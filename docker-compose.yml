@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  db-service:
+      container_name: dev-database
+      image: mysql
+      user: root
+      volumes:
+        - ./mysql-data:/var/lib/mysql
+      env_file: .env
+      environment:
+        - MYSQL_ROOT_PASSWORD=${MYSQL_DEVDB_PASSWORD}
+        - MYSQL_DATABASE=${MYSQL_DEVDB_NAME}
+      # ports:
+      #   - ${MYSQL_DEVDB_PORT}:${MYSQL_DEVDB_DOCKER_PORT}
+  app:
+    container_name: scout-api-dev
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./.wwebjs_auth:/.wwebjs_auth
+    env_file: .env
+    environment:
+      - PORT=${PORT}
+    # ports:
+    #   - ${PORT}:${PORT}
+    depends_on:
+      - db-service
+    # links:
+    #   - db-service
+    network_mode: service:db-service
