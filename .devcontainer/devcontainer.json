@@ -15,8 +15,8 @@
 	"workspaceFolder": "/app",
 	"features": {
 		"ghcr.io/dhoeric/features/act:1": {},
-		"ghcr.io/devcontainers/features/git:1": {}
-		// "ghcr.io/devcontainers-contrib/features/mysql-homebrew:1": {}
+		"ghcr.io/devcontainers/features/git:1": {},
+		"ghcr.io/devcontainers-contrib/features/prisma:2": {}
 	},
 	"customizations": {
 		"vscode": {
@@ -59,7 +59,11 @@
 	// Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "devcontainer"
 	"forwardPorts": [
+		//Export mysql
 		3306,
-		8080
+		//Export node
+		8080,
+		//Export prisma
+		5555
 	]
 }
