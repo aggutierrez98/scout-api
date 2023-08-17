@@ -17,7 +17,7 @@ services:
     restart: always
     build: 
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     volumes: 
       - ./.wwebjs_auth/session-client-master/:/.wwebjs_auth/session-client-master
     env_file: .env
