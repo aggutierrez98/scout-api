@@ -6,7 +6,46 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
   relationMode = "prisma"
+}
+
+model Scout {
+  id                Int                 @id @default(autoincrement())
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  name              String              @db.VarChar(45)
+  surname           String              @db.VarChar(45)
+  dateBirth         DateTime            @db.DateTime()
+  dni               Int                 @db.Int
+  sex               String              @db.Char(1)
+  location          String              @db.VarChar(45)
+  address           String              @db.VarChar(65)
+  progression       Progression         @default(PISTA)
+  PresentedDocument PresentedDocument[]
+}
+
+model Document {
+  id                Int                 @id @default(autoincrement())
+  name              String              @db.VarChar(45)
+  PresentedDocument PresentedDocument[]
+}
+
+model PresentedDocument {
+  id          Int      @id @default(autoincrement())
+  document    Document @relation(fields: [documentId], references: [id])
+  documentId  Int      @unique
+  scout       Scout    @relation(fields: [scoutId], references: [id])
+  scoutId     Int      @unique
+  presentedAt DateTime @default(now())
+
+  @@index([scoutId, documentId])
+  @@index([documentId])
+}
+
+enum Progression {
+  PISTA
+  RUMBO
+  TRAVESIA
 }
