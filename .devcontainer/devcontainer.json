@@ -59,7 +59,7 @@
 		//Export prisma
 		5555
 	],
-	"postCreateCommand": "sh .devcontainer/postCreateCommand.sh"
+	"postAttachCommand": "sh .devcontainer/postCreateCommand.sh"
 	// Uncomment the next line if you want start specific services in your Docker Compose config.
 	// "runServices": [],
 	// Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
