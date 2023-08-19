@@ -52,14 +52,14 @@
 		}
 	},
 	"forwardPorts": [
-		//Export mysql
-		// 3306,
-		//Export node
+		//Mysql port
+		3306,
+		//Node port
 		8080,
-		//Export prisma
+		//Prisma studio port
 		5555
 	],
-	"postAttachCommand": "sh .devcontainer/postCreateCommand.sh"
+	"postAttachCommand": "sh .devcontainer/postCommand.sh"
 	// Uncomment the next line if you want start specific services in your Docker Compose config.
 	// "runServices": [],
 	// Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
