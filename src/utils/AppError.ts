@@ -5,6 +5,7 @@ export enum HttpCode {
 	UNAUTHORIZED = 401,
 	NOT_FOUND = 404,
 	INTERNAL_SERVER_ERROR = 500,
+	SERVER_TOO_BUSY = 503,
 }
 
 interface AppErrorArgs {

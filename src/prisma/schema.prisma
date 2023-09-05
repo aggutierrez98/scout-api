@@ -11,7 +11,7 @@ datasource db {
   relationMode = "prisma"
 }
 
-//TODO: 3) Agregar modelo cuota y relacion con scout
+//TODO: Agregar modelo PAGO y relacion con scout
 
 model Scout {
   id                    Int                   @id @default(autoincrement())
@@ -93,7 +93,7 @@ model InsigniaObtenida {
   Scout          Scout        @relation(fields: [scoutId], references: [id])
   scoutId        Int          @unique
   insignia       TipoInsignia
-  progresion     Progresion
+  progresion     Progresion?
   fechaObtencion DateTime     @db.Date()
 }
 

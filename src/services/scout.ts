@@ -15,16 +15,16 @@ const insertScout = async (scout: IScout): Promise<IScoutData | null> => {
 const getScouts = async ({
 	limit = 10,
 	offset = 0,
-	order = "apellido",
+	orderBy = "apellido",
 }: {
-	limit: number;
-	offset: number;
-	order: OrderToGetScouts;
+	limit?: number;
+	offset?: number;
+	orderBy?: OrderToGetScouts;
 }): Promise<IScoutData[]> => {
 	const responseItem = await ScoutModel.findMany({
 		skip: offset,
 		take: limit,
-		orderBy: { [order]: "asc" },
+		orderBy: { [orderBy]: "asc" },
 	});
 	return responseItem;
 };

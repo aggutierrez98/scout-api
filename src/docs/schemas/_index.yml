@@ -1,0 +1,12 @@
+components:
+  schemas:
+    scout:
+      $ref: "./scout.yml"
+    patrulla:
+      $ref: "./patrulla.yml"
+    documentos:
+      $ref: "./documento.yml"
+    insignias:
+      $ref: "./insignia.yml"
+    familiar:
+      $ref: "./familiar.yml"

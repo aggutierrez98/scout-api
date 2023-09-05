@@ -1,0 +1,38 @@
+type: object
+properties:
+  id:
+    type: string
+    readOnly: true
+  scouts:
+    type: array
+    readOnly: true
+    items:
+      $ref: '#/components/schemas/scout'
+  tipoInsignia:
+    type: string
+    enum:
+      - UNIFORME
+      - GUIA
+      - SUBGUIA
+      - PROGRESION
+      - PROMESA
+      - ESPNATURALEZA
+      - ESPARTE
+      - ESPECSERVICIO
+      - ESPESPIRITUALIDAD
+      - ESPDEPORTES
+      - ESPCIENCIA
+      - SUPERACION
+  progresion:
+    type: string
+    enum:
+      - PISTA
+      - RUMBO
+      - TRAVESIA
+  fechaObtencion:
+    type: date
+    readOnly: true
+required:
+  - scouts
+  - tipoInsignia
+  - fechaObtencion

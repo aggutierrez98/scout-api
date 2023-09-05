@@ -5,34 +5,51 @@
   "main": "index.js",
   "scripts": {
     "test": "npm run test",
+    "prebuild": "npm run swagger",
     "build": "npx tsc",
     "start": "dotenv -e .env.production -- node dist/index.js",
-    "dev": "dotenv -e .env.production -- ts-node-dev src/index.ts",
+    "dev-old": "dotenv -e .env.production -- ts-node-dev src/index.ts",
+    "dev": "dotenv -e .env.production -- nodemon",
     "import-scouts:dev": "dotenv -e .env.development -- ts-node src/bin/updateScouts.ts",
     "import-scouts": "dotenv -e .env.production -- ts-node src/bin/updateScouts.ts",
     "push:dev": "dotenv -e .env.development -- prisma db push",
     "studio:dev": "dotenv -e .env.development -- prisma studio",
-    "studio": "dotenv -e .env.production -- prisma studio"
+    "studio": "dotenv -e .env.production -- prisma studio",
+    "preview": "redocly bundle src/docs/openapi.yaml --output _build/openapi.yaml",
+    "proxy": "dotenv -e .env.development -- node --experimental-fetch src/proxy.cjs",
+    "proxy:old": "dotenv -e .env.development -- ts-node --experimental-fetch src/proxy.cts"
   },
   "author": "aggutierrez",
   "license": "ISC",
   "dependencies": {
     "@prisma/client": "5.1.1",
+    "@redocly/cli": "^1.0.2",
     "bcryptjs": "^2.4.3",
+    "compression": "^1.7.4",
     "cors": "2.8.5",
     "dotenv": "16.3.1",
     "dotenv-cli": "7.3.0",
     "esm": "^3.2.25",
     "execa": "^8.0.1",
     "express": "4.18.2",
+    "express-rate-limit": "^6.10.0",
+    "helmet": "^7.0.0",
     "http-terminator": "^3.2.0",
+    "json-refs": "^3.0.15",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "3.6.0",
     "node-cron": "3.0.2",
+    "node-fetch": "^3.3.2",
     "progress": "^2.0.3",
     "qrcode-terminal": "0.12.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0",
+    "tiny-csrf": "^1.1.3",
+    "toobusy-js": "^0.5.1",
+    "tsoa": "^5.1.1",
     "whatsapp-web.js": "1.22.1",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.0/xlsx-0.20.0.tgz",
+    "yamljs": "0.3.0",
     "zod": "3.22.2"
   },
   "devDependencies": {
@@ -44,6 +61,10 @@
     "@types/node": "20.5.0",
     "@types/progress": "^2.0.5",
     "@types/qrcode-terminal": "0.12.0",
+    "@types/swagger-jsdoc": "^6.0.1",
+    "@types/swagger-ui-express": "^4.1.3",
+    "@types/toobusy-js": "^0.5.2",
+    "@types/yamljs": "^0.2.31",
     "nodemon": "3.0.1",
     "prisma": "5.1.1",
     "rome": "12.1.3",
@@ -62,5 +83,12 @@
   "homepage": "https://github.com/aggutierrez98/scout-api#readme",
   "prisma": {
     "schema": "src/prisma/schema.prisma"
+  },
+  "nodemonConfig": {
+    "watch": [
+      "src"
+    ],
+    "ext": "ts",
+    "exec": "ts-node src/index.ts"
   }
 }

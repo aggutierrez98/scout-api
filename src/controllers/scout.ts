@@ -8,6 +8,7 @@ import {
 } from "../services/scout";
 import { AppError, HttpCode } from "../utils/AppError";
 import { OrderToGetScouts } from "../interfaces/types";
+import { Delete, Get, Put, Route, Post } from "tsoa";
 
 const getItem = async (
 	{ params }: Request,
@@ -34,11 +35,13 @@ const getItem = async (
 
 const getItems = async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		const { limit, offset, order } = req.query;
+		//VALIDAR LIMIT OFFSET Y ORDER
+		const { offset, limit, orderBy } = req.query;
+
 		const response = await getScouts({
-			limit: Number(limit),
-			offset: Number(offset),
-			order: order as OrderToGetScouts,
+			limit: limit ? Number(limit) : undefined,
+			offset: offset ? Number(offset) : undefined,
+			orderBy: orderBy as OrderToGetScouts,
 		});
 		res.send(response);
 	} catch (e) {
@@ -70,7 +73,7 @@ const updateItem = async (
 	}
 };
 
-const postItem = async (
+const insertItem = async (
 	{ body }: Request,
 	res: Response,
 	next: NextFunction,
@@ -106,4 +109,4 @@ const deleteItem = async (
 	}
 };
 
-export { getItem, getItems, postItem, updateItem, deleteItem };
+export { getItem, getItems, insertItem, updateItem, deleteItem };

@@ -2,7 +2,7 @@ import { PrismaClient, Progresion, Funcion, Prisma } from "@prisma/client";
 import * as XLSX from "xlsx";
 import ProgressBar from "progress";
 import { parseDMYtoDate } from "../utils";
-import { ScoutXLSX } from "../interfaces/types";
+import { ReligionType, ScoutXLSX } from "../interfaces/types";
 
 const insertScouts = async () => {
 	try {
@@ -43,15 +43,11 @@ const insertScouts = async () => {
 
 			const progresionActual =
 				scoutXLSX.Progresion?.toUpperCase() as Progresion;
+			const religion = scoutXLSX.Religion?.toUpperCase() as ReligionType;
 
 			const patrullaId = (
 				await prisma.patrulla.findFirst({
 					where: { nombre: scoutXLSX.Patrulla },
-				})
-			)?.id;
-			const religionId = (
-				await prisma.religion.findFirst({
-					where: { nombre: scoutXLSX.Religion },
 				})
 			)?.id;
 
@@ -60,10 +56,10 @@ const insertScouts = async () => {
 				apellido,
 				fechaNacimiento,
 				progresionActual,
-				religionId,
 				patrullaId,
 				Funcion: funcion,
 				sexo,
+				religion,
 				dni: scoutXLSX.Documento,
 				localidad: scoutXLSX.Localidad,
 				direccion: scoutXLSX.Calle,

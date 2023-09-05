@@ -1,0 +1,14 @@
+type: object
+properties:
+  id:
+    type: string
+    readOnly: true
+  nombre:
+    type: string
+  vence:
+    type: boolean
+  fechaPresentacion:
+    type: date
+required:
+  - nombre
+  - vence

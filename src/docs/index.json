@@ -1,0 +1,130 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Scout API Documentation",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080/api"
+    },
+    {
+      "basePath": "."
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "scout": {
+        "$ref": "./schemas/scout.yml"
+      },
+      "patrulla": {
+        "$ref": "./schemas/patrulla.yml"
+      },
+      "documentos": {
+        "$ref": "./schemas/documentos.yml"
+      },
+      "insignias": {
+        "$ref": "./schemas/insignia.yml"
+      },
+      "familiar": {
+        "$ref": "./schemas/familiar.yml"
+      }
+    }
+  },
+  "paths": {
+    "/scout": {
+      "get": {
+        "tags": [
+          "scouts"
+        ],
+        "summary": "Read Scouts data",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns object inserted in collection."
+          },
+          "402": {
+            "description": "User input error."
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "scouts"
+        ],
+        "summary": "Create Scout",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/scout"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Returns object inserted in collection."
+          },
+          "402": {
+            "description": "User input error."
+          }
+        }
+      }
+    },
+    "/scout/{id}": {
+      "get": {
+        "tags": [
+          "scouts"
+        ],
+        "summary": "Read Specific Scout data",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns object inserted in collection."
+          },
+          "402": {
+            "description": "User input error."
+          }
+        }
+      }
+    }
+  }
+}
