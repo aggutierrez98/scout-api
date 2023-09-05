@@ -11,7 +11,8 @@ import swaggerSetup from "./docs/swagger";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import { tooBusy } from "./middlewares/tooBusy";
-const compression = require("compression");
+import compression from "compression";
+import shouldCompress from "./utils/shouldCompress";
 
 // import swaggerSetup from "./docs/ymlToJson";
 // import swaggerSetup from "./docs/exampleToJson";
@@ -56,15 +57,6 @@ export default class Server {
 		// this.app.use(morgan(logFormat, {
 		//     skip: () => process.env.NODE_ENV === 'test'
 		// }))
-
-		function shouldCompress(req: Request, res: Response) {
-			// don't compress responses with this request header
-			if (req.headers["x-no-compression"]) {
-				return false;
-			}
-
-			return compression.filter(req, res);
-		}
 
 		this.app.use(express.json());
 		this.app.use(bodyParser.json({ limit: "50kb" }));
