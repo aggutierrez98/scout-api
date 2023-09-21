@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
-import { AppError } from "../utils/AppError";
-import { errorHandler } from "../utils/errorHandler";
+import { AppError } from "../utils/classes/AppError";
+import { errorHandler } from "../utils/classes/ErrorHandler";
 
 const errorMiddleware = (
 	error: AppError,
@@ -9,7 +9,6 @@ const errorMiddleware = (
 	next: NextFunction,
 ): void => {
 	if (error) {
-		console.log(error);
 		errorHandler.handleError(error, res);
 	} else {
 		next();

@@ -1,7 +1,31 @@
-import { IDocPresentado } from "./documentoPresentado.interface";
-import { IInsignaObt } from "./insigniaObtenida.interface";
-import { IFamiliarScout } from "./familiarScout.interface";
-import { ProgresionType, FuncionType, ReligionType, SexoType } from "./types";
+import { ProgresionEnum, TipoInsigniaEnum } from "./XLSXTypes";
+import {
+	FuncionType,
+	ProgresionType,
+	ReligionType,
+	SexoType,
+} from "./constantTypes";
+
+export interface IFamiliarScout {
+	id: number;
+	familiarId: number;
+	scoutId: number;
+}
+
+export interface IDocPresentado {
+	id: number;
+	documentoId: number;
+	scoutId: number;
+	fechaPresentacion: Date;
+}
+
+export interface IInsignaObt {
+	id: number;
+	scoutId: number;
+	insignia: TipoInsigniaEnum;
+	progresion: ProgresionEnum;
+	fechaObtencion: Date;
+}
 
 export interface IScout {
 	nombre: string;

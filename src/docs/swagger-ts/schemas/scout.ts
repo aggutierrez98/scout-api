@@ -1,4 +1,12 @@
-export default {
+import { OAS3Options } from "swagger-jsdoc";
+import {
+	VALID_FUNCTIONS,
+	VALID_PROGRESSIONS,
+	VALID_RELIGIONS,
+	VALID_SEX,
+} from "../../../utils";
+
+export const scoutSchema: OAS3Options = {
 	type: "object",
 	properties: {
 		id: {
@@ -19,7 +27,7 @@ export default {
 		},
 		sexo: {
 			type: "string",
-			enum: ["M", "F"],
+			enum: VALID_SEX,
 		},
 		localidad: {
 			type: "string",
@@ -35,15 +43,15 @@ export default {
 		},
 		progresionActual: {
 			type: "string",
-			enum: ["PISTA", "RUMBO", "TRAVESIA"],
+			enum: VALID_PROGRESSIONS,
 		},
 		religion: {
 			type: "string",
-			enum: ["CATOLICA", "JUDIA", "BUDISTA", "EVANGELICA"],
+			enum: VALID_RELIGIONS,
 		},
 		Funcion: {
 			type: "string",
-			enum: ["JOVEN", "JEFE", "SUBJEFE", "AYUDANTE", "COLABORADOR"],
+			enum: VALID_FUNCTIONS,
 		},
 		patrullaId: {
 			type: "string",
@@ -57,14 +65,14 @@ export default {
 			type: "array",
 			readOnly: true,
 			items: {
-				$ref: "#/components/schemas/documentos",
+				$ref: "#/components/schemas/documento",
 			},
 		},
 		insigniasObtenidas: {
 			type: "array",
 			readOnly: true,
 			items: {
-				$ref: "#/components/schemas/insignias",
+				$ref: "#/components/schemas/insignia",
 			},
 		},
 		familiares: {

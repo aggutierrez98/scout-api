@@ -1,60 +1,62 @@
-import { IScout, IScoutData } from "../interfaces/scout.interface";
+import { IScout, IScoutData } from "../types";
 import { PrismaClient, Scout } from "@prisma/client";
-import { OrderToGetScouts } from "../interfaces/types";
+import { OrderToGetScouts } from "../types";
 
 const prisma = new PrismaClient();
 const ScoutModel = prisma.scout;
 
-const insertScout = async (scout: IScout): Promise<IScoutData | null> => {
-	const responseInsert = await ScoutModel.create({
-		data: scout,
-	});
-	return responseInsert;
-};
+interface IScoutService {
+	insertScout: (scout: IScout) => Promise<IScoutData | null>;
+	getScouts: ({
+		limit,
+		offset,
+		orderBy,
+	}: {
+		limit?: number;
+		offset?: number;
+		orderBy?: OrderToGetScouts;
+	}) => Promise<IScoutData[]>;
+	getScout: (id: string) => Promise<IScoutData | null>;
+	updateScout: (id: string, dataUpdated: Scout) => Promise<IScoutData | null>;
+	deleteScout: (id: string) => Promise<IScoutData | null>;
+}
 
-const getScouts = async ({
-	limit = 10,
-	offset = 0,
-	orderBy = "apellido",
-}: {
-	limit?: number;
-	offset?: number;
-	orderBy?: OrderToGetScouts;
-}): Promise<IScoutData[]> => {
-	const responseItem = await ScoutModel.findMany({
-		skip: offset,
-		take: limit,
-		orderBy: { [orderBy]: "asc" },
-	});
-	return responseItem;
-};
-
-const getScout = async (id: string): Promise<IScoutData | null> => {
-	try {
-		const responseItem = await ScoutModel.findUnique({
-			where: { id: Number(id) },
+export class ScoutService implements IScoutService {
+	insertScout = async (scout: IScout) => {
+		const responseInsert = await ScoutModel.create({
+			//@ts-ignore
+			data: scout,
 		});
-
+		return responseInsert;
+	};
+	getScouts = async ({ limit = 10, offset = 0, orderBy = "apellido" }) => {
+		const responseItem = await ScoutModel.findMany({
+			skip: offset,
+			take: limit,
+			orderBy: { [orderBy]: "asc" },
+		});
 		return responseItem;
-	} catch (error) {
-		return null;
-	}
-};
+	};
+	getScout = async (id: string) => {
+		try {
+			const responseItem = await ScoutModel.findUnique({
+				where: { id: Number(id) },
+			});
 
-const updateScout = async (
-	id: string,
-	dataUpdated: Scout,
-): Promise<IScoutData | null> => {
-	const responseItem = await ScoutModel.update({
-		where: { id: Number(id) },
-		data: dataUpdated,
-	});
-	return responseItem;
-};
-
-const deleteScout = async (id: string): Promise<IScoutData | null> => {
-	const responseItem = await ScoutModel.delete({ where: { id: Number(id) } });
-	return responseItem;
-};
-
-export { insertScout, getScouts, getScout, updateScout, deleteScout };
+			return responseItem;
+		} catch (error) {
+			return null;
+		}
+	};
+	updateScout = async (id: string, dataUpdated: Scout) => {
+		const responseItem = await ScoutModel.update({
+			where: { id: Number(id) },
+			data: dataUpdated,
+		});
+		return responseItem;
+	};
+	deleteScout = async (id: string) => {
+		const responseItem = await ScoutModel.delete({ where: { id: Number(id) } });
+		return responseItem;
+	};
+}

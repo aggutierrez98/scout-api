@@ -1,6 +1,3 @@
-import { JwtPayload } from "jsonwebtoken";
-import { Request } from "express";
-
 export type ScoutXLSX = {
 	Documento: string;
 	Nombre: string;
@@ -20,48 +17,6 @@ export type ScoutXLSX = {
 	Estado: string;
 	Progresion: string;
 };
-
-export type OrderToGetScouts = "apellido" | "dni" | "fechaNacimiento";
-
-export interface RequestExt extends Request {
-	user?: JwtPayload | { id: string };
-}
-
-export type RelacionFamiliarType =
-	| "PADRE"
-	| "MADRE"
-	| "TIO"
-	| "TIA"
-	| "HERMANO"
-	| "HERMANA"
-	| "OTRO";
-
-export type ReligionType = "CATOLICA" | "JUDIA" | "BUDISTA" | "EVANGELICA";
-
-export type SexoType = "M" | "F";
-
-export type ProgresionType = "PISTA" | "RUMBO" | "TRAVESIA";
-
-export type FuncionType =
-	| "JOVEN"
-	| "JEFE"
-	| "SUBJEFE"
-	| "AYUDANTE"
-	| "COLABORADOR";
-
-export type TipoInsigniaType =
-	| "UNIFORME"
-	| "GUIA"
-	| "SUBGUIA"
-	| "PROGRESION"
-	| "PROMESA"
-	| "ESPNATURALEZA"
-	| "ESPARTE"
-	| "ESPECSERVICIO"
-	| "ESPESPIRITUALIDAD"
-	| "ESPDEPORTES"
-	| "ESPCIENCIA"
-	| "SUPERACION";
 
 export enum RelacionFamiliarScoutEnum {
 	PADRE = "Padre",

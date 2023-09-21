@@ -1,18 +1,41 @@
 import { Router } from "express";
 
+import { cacheMiddleware, cleanCacheMiddleware } from "../middlewares";
+import { ScoutController } from "../controllers/scout";
+import { ScoutService } from "../services/scout";
+import { validate } from "../middlewares/validate";
 import {
-	deleteItem,
-	getItem,
-	getItems,
-	insertItem,
-	updateItem,
-} from "../controllers/scout";
-const router = Router();
+	DeleteScoutSchema,
+	GetScoutSchema,
+	GetScoutsSchema,
+	PostScoutSchema,
+	PutScoutSchema,
+} from "../validators/scout";
 
-router.get("/", getItems);
-router.get("/:id", getItem);
-router.post("/", insertItem);
-router.put("/:id", updateItem);
-router.delete("/:id", deleteItem);
+export const createScoutRouter = (scoutService: ScoutService) => {
+	const router = Router();
+	const scoutController = new ScoutController({ scoutService });
 
-export { router };
+	router.get("/", validate(GetScoutsSchema), scoutController.getItems);
+	router.get(
+		"/:id",
+		validate(GetScoutSchema),
+		cacheMiddleware,
+		scoutController.getItem,
+	);
+	router.post("/", validate(PostScoutSchema), scoutController.insertItem);
+	router.put(
+		"/:id",
+		validate(PutScoutSchema),
+		cleanCacheMiddleware,
+		scoutController.updateItem,
+	);
+	router.delete(
+		"/:id",
+		validate(DeleteScoutSchema),
+		cleanCacheMiddleware,
+		scoutController.deleteItem,
+	);
+
+	return router;
+};

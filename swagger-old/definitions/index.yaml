@@ -1,0 +1,10 @@
+Scout:
+  $ref: "./scout.yaml"
+Patrulla:
+  $ref: "./patrulla.yaml"
+Documento:
+  $ref: "./documento.yaml"
+Insignia:
+  $ref: "./insignia.yaml"
+Familiar:
+  $ref: "./familiar.yaml"

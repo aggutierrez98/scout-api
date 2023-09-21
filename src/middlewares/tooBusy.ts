@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import toobusy from "toobusy-js";
-import { AppError, HttpCode } from "../utils/AppError";
+import { AppError, HttpCode } from "../utils/classes/AppError";
 
 export const tooBusy = (req: Request, res: Response, next: NextFunction) => {
 	if (toobusy()) {

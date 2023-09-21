@@ -1,5 +1,6 @@
 import { Response } from "express";
 import { AppError, HttpCode } from "./AppError";
+import logger from "./Logger";
 
 class ErrorHandler {
 	private isTrustedError(error: AppError): boolean {
@@ -17,22 +18,26 @@ class ErrorHandler {
 		}
 	}
 
-	// rome-ignore lint/suspicious/noExplicitAny: <explanation>
-	private handleTrustedError(error: AppError, response: Response): any {
-		return response.status(error.httpCode).json({ message: error.message });
+	private handleTrustedError(error: AppError, response: Response) {
+		logger.error(error.message);
+		return response
+			.status(error.httpCode)
+			.json({ name: error.name, message: error.message });
 	}
 
 	private handleCriticalError(
 		error: Error | AppError,
 		response?: Response,
 	): void {
+		logger.error("Error interno del servidor");
+		logger.error(`${error.name}: ${error.message}`);
+
 		if (response) {
 			response
 				.status(HttpCode.INTERNAL_SERVER_ERROR)
-				.json({ message: "Internal server error" });
+				.json({ message: "Error Interno del Servidor" });
 		}
 
-		console.log("Application encountered a critical error. Exiting");
 		process.exit(1);
 	}
 }

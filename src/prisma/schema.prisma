@@ -108,6 +108,7 @@ enum RelacionFamiliarScout {
 }
 
 enum Progresion {
+  INTERRAMA
   PISTA
   RUMBO
   TRAVESIA

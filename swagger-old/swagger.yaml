@@ -2,6 +2,13 @@ openapi: 3.0.0
 info:
   title: Scout API Documentation
   version: 1.0.0
+  description: Multi-file boilerplate for OpenAPI Specification.
+  license:
+    name: MIT
+  contact:
+    name: API Support
+    url: http://www.example.com/support
+    email: support@example.com
 servers:
   - url: 'http://localhost:8080/api'
 components:
@@ -10,16 +17,18 @@ components:
   #     type: http
   #     scheme: bearer
   schemas:
-    scout:
-      $ref: ./docs/schemas/scout.yml
-    patrulla:
-      $ref: ./docs/schemas/patrulla.yml
-    documentos:
-      $ref: ./docs/schemas/documento.yml
-    insignias:
-      $ref: ./docs/schemas/insignia.yml
-    familiar:
-      $ref: ./docs/schemas/familiar.yml
+    $ref: "./schemas/_index.yaml"
+    # scout:
+    #   $ref: ./docs/schemas/scout.yml
+    # patrulla:
+    #   $ref: ./docs/schemas/patrulla.yml
+    # documentos:
+    #   $ref: ./docs/schemas/documento.yml
+    # insignias:
+    #   $ref: ./docs/schemas/insignia.yml
+    # familiar:
+    #   $ref: ./docs/schemas/familiar.yml
+    
 paths:
   /scout:
     get:

@@ -2,7 +2,7 @@ import { PrismaClient, Progresion, Funcion, Prisma } from "@prisma/client";
 import * as XLSX from "xlsx";
 import ProgressBar from "progress";
 import { parseDMYtoDate } from "../utils";
-import { ReligionType, ScoutXLSX } from "../interfaces/types";
+import { ReligionType, ScoutXLSX } from "../types/types";
 
 const insertScouts = async () => {
 	try {

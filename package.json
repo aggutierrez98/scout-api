@@ -1,29 +1,14 @@
 {
-  "name": "scout-api",
-  "version": "1.0.0",
-  "description": "Scout api for personal use",
-  "main": "index.js",
-  "scripts": {
-    "test": "npm run test",
-    "prebuild": "npm run swagger",
-    "build": "npx tsc",
-    "start": "dotenv -e .env.production -- node dist/index.js",
-    "dev-old": "dotenv -e .env.production -- ts-node-dev src/index.ts",
-    "dev": "dotenv -e .env.production -- nodemon",
-    "import-scouts:dev": "dotenv -e .env.development -- ts-node src/bin/updateScouts.ts",
-    "import-scouts": "dotenv -e .env.production -- ts-node src/bin/updateScouts.ts",
-    "push:dev": "dotenv -e .env.development -- prisma db push",
-    "studio:dev": "dotenv -e .env.development -- prisma studio",
-    "studio": "dotenv -e .env.production -- prisma studio",
-    "preview": "redocly bundle src/docs/openapi.yaml --output _build/openapi.yaml",
-    "proxy": "dotenv -e .env.development -- node --experimental-fetch src/proxy.cjs",
-    "proxy:old": "dotenv -e .env.development -- ts-node --experimental-fetch src/proxy.cts"
-  },
   "author": "aggutierrez",
-  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/aggutierrez98/scout-api/issues"
+  },
   "dependencies": {
+    "@logtail/node": "^0.4.12",
+    "@logtail/winston": "^0.4.12",
     "@prisma/client": "5.1.1",
     "@redocly/cli": "^1.0.2",
+    "@types/morgan": "^1.9.5",
     "bcryptjs": "^2.4.3",
     "compression": "^1.7.4",
     "cors": "2.8.5",
@@ -37,21 +22,25 @@
     "http-terminator": "^3.2.0",
     "json-refs": "^3.0.15",
     "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
     "mysql2": "3.6.0",
     "node-cron": "3.0.2",
     "node-fetch": "^3.3.2",
     "progress": "^2.0.3",
     "qrcode-terminal": "0.12.0",
+    "redis": "^4.6.8",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",
     "tiny-csrf": "^1.1.3",
     "toobusy-js": "^0.5.1",
     "tsoa": "^5.1.1",
     "whatsapp-web.js": "1.22.1",
+    "winston": "^3.10.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.0/xlsx-0.20.0.tgz",
     "yamljs": "0.3.0",
     "zod": "3.22.2"
   },
+  "description": "Scout api for personal use",
   "devDependencies": {
     "@types/apicache": "^1.6.2",
     "@types/bcryptjs": "^2.4.3",
@@ -69,27 +58,43 @@
     "nodemon": "3.0.1",
     "prisma": "5.1.1",
     "rome": "12.1.3",
+    "swagger-cli": "^4.0.4",
     "ts-node": "10.9.1",
     "ts-node-dev": "^2.0.0",
     "typescript": "5.1.6"
+  },
+  "homepage": "https://github.com/aggutierrez98/scout-api#readme",
+  "keywords": [],
+  "license": "ISC",
+  "main": "index.js",
+  "name": "scout-api",
+  "nodemonConfig": {
+    "exec": "ts-node src/index.ts",
+    "ext": "ts",
+    "watch": [
+      "src"
+    ]
+  },
+  "prisma": {
+    "schema": "src/prisma/schema.prisma"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aggutierrez98/scout-api.git"
   },
-  "keywords": [],
-  "bugs": {
-    "url": "https://github.com/aggutierrez98/scout-api/issues"
+  "scripts": {
+    "build": "npx tsc",
+    "dev": "dotenv -e .env.production -- nodemon",
+    "dev:old": "dotenv -e .env.production -- npm run doc:generate && nodemon",
+    "doc:generate": "swagger-cli bundle src/docs/swagger/index.yaml --outfile src/docs/swagger/index.json",
+    "import-scouts": "dotenv -e .env.production -- ts-node src/bin/updateScouts.ts",
+    "import-scouts:dev": "dotenv -e .env.development -- ts-node src/bin/updateScouts.ts",
+    "prebuild": "npm run swagger",
+    "push:dev": "dotenv -e .env.development -- prisma db push",
+    "start": "dotenv -e .env.production -- node dist/index.js",
+    "studio": "dotenv -e .env.production -- prisma studio",
+    "studio:dev": "dotenv -e .env.development -- prisma studio",
+    "test": "npm run test"
   },
-  "homepage": "https://github.com/aggutierrez98/scout-api#readme",
-  "prisma": {
-    "schema": "src/prisma/schema.prisma"
-  },
-  "nodemonConfig": {
-    "watch": [
-      "src"
-    ],
-    "ext": "ts",
-    "exec": "ts-node src/index.ts"
-  }
+  "version": "1.0.0"
 }

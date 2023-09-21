@@ -1,7 +1,10 @@
-import { NextFunction, Response } from "express";
-import { verifyToken } from "../utils/jwt.util";
-import { RequestExt } from "../interfaces/types";
+import { NextFunction, Response, Request } from "express";
+import { verifyToken } from "../utils/lib/jwt.util";
+import { JwtPayload } from "jsonwebtoken";
 
+interface RequestExt extends Request {
+	user?: JwtPayload | { id: string };
+}
 const checkJwt = (req: RequestExt, res: Response, next: NextFunction) => {
 	try {
 		const jwtByUser = req.headers.authorization || "";

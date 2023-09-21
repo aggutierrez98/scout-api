@@ -11,11 +11,10 @@ info:
     email: support@example.com
 servers:
   - url: 'http://localhost:8080/api'
-components:
-  schemas:
-    $ref: './schemas/_index.yml'
-tags:
-  - name: scouts
+
+definitions:
+  $ref: ./definitions/index.yaml
+
 paths:
   /scout:
     get:
@@ -44,11 +43,11 @@ paths:
       tags:
         - scouts
       summary: "Create Scout"
-      requestBody:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/scout"
+      # requestBody:
+      #     content:
+      #       application/json:
+              # schema:
+              #   $ref: "#/components/schemas/scout"
       responses:
         '200':
           description: Returns object inserted in collection.
@@ -70,3 +69,23 @@ paths:
           description: Returns object inserted in collection.
         '402':
           description: User input error.
+ 
+
+# components:
+#   # securitySchemes:
+#   #   bearerAuth:
+#   #     type: http
+#   #     scheme: bearer
+#   schemas:
+#     $ref: "./schemas/_index.yaml"
+#     # scout:
+#     #   $ref: ./docs/schemas/scout.yml
+#     # patrulla:
+#     #   $ref: ./docs/schemas/patrulla.yml
+#     # documentos:
+#     #   $ref: ./docs/schemas/documento.yml
+#     # insignias:
+#     #   $ref: ./docs/schemas/insignia.yml
+#     # familiar:
+#     #   $ref: ./docs/schemas/familiar.yml
+

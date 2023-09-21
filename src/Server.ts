@@ -1,18 +1,22 @@
-import express, { Request, Response } from "express";
+import express, { Request, Response, Router } from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import whatsappClientConnection from "./whatsapp";
-import { errorMiddleware } from "./middlewares";
-import routes from "./routes";
+import { errorMiddleware, morganMiddleware } from "./middlewares";
 import swaggerUi from "swagger-ui-express";
 import { config } from "dotenv";
 config();
-import swaggerSetup from "./docs/swagger";
+import { swaggerDefinition } from "./docs/swagger-ts/swagger";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import { tooBusy } from "./middlewares/tooBusy";
 import compression from "compression";
-import shouldCompress from "./utils/shouldCompress";
+import { shouldCompress } from "./utils";
+import { createScoutRouter } from "./routes/scout";
+import { ScoutService } from "./services/scout";
+import winston from "winston";
+
+const PATH_ROUTER = `${__dirname}`;
 
 // import swaggerSetup from "./docs/ymlToJson";
 // import swaggerSetup from "./docs/exampleToJson";
@@ -53,11 +57,6 @@ export default class Server {
 			}),
 		);
 
-		// const logFormat = process.env.ENVIRONMENT === 'development' ? "dev" : ':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"'
-		// this.app.use(morgan(logFormat, {
-		//     skip: () => process.env.NODE_ENV === 'test'
-		// }))
-
 		this.app.use(express.json());
 		this.app.use(bodyParser.json({ limit: "50kb" }));
 		this.app.use(bodyParser.urlencoded({ extended: true }));
@@ -67,22 +66,41 @@ export default class Server {
 
 		const limiter = rateLimit({
 			windowMs: 15 * 60 * 1000, // 15 minutes
-			max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+			max: 100, // Limit each IP to 100 requests per "windowMs" time
 			standardHeaders: "draft-7",
 			legacyHeaders: false,
 		});
 
-		// Apply the rate limiting middleware to all requests
 		this.app.use(limiter);
 		this.app.use(tooBusy);
+		this.app.use(morganMiddleware);
+		this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDefinition));
 
-		this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSetup));
+		// // this.app.use("/api", routes);
+		this.app.use("/api", this.loadRoutes());
 
-		this.app.use("/api", routes);
 		this.app.use(errorMiddleware);
 	}
 
-	// // async connectDB() {}
+	loadRoutes() {
+		const router = Router();
+		const scoutService = new ScoutService();
+		router.use("/scout", createScoutRouter(scoutService));
+		return router;
+
+		// TODO: Reveer metodo de lectura dinamica de routers haciendo dependency injection
+		// // const PATH_ROUTER = `${__dirname}`;
+		// // readdirSync(PATH_ROUTER).filter((fileName) => {
+		// // 	const cleanName = cleanFileName(fileName);
+		// // 	if (cleanName !== "index") {
+		// // 		import(`./${cleanName}`).then(({ createRouter }) => {
+		// // 			router.use(`/${cleanName}`, createRouter());
+		// // 		});
+		// // 	}
+		// // });
+	}
+
+	createLogger() {}
 
 	async connectWhatsapp() {
 		await whatsappClientConnection();
@@ -94,7 +112,6 @@ export default class Server {
 			console.log(`⚡️[server]: Server running on port ${this.port}`);
 			console.log("-------------------------------------------------- ");
 		});
-
 		return server;
 	}
 }
