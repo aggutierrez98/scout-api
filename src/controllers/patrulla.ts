@@ -1,20 +1,19 @@
 import { Request, Response, NextFunction } from "express";
 
 import { AppError, HttpCode } from "../utils/classes/AppError";
-import { OrderToGetScouts } from "../types";
-import { ScoutService } from "../services/scout";
+import { PatrullaService } from "../services/patrulla";
 
-export class ScoutController {
-	public scoutService;
+export class PatrullaController {
+	public patrullaService;
 
-	constructor({ scoutService }: { scoutService: ScoutService }) {
-		this.scoutService = scoutService;
+	constructor({ patrullaService }: { patrullaService: PatrullaService }) {
+		this.patrullaService = patrullaService;
 	}
 
 	getItem = async ({ params }: Request, res: Response, next: NextFunction) => {
 		try {
 			const { id } = params;
-			const response = await this.scoutService.getScout(id);
+			const response = await this.patrullaService.getPatrulla(id);
 
 			if (!response) {
 				throw new AppError({
@@ -31,13 +30,7 @@ export class ScoutController {
 
 	getItems = async (req: Request, res: Response, next: NextFunction) => {
 		try {
-			const { offset, limit, orderBy } = req.query;
-
-			const response = await this.scoutService.getScouts({
-				limit: Number(limit),
-				offset: Number(offset),
-				orderBy: orderBy as OrderToGetScouts,
-			});
+			const response = await this.patrullaService.getPatrullas();
 			res.send(response);
 		} catch (e) {
 			next(e);
@@ -51,7 +44,7 @@ export class ScoutController {
 	) => {
 		try {
 			const { id } = params;
-			const response = await this.scoutService.updateScout(id, body);
+			const response = await this.patrullaService.updatePatrulla(id, body);
 
 			if (!response) {
 				throw new AppError({
@@ -68,8 +61,8 @@ export class ScoutController {
 
 	insertItem = async ({ body }: Request, res: Response, next: NextFunction) => {
 		try {
-			const responseScout = await this.scoutService.insertScout(body);
-			res.send(responseScout);
+			const responsePatrulla = await this.patrullaService.insertPatrulla(body);
+			res.send(responsePatrulla);
 		} catch (e) {
 			next(e);
 		}
@@ -82,7 +75,7 @@ export class ScoutController {
 	) => {
 		try {
 			const { id } = params;
-			const response = await this.scoutService.deleteScout(id);
+			const response = await this.patrullaService.deletePatrulla(id);
 
 			if (!response) {
 				throw new AppError({
