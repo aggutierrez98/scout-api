@@ -50,3 +50,9 @@ export const VALID_INSINGIAS_TYPE = [
 ] as const;
 
 export const VALID_SEX = ["M", "F"] as const;
+
+export const VALID_METODOS_PAGO = [
+	"EFECTIVO",
+	"TRANSFERENCIA",
+	"OTRO",
+] as const;

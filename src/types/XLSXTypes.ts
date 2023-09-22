@@ -29,6 +29,7 @@ export enum RelacionFamiliarScoutEnum {
 }
 
 export enum ProgresionEnum {
+	INTERRAMA = "Interrama",
 	PISTA = "Pista",
 	RUMBO = "Rumbo",
 	TRAVESIA = "Travesia",

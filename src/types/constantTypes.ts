@@ -1,6 +1,7 @@
 import {
 	VALID_FUNCTIONS,
 	VALID_INSINGIAS_TYPE,
+	VALID_METODOS_PAGO,
 	VALID_RELATIONSHIPS,
 	VALID_SEX,
 } from "../utils";
@@ -17,6 +18,7 @@ export type SexoType = typeof VALID_SEX[number];
 export type ProgresionType = typeof VALID_PROGRESSIONS[number];
 export type FuncionType = typeof VALID_FUNCTIONS[number];
 export type TipoInsigniaType = typeof VALID_INSINGIAS_TYPE[number];
+export type MetodosPagoType = typeof VALID_METODOS_PAGO[number];
 
 // PARAMS Types
 export type OrderToGetScouts = typeof VALID_GET_SCOUTS_FILTERS[number];
