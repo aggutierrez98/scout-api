@@ -2,7 +2,8 @@ import { PrismaClient, Progresion, Funcion, Prisma } from "@prisma/client";
 import * as XLSX from "xlsx";
 import ProgressBar from "progress";
 import { parseDMYtoDate } from "../utils";
-import { ReligionType, ScoutXLSX } from "../types/types";
+import { ReligionType, ScoutXLSX } from "../types";
+const prisma = new PrismaClient();
 
 const insertScouts = async () => {
 	try {
@@ -10,9 +11,6 @@ const insertScouts = async () => {
 		console.log(
 			"------------ INICIANDO SCRIPT DE ACTUALIZACION SCOUTS -------------\n",
 		);
-
-		const scouts: Prisma.ScoutCreateManyInput[] = [];
-		const prisma = new PrismaClient();
 
 		const file = XLSX.readFile("scouts.xlsx");
 		const sheet = file.Sheets[file.SheetNames[0]];
@@ -26,6 +24,7 @@ const insertScouts = async () => {
 			},
 		);
 
+		const scouts: Prisma.ScoutCreateManyInput[] = [];
 		for (const scoutXLSX of data) {
 			const [apellido, nombre] = scoutXLSX.Nombre.split(", ");
 			const fechaNacimiento = parseDMYtoDate(scoutXLSX["Fecha Nacimiento"]);
@@ -57,7 +56,7 @@ const insertScouts = async () => {
 				fechaNacimiento,
 				progresionActual,
 				patrullaId,
-				Funcion: funcion,
+				funcion: funcion,
 				sexo,
 				religion,
 				dni: scoutXLSX.Documento,
@@ -71,6 +70,7 @@ const insertScouts = async () => {
 		}
 
 		console.log(`\n-> Cargando ${scouts.length} scouts a la bd...`);
+		await prisma.$queryRaw`ALTER TABLE scouts AUTO_INCREMENT = 1`;
 		const result = await prisma.scout.createMany({
 			data: scouts,
 			skipDuplicates: true,
@@ -80,8 +80,9 @@ const insertScouts = async () => {
 		console.log("\n------------ ACTUALIZACION TERMINADA -------------\n");
 		console.timeEnd("Tiempo de ejecucion");
 	} catch (error) {
-		// rome-ignore lint/suspicious/noExplicitAny: <explanation>
-		console.log("Error en el script: ", (error as any).message);
+		console.log("Error en el script: ", (error as Error).message);
+	} finally {
+		await prisma.$disconnect();
 	}
 };
 
