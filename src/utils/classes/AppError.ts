@@ -11,7 +11,7 @@ export enum HttpCode {
 interface AppErrorArgs {
 	name?: string;
 	httpCode: HttpCode;
-	description: string;
+	description?: string;
 	isOperational?: boolean;
 }
 

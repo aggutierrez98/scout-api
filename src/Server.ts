@@ -15,6 +15,8 @@ import { shouldCompress } from "./utils";
 import { createScoutRouter } from "./routes/scout";
 import { ScoutService } from "./services/scout";
 import winston from "winston";
+import { PatrullaService } from "./services/patrulla";
+import { createPatrullaRouter } from "./routes/patrulla";
 
 const PATH_ROUTER = `${__dirname}`;
 
@@ -84,8 +86,13 @@ export default class Server {
 
 	loadRoutes() {
 		const router = Router();
+
 		const scoutService = new ScoutService();
 		router.use("/scout", createScoutRouter(scoutService));
+
+		const patrullaService = new PatrullaService();
+		router.use("/patrulla", createPatrullaRouter(patrullaService));
+
 		return router;
 
 		// TODO: Reveer metodo de lectura dinamica de routers haciendo dependency injection
