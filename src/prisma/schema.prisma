@@ -60,7 +60,7 @@ model DocumentoPresentado {
 
 model Pago {
   id            Int         @id @default(autoincrement())
-  concepto      String      @db.VarChar(45)
+  concepto      String      @db.VarChar(50)
   monto         Decimal     @db.Decimal(10, 2)
   rendido       Boolean     @default(false)
   metodoPago    MetodosPago

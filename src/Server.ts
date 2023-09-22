@@ -17,6 +17,10 @@ import { ScoutService } from "./services/scout";
 import winston from "winston";
 import { PatrullaService } from "./services/patrulla";
 import { createPatrullaRouter } from "./routes/patrulla";
+import { DocumentoService } from "./services/documento";
+import { createDocumentoRouter } from "./routes/documento";
+import { PagoService } from "./services/pago";
+import { createPagoRouter } from "./routes/pago";
 
 const PATH_ROUTER = `${__dirname}`;
 
@@ -90,8 +94,13 @@ export default class Server {
 		const scoutService = new ScoutService();
 		router.use("/scout", createScoutRouter(scoutService));
 
-		const patrullaService = new PatrullaService();
-		router.use("/patrulla", createPatrullaRouter(patrullaService));
+		// const patrullaService = new PatrullaService();
+		// router.use("/patrulla", createPatrullaRouter(patrullaService));
+
+		const documentoService = new DocumentoService();
+		router.use("/documento", createDocumentoRouter(documentoService));
+		const pagoService = new PagoService();
+		router.use("/pago", createPagoRouter(pagoService));
 
 		return router;
 
