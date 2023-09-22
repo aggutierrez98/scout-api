@@ -2,7 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch", "fullTextIndex"]
 }
 
 datasource db {
@@ -28,10 +29,11 @@ model Scout {
   religion              Religion?             @default(CATOLICA)
   patrulla              Patrulla?             @relation(fields: [patrullaId], references: [id])
   patrullaId            Int?
-  Funcion               Funcion?              @default(JOVEN)
+  funcion               Funcion?              @default(JOVEN)
   documentosPresentados DocumentoPresentado[]
   insigniasObtenidas    InsigniaObtenida[]
   familiarScout         FamiliarScout[]
+  pagosRealizados       Pago[]
   fechaCreacion         DateTime              @default(now())
   fechaActualizacion    DateTime              @updatedAt
 
@@ -49,48 +51,61 @@ model DocumentoPresentado {
   id                Int       @id @default(autoincrement())
   documento         Documento @relation(fields: [documentoId], references: [id])
   documentoId       Int       @unique
-  Scout             Scout     @relation(fields: [scoutId], references: [id])
+  scout             Scout     @relation(fields: [scoutId], references: [id])
   scoutId           Int       @unique
   fechaPresentacion DateTime  @db.Date()
 
   @@index([scoutId, documentoId])
 }
 
+model Pago {
+  id            Int         @id @default(autoincrement())
+  concepto      String      @db.VarChar(45)
+  monto         Decimal     @db.Decimal(10, 2)
+  rendido       Boolean     @default(false)
+  metodoPago    MetodosPago
+  scout         Scout       @relation(fields: [scoutId], references: [id])
+  scoutId       Int         @unique
+  fechaPago     DateTime    @default(now())
+  fechaCreacion DateTime    @default(now())
+}
+
 model Familiar {
-  id                 Int                   @id @default(autoincrement())
-  nombre             String                @db.VarChar(45)
-  apellido           String                @db.VarChar(45)
-  fechaNacimiento    DateTime              @db.Date()
-  dni                String                @db.VarChar(20)
+  id                 Int             @id @default(autoincrement())
+  nombre             String          @db.VarChar(45)
+  apellido           String          @db.VarChar(45)
+  fechaNacimiento    DateTime        @db.Date()
+  dni                String          @db.VarChar(20)
   sexo               Sexo
-  telefono           String                @db.VarChar(25)
-  relacion           RelacionFamiliarScout
-  fechaCreacion      DateTime              @default(now())
-  fechaActualizacion DateTime              @updatedAt
+  telefono           String          @db.VarChar(25)
+  fechaCreacion      DateTime        @default(now())
+  fechaActualizacion DateTime        @updatedAt
   padreScout         FamiliarScout[]
 }
 
 model FamiliarScout {
-  id         Int      @id @default(autoincrement())
-  familiar   Familiar @relation(fields: [familiarId], references: [id])
-  familiarId Int      @unique
-  Scout      Scout    @relation(fields: [scoutId], references: [id])
-  scoutId    Int      @unique
+  id         Int                   @id @default(autoincrement())
+  familiar   Familiar              @relation(fields: [familiarId], references: [id])
+  familiarId Int                   @unique
+  scout      Scout                 @relation(fields: [scoutId], references: [id])
+  scoutId    Int                   @unique
+  relacion   RelacionFamiliarScout
 
   @@index([scoutId, familiarId])
 }
 
 model Patrulla {
-  id            Int      @id @default(autoincrement())
-  nombre        String   @db.VarChar(45)
-  lema          String?  @db.VarChar(100)
-  fechaCreacion DateTime @db.Date()
-  Scout         Scout[]
+  id                 Int      @id @default(autoincrement())
+  nombre             String   @db.VarChar(45)
+  lema               String?  @db.VarChar(100)
+  fechaCreacion      DateTime @db.Date()
+  fechaActualizacion DateTime @updatedAt
+  scout              Scout[]
 }
 
 model InsigniaObtenida {
   id             Int          @id @default(autoincrement())
-  Scout          Scout        @relation(fields: [scoutId], references: [id])
+  scout          Scout        @relation(fields: [scoutId], references: [id])
   scoutId        Int          @unique
   insignia       TipoInsignia
   progresion     Progresion?
@@ -124,11 +139,17 @@ enum Funcion {
 
 enum TipoInsignia {
   UNIFORME
-  GUIASUBGUIA
+  GUIA
+  SUBGUIA
   PROGRESION
   PROMESA
-  ESPECIALIDAD
   SUPERACION
+  ESPNATURALEZA
+  ESPARTE
+  ESPECSERVICIO
+  ESPESPIRITUALIDAD
+  ESPDEPORTES
+  ESPCIENCIA
 }
 
 enum Sexo {
@@ -141,4 +162,10 @@ enum Religion {
   JUDIA
   BUDISTA
   EVANGELICA
+}
+
+enum MetodosPago {
+  EFECTIVO
+  TRANSFERENCIA
+  OTRO
 }
