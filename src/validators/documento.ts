@@ -21,12 +21,12 @@ export const DocumentoSchema = z.object({
 
 export const GetDocumentosSchema = z.object({
 	query: QuerySearchSchema.extend({
-		documento: z.string().max(10).regex(numberReg),
-		patrulla: z.string().max(10).regex(numberReg),
-		nombre: z.string().max(85).regex(nameRegex),
-		funcion: z.enum(VALID_FUNCTIONS),
-		sexo: z.enum(VALID_SEX),
-		progresion: z.enum(VALID_PROGRESSIONS),
+		documento: z.string().max(10).regex(numberReg).optional(),
+		patrulla: z.string().max(10).regex(numberReg).optional(),
+		nombre: z.string().max(85).regex(nameRegex).optional(),
+		funcion: z.enum(VALID_FUNCTIONS).optional(),
+		sexo: z.enum(VALID_SEX).optional(),
+		progresion: z.enum(VALID_PROGRESSIONS).optional(),
 	}),
 });
 

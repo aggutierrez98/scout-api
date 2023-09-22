@@ -1,10 +1,8 @@
 import { z } from "zod";
-import { IdSchema, QuerySearchSchema } from "./http";
+import { IdSchema } from "./http";
 import { PrismaClient } from "@prisma/client";
 import { IPatrulla } from "../types";
 import { ScoutSchema } from "./scout";
-import { nameRegex, numberReg } from "./regex";
-import { VALID_FUNCTIONS, VALID_PROGRESSIONS, VALID_SEX } from "../utils";
 
 const validPatrullaId = async (id: string) => {
 	const prisma = new PrismaClient();
