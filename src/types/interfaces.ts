@@ -1,6 +1,8 @@
+import { Decimal } from "@prisma/client/runtime/library";
 import { ProgresionEnum, TipoInsigniaEnum } from "./XLSXTypes";
 import {
 	FuncionType,
+	MetodosPagoType,
 	ProgresionType,
 	RelacionFamiliarType,
 	ReligionType,
@@ -100,4 +102,19 @@ export interface IDocumentoData {
 	};
 	scoutId: number;
 	fechaPresentacion: Date;
+}
+
+export interface IPago {
+	scoutId: string | number;
+	concepto: string;
+	monto: number | Decimal;
+	metodoPago: MetodosPagoType;
+	fechaPago: Date;
+}
+
+export interface IPagoData extends IPago {
+	id: number;
+	rendido: boolean;
+	fechaCreacion: Date;
+	// scout: IScout;
 }
