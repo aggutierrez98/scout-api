@@ -118,3 +118,24 @@ export interface IPagoData extends IPago {
 	fechaCreacion: Date;
 	// scout: IScout;
 }
+
+export interface IFamiliar {
+	nombre: string;
+	apellido: string;
+	fechaNacimiento: Date;
+	dni: string;
+	sexo: SexoType;
+	telefono: string;
+}
+
+export interface IFamiliarScoutData extends IFamiliar {
+	id: number;
+	scoutFamiliares?: {
+		id: number;
+		nombre: string;
+		apellido: string;
+		dni: string;
+		fechaNacimiento: Date;
+		sexo: SexoType;
+	}[];
+}
