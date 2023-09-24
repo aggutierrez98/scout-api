@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { IdSchema } from "./http";
 import { PrismaClient } from "@prisma/client";
 import { IPatrulla } from "../types";
 import { ScoutSchema } from "./scout";
+import { IdSchema } from ".";
 
 const validPatrullaId = async (id: string) => {
 	const prisma = new PrismaClient();

@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { IdSchema, QuerySearchSchema } from "./http";
 import { PrismaClient } from "@prisma/client";
 import { IDocumento } from "../types";
 import { validScoutID } from "./scout";
-import { nameRegex, numberReg } from "./regex";
 import { VALID_FUNCTIONS, VALID_PROGRESSIONS, VALID_SEX } from "../utils";
+import { nameRegex, numberReg } from "../utils/regex";
+import { IdSchema, QuerySearchSchema } from ".";
 
 export const validDocumentoId = async (id: string) => {
 	const prisma = new PrismaClient();

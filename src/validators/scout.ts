@@ -8,8 +8,8 @@ import {
 } from "../utils";
 import { PrismaClient } from "@prisma/client";
 import { IScout } from "../types";
-import { IdSchema, QuerySearchSchema } from "./http";
-import { directionReg, lettersReg, numberReg } from "./regex";
+import { directionReg, lettersReg, numberReg } from "../utils/regex";
+import { IdSchema, QuerySearchSchema } from ".";
 
 export const validScoutID = async (id: string) => {
 	const prisma = new PrismaClient();

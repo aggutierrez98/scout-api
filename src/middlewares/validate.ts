@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { AnyZodObject } from "zod";
 import { AppError, HttpCode } from "../utils/classes/AppError";
-import { errorMap } from "../validators";
+import { errorMap } from "../utils/lib/zod.util";
 
 export const validate =
 	(schema: AnyZodObject) =>
@@ -13,7 +13,7 @@ export const validate =
 					query: req.query,
 					params: req.params,
 				},
-				{ errorMap: errorMap },
+				{ errorMap },
 			);
 
 			if (!parseReturn.success) {

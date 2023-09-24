@@ -1,11 +1,10 @@
 import { z } from "zod";
-import { IdSchema, QuerySearchSchema } from "./http";
 import { PrismaClient } from "@prisma/client";
 import { IPago } from "../types";
 import { validScoutID } from "./scout";
 import { VALID_FUNCTIONS, VALID_METODOS_PAGO } from "../utils";
-import { nameRegex, numberReg } from "./regex";
-
+import { nameRegex, numberReg } from "../utils/regex";
+import { IdSchema, QuerySearchSchema } from ".";
 const validPagoId = async (id: string) => {
 	const prisma = new PrismaClient();
 	const ParullaModel = prisma.pago;
