@@ -32,8 +32,8 @@ export class PagoController {
 
 		try {
 			const response = await this.pagoService.getPagos({
-				limit: Number(limit),
-				offset: Number(offset),
+				limit: limit ? Number(limit) : undefined,
+				offset: offset ? Number(offset) : undefined,
 				filters,
 			});
 			res.send(response);

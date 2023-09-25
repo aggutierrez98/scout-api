@@ -54,14 +54,13 @@ export class ScoutService implements IScoutService {
 		filters = {},
 	}: queryParams) => {
 		const {
-			funcion,
-			progresion,
-			nombre: nombreQuery,
-			patrulla,
-			sexo,
-			insignia,
+			funcion = [],
+			progresion = [],
+			nombre = "",
+			patrulla = "",
+			sexo = [],
+			insignia = [],
 		} = filters;
-		const [nombre, apellido] = nombreQuery?.split(" ") || [];
 
 		const responseItem = await ScoutModel.findMany({
 			skip: offset,
@@ -70,14 +69,18 @@ export class ScoutService implements IScoutService {
 			where: {
 				OR: [
 					{
-						nombre: {
-							search: nombre,
-						},
-					},
-					{
-						apellido: {
-							search: apellido,
-						},
+						OR: [
+							{
+								nombre: {
+									contains: nombre,
+								},
+							},
+							{
+								apellido: {
+									contains: nombre,
+								},
+							},
+						],
 					},
 					{
 						patrulla: {
@@ -107,6 +110,7 @@ export class ScoutService implements IScoutService {
 				],
 			},
 		});
+
 		return responseItem;
 	};
 	getScout = async (id: string) => {

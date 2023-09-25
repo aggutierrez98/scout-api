@@ -18,7 +18,6 @@ interface IPatrullaService {
 export class PatrullaService implements IPatrullaService {
 	insertPatrulla = async (patrulla: IPatrulla) => {
 		const responseInsert = await PatrullaModel.create({
-			//@ts-ignore
 			data: patrulla,
 		});
 		return responseInsert;

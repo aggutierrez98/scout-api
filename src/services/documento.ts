@@ -18,7 +18,7 @@ type getQueryParams = {
 		patrulla?: string;
 		nombre?: string;
 		funcion?: FuncionType[];
-		sexo?: SexoType;
+		sexo?: SexoType[];
 		progresion?: ProgresionType[];
 	};
 };
@@ -61,14 +61,13 @@ export class DocumentoService implements IDocumentoService {
 		filters = {},
 	}: getQueryParams) => {
 		const {
-			funcion,
-			progresion,
-			nombre: nombreQuery,
-			patrulla,
-			sexo,
-			documento,
+			funcion = [],
+			progresion = [],
+			nombre = "",
+			patrulla = "",
+			sexo = [],
+			documento = "",
 		} = filters;
-		const [nombre, apellido] = nombreQuery?.split(" ") || [];
 
 		const responseItem = await DocumentoModel.findMany({
 			skip: offset,
@@ -94,14 +93,18 @@ export class DocumentoService implements IDocumentoService {
 						scout: {
 							OR: [
 								{
-									nombre: {
-										search: nombre,
-									},
-								},
-								{
-									apellido: {
-										search: apellido,
-									},
+									OR: [
+										{
+											nombre: {
+												contains: nombre,
+											},
+										},
+										{
+											apellido: {
+												contains: nombre,
+											},
+										},
+									],
 								},
 								{
 									patrulla: {
@@ -119,7 +122,9 @@ export class DocumentoService implements IDocumentoService {
 									},
 								},
 								{
-									sexo,
+									sexo: {
+										in: sexo,
+									},
 								},
 							],
 						},

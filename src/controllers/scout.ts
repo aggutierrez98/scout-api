@@ -31,12 +31,13 @@ export class ScoutController {
 
 	getItems = async (req: Request, res: Response, next: NextFunction) => {
 		try {
-			const { offset, limit, orderBy } = req.query;
+			const { offset, limit, orderBy, ...filters } = req.query;
 
 			const response = await this.scoutService.getScouts({
-				limit: Number(limit),
-				offset: Number(offset),
+				limit: limit ? Number(limit) : undefined,
+				offset: offset ? Number(offset) : undefined,
 				orderBy: orderBy as OrderToGetScouts,
+				filters,
 			});
 			res.send(response);
 		} catch (e) {

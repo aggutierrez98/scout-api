@@ -33,8 +33,8 @@ export class DocumentoController {
 
 		try {
 			const response = await this.documentoService.getDocumentos({
-				limit: Number(limit),
-				offset: Number(offset),
+				limit: limit ? Number(limit) : undefined,
+				offset: offset ? Number(offset) : undefined,
 				filters,
 			});
 			res.send(response);

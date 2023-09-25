@@ -37,12 +37,11 @@ export class PagoService implements IPagoService {
 		const {
 			tiempoDesde,
 			tiempoHasta,
-			nombre: nombreQuery,
-			concepto,
-			patrulla,
-			funcion,
+			nombre = "",
+			concepto = "",
+			patrulla = "",
+			funcion = [],
 		} = filters;
-		const [nombre, apellido] = nombreQuery?.split(" ") || [];
 
 		const responseItem = await PagoModel.findMany({
 			skip: offset,
@@ -54,14 +53,18 @@ export class PagoService implements IPagoService {
 						scout: {
 							OR: [
 								{
-									nombre: {
-										search: nombre,
-									},
-								},
-								{
-									apellido: {
-										search: apellido,
-									},
+									OR: [
+										{
+											nombre: {
+												contains: nombre,
+											},
+										},
+										{
+											apellido: {
+												contains: nombre,
+											},
+										},
+									],
 								},
 								{
 									patrulla: {
