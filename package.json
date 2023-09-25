@@ -84,9 +84,11 @@
   },
   "scripts": {
     "build": "npx tsc",
-    "dev": "dotenv -e .env.production -- nodemon",
+    "dev": "dotenv -e .env.development -- nodemon",
     "dev:old": "dotenv -e .env.production -- npm run doc:generate && nodemon",
     "doc:generate": "swagger-cli bundle src/docs/swagger/index.yaml --outfile src/docs/swagger/index.json",
+    "dump-db": "dotenv -e .env.development -- ts-node src/bin/dumpData.ts",
+    "dump-db:prod": "dotenv -e .env.production -- ts-node src/bin/dumpData.ts",
     "import-scouts": "dotenv -e .env.production -- ts-node src/bin/updateScouts.ts",
     "import-scouts:dev": "dotenv -e .env.development -- ts-node src/bin/updateScouts.ts",
     "prebuild": "npm run swagger",

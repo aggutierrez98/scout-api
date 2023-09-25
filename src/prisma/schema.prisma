@@ -12,10 +12,9 @@ datasource db {
   relationMode = "prisma"
 }
 
-//TODO: Agregar modelo PAGO y relacion con scout
-
 model Scout {
   id                    Int                   @id @default(autoincrement())
+  uuid                  String                @unique @default(uuid())
   nombre                String                @db.VarChar(45)
   apellido              String                @db.VarChar(45)
   fechaNacimiento       DateTime              @db.Date()
@@ -42,6 +41,7 @@ model Scout {
 
 model Documento {
   id                  Int                   @id @default(autoincrement())
+  uuid                String                @unique @default(uuid())
   nombre              String                @db.VarChar(45)
   vence               Boolean               @db.Bit(1)
   documentoPresentado DocumentoPresentado[]
@@ -49,6 +49,7 @@ model Documento {
 
 model DocumentoPresentado {
   id                Int       @id @default(autoincrement())
+  uuid              String    @unique @default(uuid())
   documento         Documento @relation(fields: [documentoId], references: [id])
   documentoId       Int       @unique
   scout             Scout     @relation(fields: [scoutId], references: [id])
@@ -60,7 +61,8 @@ model DocumentoPresentado {
 
 model Pago {
   id            Int         @id @default(autoincrement())
-  concepto      String      @db.VarChar(50)
+  uuid          String      @unique @default(uuid())
+  concepto      String      @db.VarChar(100)
   monto         Decimal     @db.Decimal(10, 2)
   rendido       Boolean     @default(false)
   metodoPago    MetodosPago
@@ -72,6 +74,7 @@ model Pago {
 
 model Familiar {
   id                 Int             @id @default(autoincrement())
+  uuid               String          @unique @default(uuid())
   nombre             String          @db.VarChar(45)
   apellido           String          @db.VarChar(45)
   fechaNacimiento    DateTime        @db.Date()
@@ -85,6 +88,7 @@ model Familiar {
 
 model FamiliarScout {
   id         Int                   @id @default(autoincrement())
+  uuid       String                @unique @default(uuid())
   familiar   Familiar              @relation(fields: [familiarId], references: [id])
   familiarId Int                   @unique
   scout      Scout                 @relation(fields: [scoutId], references: [id])
@@ -96,15 +100,17 @@ model FamiliarScout {
 
 model Patrulla {
   id                 Int      @id @default(autoincrement())
+  uuid               String   @unique @default(uuid())
   nombre             String   @db.VarChar(45)
   lema               String?  @db.VarChar(100)
-  fechaCreacion      DateTime @db.Date()
+  fechaCreacion      DateTime @default(now())
   fechaActualizacion DateTime @updatedAt
   scout              Scout[]
 }
 
 model InsigniaObtenida {
   id             Int          @id @default(autoincrement())
+  uuid           String       @unique @default(uuid())
   scout          Scout        @relation(fields: [scoutId], references: [id])
   scoutId        Int          @unique
   insignia       TipoInsignia
