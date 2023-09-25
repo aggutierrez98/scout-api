@@ -2,7 +2,7 @@ import { z } from "zod";
 import { PrismaClient } from "@prisma/client";
 import { IPatrulla } from "../types";
 import { ScoutSchema } from "./scout";
-import { IdSchema } from ".";
+import { IdSchema } from "./generics";
 
 const validPatrullaId = async (id: string) => {
 	const prisma = new PrismaClient();

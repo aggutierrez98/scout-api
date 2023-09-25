@@ -4,7 +4,7 @@ import { IPago } from "../types";
 import { validScoutID } from "./scout";
 import { VALID_FUNCTIONS, VALID_METODOS_PAGO } from "../utils";
 import { nameRegex, numberReg } from "../utils/regex";
-import { IdSchema, QuerySearchSchema } from ".";
+import { IdSchema, QuerySearchSchema } from "./generics";
 const validPagoId = async (id: string) => {
 	const prisma = new PrismaClient();
 	const ParullaModel = prisma.pago;

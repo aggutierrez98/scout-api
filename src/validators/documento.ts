@@ -4,7 +4,7 @@ import { IDocumento } from "../types";
 import { validScoutID } from "./scout";
 import { VALID_FUNCTIONS, VALID_PROGRESSIONS, VALID_SEX } from "../utils";
 import { nameRegex, numberReg } from "../utils/regex";
-import { IdSchema, QuerySearchSchema } from ".";
+import { IdSchema, QuerySearchSchema } from "./generics";
 
 export const validDocumentoId = async (id: string) => {
 	const prisma = new PrismaClient();

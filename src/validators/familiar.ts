@@ -3,7 +3,8 @@ import { VALID_RELATIONSHIPS, VALID_SEX } from "../utils";
 import { PrismaClient } from "@prisma/client";
 import { IFamiliar } from "../types";
 import { lettersReg, numberReg } from "../utils/regex";
-import { IdSchema, validScoutID } from ".";
+import { validScoutID } from ".";
+import { IdSchema } from "./generics";
 
 export const validFamiliarID = async (id: string) => {
 	const prisma = new PrismaClient();

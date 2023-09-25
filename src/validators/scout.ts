@@ -9,7 +9,7 @@ import {
 import { PrismaClient } from "@prisma/client";
 import { IScout } from "../types";
 import { directionReg, lettersReg, numberReg } from "../utils/regex";
-import { IdSchema, QuerySearchSchema } from ".";
+import { IdSchema, QuerySearchSchema } from "./generics";
 
 export const validScoutID = async (id: string) => {
 	const prisma = new PrismaClient();
