@@ -10,7 +10,7 @@ export const validFamiliarID = async (id: string) => {
 	const prisma = new PrismaClient();
 	const FamiliarModel = prisma.familiar;
 	const respItem = await FamiliarModel.findUnique({
-		where: { id: Number(id) },
+		where: { uuid: id },
 	});
 	return !!respItem;
 };

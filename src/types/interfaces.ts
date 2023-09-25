@@ -1,5 +1,4 @@
 import { Decimal } from "@prisma/client/runtime/library";
-import { ProgresionEnum, TipoInsigniaEnum } from "./XLSXTypes";
 import {
 	FuncionType,
 	MetodosPagoType,
@@ -20,40 +19,41 @@ export interface IScout {
 	direccion: string;
 	telefono: string | null;
 	mail: string | null;
-	patrullaId: number | null;
+	patrullaId: string | null;
 	religion: ReligionType | null;
 	progresionActual: ProgresionType | null;
 	funcion: FuncionType | null;
 }
 
 export interface IScoutData extends IScout {
-	id: number;
+	id: string;
 	documentosPresentados?: {
-		id: number;
-		documento: {
-			nombre: string;
-			vence: boolean;
-		};
+		id: string;
+		nombre: string;
+		vence: boolean;
 		fechaPresentacion: Date;
 	}[];
 	insigniasObtenidas?: {
-		id: number;
+		id: string;
 		insignia: TipoInsigniaType;
 		progresion: ProgresionType | null;
 		fechaObtencion: Date;
 	}[];
-	familiarScout?: {
+	familiares?: {
 		relacion: RelacionFamiliarType;
-		familiar: {
-			id: number;
-			nombre: string;
-			apellido: string;
-			dni: string;
-			telefono: string;
-			sexo: SexoType;
-			fechaNacimiento: Date;
-		};
+		id: string;
+		nombre: string;
+		apellido: string;
+		dni: string;
+		telefono: string;
+		sexo: SexoType;
+		fechaNacimiento: Date;
 	}[];
+	patrulla?: {
+		id: string;
+		nombre: string;
+		lema: string | null;
+	} | null;
 	fechaActualizacion: Date;
 	fechaCreacion: Date;
 }
@@ -65,20 +65,20 @@ export interface IPatrulla {
 }
 
 export interface IPatrullaData extends IPatrulla {
-	id: number;
+	id: string;
 	fechaCreacion: Date;
 	fechaActualizacion: Date;
 }
 
 export interface IFamiliarScout {
-	id: number;
-	familiarId: number;
+	id: string;
+	familiarId: string;
 	scouts: IScout[];
 }
 
 export interface IInsignaObt {
-	id: number;
-	scoutId: number;
+	id: string;
+	scoutId: string;
 	insignia: TipoInsigniaType;
 	progresion: ProgresionType | null;
 	fechaObtencion: Date;
@@ -91,7 +91,7 @@ export interface IDocumento {
 }
 
 export interface IDocumentoData {
-	id: number;
+	id: string;
 	scout: {
 		nombre: string;
 		apellido: string;
@@ -100,12 +100,12 @@ export interface IDocumentoData {
 		nombre: string;
 		vence: boolean;
 	};
-	scoutId: number;
+	scoutId: string;
 	fechaPresentacion: Date;
 }
 
 export interface IPago {
-	scoutId: string | number;
+	scoutId: string;
 	concepto: string;
 	monto: number | Decimal;
 	metodoPago: MetodosPagoType;
@@ -113,10 +113,10 @@ export interface IPago {
 }
 
 export interface IPagoData extends IPago {
-	id: number;
+	id: string;
 	rendido: boolean;
 	fechaCreacion: Date;
-	// scout: IScout;
+	uuid: undefined;
 }
 
 export interface IFamiliar {
@@ -129,7 +129,7 @@ export interface IFamiliar {
 }
 
 export interface IFamiliarScoutData extends IFamiliar {
-	id: number;
+	id: string;
 	scoutFamiliares?: {
 		id: number;
 		nombre: string;

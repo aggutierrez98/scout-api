@@ -1,7 +1,19 @@
+import { nanoid } from "nanoid";
 import { IFamiliar, IFamiliarScoutData, RelacionFamiliarType } from "../types";
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient().$extends({
+	result: {
+		familiar: {
+			id: {
+				compute: (data) => data.uuid,
+			},
+			uuid: {
+				compute: () => undefined,
+			},
+		},
+	},
+});
 const FamiliarModel = prisma.familiar;
 const FamiliarScoutModel = prisma.familiarScout;
 
@@ -26,8 +38,16 @@ interface IFamiliarService {
 
 export class FamiliarService implements IFamiliarService {
 	insertFamiliar = async (familiar: IFamiliar) => {
+		const uuid = nanoid(10);
+
 		const familiarRespInsert = await FamiliarModel.create({
-			data: familiar,
+			data: {
+				...familiar,
+				uuid,
+				nombre: familiar.nombre.toLocaleUpperCase(),
+				apellido: familiar.apellido.toLocaleUpperCase(),
+				telefono: familiar.telefono?.toLocaleUpperCase(),
+			},
 		});
 		return familiarRespInsert;
 	};
@@ -41,8 +61,8 @@ export class FamiliarService implements IFamiliarService {
 			familiar: { padreScout, ...data },
 		} = await FamiliarScoutModel.create({
 			data: {
-				scoutId: Number(scoutId),
-				familiarId: Number(familiarId),
+				scoutId: scoutId,
+				familiarId: familiarId,
 				relacion: relacionInput,
 			},
 			include: {
@@ -57,7 +77,7 @@ export class FamiliarService implements IFamiliarService {
 						fechaNacimiento: true,
 						padreScout: {
 							where: {
-								familiarId: Number(familiarId),
+								familiarId: familiarId,
 							},
 							include: {
 								scout: {
@@ -84,8 +104,8 @@ export class FamiliarService implements IFamiliarService {
 	unrelateScoutToFamiliar = async (familiarId: string, scoutId: string) => {
 		const resp = await FamiliarScoutModel.deleteMany({
 			where: {
-				familiarId: Number(familiarId),
-				scoutId: Number(scoutId),
+				familiarId: familiarId,
+				scoutId: scoutId,
 			},
 		});
 		return resp.count !== 0;
@@ -94,11 +114,11 @@ export class FamiliarService implements IFamiliarService {
 	getFamiliar = async (id: string) => {
 		try {
 			const responseItem = await FamiliarModel.findUnique({
-				where: { id: Number(id) },
+				where: { uuid: id },
 				include: {
 					padreScout: {
 						where: {
-							familiarId: Number(id),
+							familiarId: id,
 						},
 						include: {
 							scout: {
@@ -129,12 +149,12 @@ export class FamiliarService implements IFamiliarService {
 
 	updateFamiliar = async (id: string, dataUpdated: IFamiliar) => {
 		const { padreScout, ...data } = await FamiliarModel.update({
-			where: { id: Number(id) },
+			where: { uuid: id },
 			data: dataUpdated,
 			include: {
 				padreScout: {
 					where: {
-						familiarId: Number(id),
+						familiarId: id,
 					},
 					include: {
 						scout: {
@@ -157,12 +177,12 @@ export class FamiliarService implements IFamiliarService {
 
 	deleteFamiliar = async (id: string) => {
 		const responseItem = await FamiliarModel.delete({
-			where: { id: Number(id) },
+			where: { uuid: id },
 		});
 
 		await FamiliarScoutModel.deleteMany({
 			where: {
-				familiarId: Number(id),
+				familiarId: id,
 			},
 		});
 

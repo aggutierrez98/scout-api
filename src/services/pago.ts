@@ -1,7 +1,27 @@
+import { nanoid } from "nanoid";
 import { FuncionType, IPago, IPagoData } from "../types";
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient().$extends({
+	result: {
+		pago: {
+			id: {
+				compute: (data) => data.uuid,
+			},
+			uuid: {
+				compute: () => undefined,
+			},
+		},
+		scout: {
+			id: {
+				compute: (data) => data.uuid,
+			},
+			uuid: {
+				compute: () => undefined,
+			},
+		},
+	},
+});
 const PagoModel = prisma.pago;
 
 type queryParams = {
@@ -28,11 +48,16 @@ interface IPagoService {
 export class PagoService implements IPagoService {
 	insertPago = async (pago: IPago) => {
 		const responseInsert = await PagoModel.create({
-			//@ts-ignore
-			data: pago,
+			data: {
+				...pago,
+				uuid: nanoid(10),
+				concepto: pago.concepto.toLocaleUpperCase(),
+				scoutId: pago.scoutId,
+			},
 		});
 		return responseInsert;
 	};
+
 	getPagos = async ({ limit = 10, offset = 0, filters = {} }: queryParams) => {
 		const {
 			tiempoDesde,
@@ -68,7 +93,7 @@ export class PagoService implements IPagoService {
 								},
 								{
 									patrulla: {
-										id: patrulla ? Number(patrulla) : undefined,
+										uuid: patrulla,
 									},
 								},
 								{
@@ -95,10 +120,11 @@ export class PagoService implements IPagoService {
 		});
 		return responseItem;
 	};
+
 	getPago = async (id: string) => {
 		try {
 			const responseItem = await PagoModel.findUnique({
-				where: { id: Number(id) },
+				where: { uuid: id },
 				include: {
 					scout: {
 						select: {
@@ -120,16 +146,21 @@ export class PagoService implements IPagoService {
 			return null;
 		}
 	};
-	updatePago = async (id: string, dataUpdated: IPago) => {
+
+	updatePago = async (id: string, { scoutId, ...dataUpdated }: IPago) => {
 		const responseItem = await PagoModel.update({
-			where: { id: Number(id) },
-			//@ts-ignore
-			data: dataUpdated,
+			where: { uuid: id },
+			data: {
+				...dataUpdated,
+				scoutId: scoutId,
+			},
 		});
+
 		return responseItem;
 	};
+
 	deletePago = async (id: string) => {
-		const responseItem = await PagoModel.delete({ where: { id: Number(id) } });
+		const responseItem = await PagoModel.delete({ where: { uuid: id } });
 		return responseItem;
 	};
 }

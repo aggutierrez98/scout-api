@@ -1,7 +1,19 @@
+import { nanoid } from "nanoid";
 import { IPatrulla, IPatrullaData } from "../types";
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient().$extends({
+	result: {
+		patrulla: {
+			id: {
+				compute: (data) => data.uuid,
+			},
+			uuid: {
+				compute: () => undefined,
+			},
+		},
+	},
+});
 const PatrullaModel = prisma.patrulla;
 
 interface IPatrullaService {
@@ -17,8 +29,15 @@ interface IPatrullaService {
 
 export class PatrullaService implements IPatrullaService {
 	insertPatrulla = async (patrulla: IPatrulla) => {
+		const uuid = nanoid(10);
+
 		const responseInsert = await PatrullaModel.create({
-			data: patrulla,
+			data: {
+				...patrulla,
+				uuid,
+				nombre: patrulla.nombre.toLocaleUpperCase(),
+				lema: patrulla.lema?.toLocaleUpperCase(),
+			},
 		});
 		return responseInsert;
 	};
@@ -29,7 +48,7 @@ export class PatrullaService implements IPatrullaService {
 	getPatrulla = async (id: string) => {
 		try {
 			const responseItem = await PatrullaModel.findUnique({
-				where: { id: Number(id) },
+				where: { uuid: id },
 			});
 
 			return responseItem;
@@ -39,14 +58,14 @@ export class PatrullaService implements IPatrullaService {
 	};
 	updatePatrulla = async (id: string, dataUpdated: IPatrulla) => {
 		const responseItem = await PatrullaModel.update({
-			where: { id: Number(id) },
+			where: { uuid: id },
 			data: dataUpdated,
 		});
 		return responseItem;
 	};
 	deletePatrulla = async (id: string) => {
 		const responseItem = await PatrullaModel.delete({
-			where: { id: Number(id) },
+			where: { uuid: id },
 		});
 		return responseItem;
 	};

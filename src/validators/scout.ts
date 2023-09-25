@@ -14,7 +14,7 @@ import { IdSchema, QuerySearchSchema } from "./generics";
 export const validScoutID = async (id: string) => {
 	const prisma = new PrismaClient();
 	const ScoutModel = prisma.scout;
-	const respItem = await ScoutModel.findUnique({ where: { id: Number(id) } });
+	const respItem = await ScoutModel.findUnique({ where: { uuid: id } });
 	return !!respItem;
 };
 
@@ -30,7 +30,7 @@ export const ScoutSchema = z.object({
 	mail: z.string().min(1).email(),
 	progresion: z.enum(VALID_PROGRESSIONS),
 	religion: z.enum(VALID_RELIGIONS),
-	patrullaId: z.number().max(10),
+	patrullaId: IdSchema.max(10),
 	funcion: z.enum(VALID_FUNCTIONS),
 	progresionActual: z.enum(VALID_PROGRESSIONS),
 }) satisfies z.Schema<IScout>;

@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import ProgressBar from "progress";
 import { parseDMYtoDate } from "../utils";
 import { ReligionType, ScoutXLSX } from "../types";
+import { nanoid } from "nanoid";
 
 const prisma = new PrismaClient();
 
@@ -22,7 +23,7 @@ const insertScouts = async () => {
 
 	const scouts: Prisma.ScoutCreateManyInput[] = [];
 	for (const scoutXLSX of data) {
-		const [apellido, nombre] = scoutXLSX.Nombre.split(", ");
+		const [apellido, nombre] = scoutXLSX.Nombre.toLocaleUpperCase().split(", ");
 		const fechaNacimiento = parseDMYtoDate(scoutXLSX["Fecha Nacimiento"]);
 		const sexo = scoutXLSX.Sexo === "Masculino" ? "M" : "F";
 		const funcion: Funcion =
@@ -43,9 +44,10 @@ const insertScouts = async () => {
 			await prisma.patrulla.findFirst({
 				where: { nombre: scoutXLSX.Patrulla },
 			})
-		)?.id;
+		)?.uuid;
 
 		scouts.push({
+			uuid: nanoid(10),
 			nombre,
 			apellido,
 			fechaNacimiento,
@@ -55,10 +57,10 @@ const insertScouts = async () => {
 			sexo,
 			religion,
 			dni: scoutXLSX.Documento,
-			localidad: scoutXLSX.Localidad,
-			direccion: scoutXLSX.Calle,
+			localidad: scoutXLSX.Localidad.toLocaleUpperCase(),
+			direccion: scoutXLSX.Calle.toLocaleUpperCase(),
+			mail: scoutXLSX.Email?.toLocaleUpperCase(),
 			telefono: scoutXLSX.Telefono,
-			mail: scoutXLSX.Email,
 		});
 
 		bar.tick(1);
@@ -79,10 +81,14 @@ const insertScouts = async () => {
 const insertDocumentos = async () => {
 	const file = XLSX.readFile("dbdata/documentos.csv");
 	const sheet = file.Sheets[file.SheetNames[0]];
-	const data = XLSX.utils.sheet_to_json(sheet);
+	const data: { nombre: string; vence: 0 | 1 }[] =
+		XLSX.utils.sheet_to_json(sheet);
 	const documentosData: Prisma.DocumentoCreateManyInput[] = data.map(
-		// rome-ignore lint/suspicious/noExplicitAny: <explanation>
-		(doc: any) => ({ ...doc, vence: doc.vence === 1 }),
+		({ nombre, vence }) => ({
+			vence: vence === 1,
+			nombre: nombre.toLocaleUpperCase(),
+			uuid: nanoid(10),
+		}),
 	);
 
 	await prisma.documento.deleteMany();
@@ -100,8 +106,16 @@ const insertDocumentos = async () => {
 const insertPatrullas = async () => {
 	const file = XLSX.readFile("dbdata/patrullas.csv");
 	const sheet = file.Sheets[file.SheetNames[0]];
-	const patrullasData: Prisma.PatrullaCreateManyInput[] =
+	const data: { nombre: string; lema: string }[] =
 		XLSX.utils.sheet_to_json(sheet);
+
+	const patrullasData: Prisma.PatrullaCreateManyInput[] = data.map(
+		({ nombre, lema }) => ({
+			lema: lema.toLocaleUpperCase(),
+			nombre: nombre.toLocaleUpperCase(),
+			uuid: nanoid(10),
+		}),
+	);
 
 	await prisma.patrulla.deleteMany();
 
@@ -129,7 +143,7 @@ const insertData = async () => {
 		console.log("\n------------ ACTUALIZACION TERMINADA -------------\n");
 		console.timeEnd("Tiempo de ejecucion");
 	} catch (error) {
-		console.log("Error en el script: ", (error as Error).message);
+		console.log("Error en el script: ", error);
 	} finally {
 		await prisma.$disconnect();
 	}

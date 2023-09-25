@@ -6,8 +6,20 @@ import {
 	ProgresionType,
 	SexoType,
 } from "../types";
+import { nanoid } from "nanoid";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient().$extends({
+	result: {
+		documentoPresentado: {
+			id: {
+				compute: (data) => data.uuid,
+			},
+			uuid: {
+				compute: () => undefined,
+			},
+		},
+	},
+});
 const DocumentoModel = prisma.documentoPresentado;
 
 type getQueryParams = {
@@ -32,11 +44,14 @@ interface IDocumentoService {
 
 export class DocumentoService implements IDocumentoService {
 	insertDocumento = async (documento: IDocumento) => {
+		const uuid = nanoid(10);
+
 		const responseInsert = await DocumentoModel.create({
 			data: {
 				...documento,
-				documentoId: Number(documento.documentoId),
-				scoutId: Number(documento.scoutId),
+				uuid,
+				documentoId: documento.documentoId,
+				scoutId: documento.scoutId,
 			},
 			include: {
 				documento: {
@@ -131,7 +146,7 @@ export class DocumentoService implements IDocumentoService {
 					},
 					{
 						documento: {
-							id: documento ? Number(documento) : undefined,
+							uuid: documento,
 						},
 					},
 				],
@@ -142,7 +157,7 @@ export class DocumentoService implements IDocumentoService {
 	getDocumento = async (id: string) => {
 		try {
 			const responseItem = await DocumentoModel.findUnique({
-				where: { id: Number(id) },
+				where: { uuid: id },
 				include: {
 					documento: {
 						select: {
@@ -166,7 +181,7 @@ export class DocumentoService implements IDocumentoService {
 	};
 	deleteDocumento = async (id: string) => {
 		const responseItem = await DocumentoModel.delete({
-			where: { id: Number(id) },
+			where: { uuid: id },
 			include: {
 				documento: {
 					select: {
@@ -182,6 +197,7 @@ export class DocumentoService implements IDocumentoService {
 				},
 			},
 		});
+
 		return responseItem;
 	};
 }

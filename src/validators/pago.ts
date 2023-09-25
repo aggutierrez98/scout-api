@@ -8,7 +8,7 @@ import { IdSchema, QuerySearchSchema } from "./generics";
 const validPagoId = async (id: string) => {
 	const prisma = new PrismaClient();
 	const ParullaModel = prisma.pago;
-	const respItem = await ParullaModel.findUnique({ where: { id: Number(id) } });
+	const respItem = await ParullaModel.findUnique({ where: { uuid: id } });
 	return !!respItem;
 };
 
@@ -16,7 +16,7 @@ export const PagoSchema = z.object({
 	concepto: z.string().max(50),
 	monto: z.number().max(99999999),
 	metodoPago: z.enum(VALID_METODOS_PAGO),
-	scoutId: z.string().refine(validScoutID),
+	scoutId: IdSchema.refine(validScoutID),
 	fechaPago: z.date(),
 }) satisfies z.Schema<IPago>;
 

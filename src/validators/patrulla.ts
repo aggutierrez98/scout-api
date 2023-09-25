@@ -7,12 +7,11 @@ import { IdSchema } from "./generics";
 const validPatrullaId = async (id: string) => {
 	const prisma = new PrismaClient();
 	const ParullaModel = prisma.patrulla;
-	const respItem = await ParullaModel.findUnique({ where: { id: Number(id) } });
+	const respItem = await ParullaModel.findUnique({ where: { uuid: id } });
 	return !!respItem;
 };
 
 export const PatrullaSchema = z.object({
-	id: z.number(),
 	nombre: z.string().max(45),
 	lema: z.string().max(100).nullable(),
 	fechaCreacion: z.date(),

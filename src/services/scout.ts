@@ -8,8 +8,53 @@ import {
 } from "../types";
 import { PrismaClient } from "@prisma/client";
 import { OrderToGetScouts } from "../types";
+import { nanoid } from "nanoid";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient().$extends({
+	result: {
+		scout: {
+			id: {
+				compute: (data) => data.uuid,
+			},
+			uuid: {
+				compute: () => undefined,
+			},
+		},
+		documentoPresentado: {
+			id: {
+				compute: (data) => data.uuid,
+			},
+			uuid: {
+				compute: () => undefined,
+			},
+		},
+		insigniaObtenida: {
+			id: {
+				compute: (data) => data.uuid,
+			},
+			uuid: {
+				compute: () => undefined,
+			},
+		},
+		patrulla: {
+			id: {
+				compute: (data) => data.uuid,
+			},
+			uuid: {
+				compute: () => undefined,
+			},
+		},
+		familiar: {
+			id: {
+				compute: (data) => data.uuid,
+			},
+			uuid: {
+				compute: () => undefined,
+			},
+		},
+	},
+});
+
 const ScoutModel = prisma.scout;
 
 type queryParams = {
@@ -41,8 +86,19 @@ interface IScoutService {
 
 export class ScoutService implements IScoutService {
 	insertScout = async (scout: IScout) => {
+		const uuid = nanoid(10);
+
 		const responseInsert = await ScoutModel.create({
-			data: scout,
+			data: {
+				...scout,
+				uuid,
+				nombre: scout.nombre.toLocaleUpperCase(),
+				apellido: scout.apellido.toLocaleUpperCase(),
+				direccion: scout.direccion.toLocaleUpperCase(),
+				localidad: scout.localidad.toLocaleUpperCase(),
+				telefono: scout.telefono?.toLocaleUpperCase(),
+				mail: scout.mail?.toLocaleUpperCase(),
+			},
 		});
 
 		return responseInsert;
@@ -84,7 +140,7 @@ export class ScoutService implements IScoutService {
 					},
 					{
 						patrulla: {
-							id: patrulla ? Number(patrulla) : undefined,
+							uuid: patrulla,
 						},
 					},
 					{
@@ -116,7 +172,7 @@ export class ScoutService implements IScoutService {
 	getScout = async (id: string) => {
 		try {
 			const responseItem = await ScoutModel.findUnique({
-				where: { id: Number(id) },
+				where: { uuid: id },
 				include: {
 					insigniasObtenidas: {
 						orderBy: {
@@ -147,39 +203,53 @@ export class ScoutService implements IScoutService {
 					familiarScout: {
 						select: {
 							relacion: true,
-							familiar: {
-								select: {
-									id: true,
-									nombre: true,
-									apellido: true,
-									dni: true,
-									fechaNacimiento: true,
-									sexo: true,
-									telefono: true,
-								},
-							},
+							familiar: true,
 						},
 						orderBy: {
 							relacion: "asc",
 						},
 					},
+					patrulla: {
+						select: {
+							id: true,
+							nombre: true,
+							lema: true,
+						},
+					},
 				},
 			});
 
-			return responseItem;
+			if (!responseItem) return null;
+
+			const { documentosPresentados, familiarScout, ...rest } = responseItem;
+			const response: IScoutData = { ...rest };
+
+			response.documentosPresentados = documentosPresentados.map(
+				({ documento, fechaPresentacion, id }) => ({
+					...documento,
+					fechaPresentacion,
+					id,
+				}),
+			);
+			response.familiares = familiarScout.map(({ familiar, relacion }) => ({
+				...familiar,
+				relacion,
+			}));
+
+			return response;
 		} catch (error) {
 			return null;
 		}
 	};
 	updateScout = async (id: string, dataUpdated: IScout) => {
 		const responseItem = await ScoutModel.update({
-			where: { id: Number(id) },
+			where: { uuid: id },
 			data: dataUpdated,
 		});
 		return responseItem;
 	};
 	deleteScout = async (id: string) => {
-		const responseItem = await ScoutModel.delete({ where: { id: Number(id) } });
+		const responseItem = await ScoutModel.delete({ where: { uuid: id } });
 		return responseItem;
 	};
 }
