@@ -1,4 +1,4 @@
-import express, { Request, Response, Router } from "express";
+import express, { Router } from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import whatsappClientConnection from "./whatsapp";
@@ -14,20 +14,18 @@ import compression from "compression";
 import { shouldCompress } from "./utils";
 import { createScoutRouter } from "./routes/scout";
 import { ScoutService } from "./services/scout";
-import winston from "winston";
-import { PatrullaService } from "./services/patrulla";
-import { createPatrullaRouter } from "./routes/patrulla";
 import { DocumentoService } from "./services/documento";
 import { createDocumentoRouter } from "./routes/documento";
 import { PagoService } from "./services/pago";
 import { createPagoRouter } from "./routes/pago";
 import { FamiliarService } from "./services/familiar";
 import { createFamiliarRouter } from "./routes/familiar";
+import { PatrullaService } from "./services/patrulla";
+import { createPatrullaRouter } from "./routes/patrulla";
+import { AuthService } from "./services/auth";
+import { createAuthRouter } from "./routes/auth";
 
 const PATH_ROUTER = `${__dirname}`;
-
-// import swaggerSetup from "./docs/ymlToJson";
-// import swaggerSetup from "./docs/exampleToJson";
 
 const ACCEPTED_ORIGINS = ["http://localhost:3000"];
 const numberOfProxiesOnServer = 1;
@@ -55,15 +53,17 @@ export default class Server {
 			}),
 		);
 
-		this.app.use(
-			cors({
-				origin: (origin, callback) => {
-					if (!origin) callback(null, true);
-					else if (ACCEPTED_ORIGINS.includes(origin)) callback(null, true);
-					else callback(new Error("Not allowed by CORS"));
-				},
-			}),
-		);
+		// this.app.use(
+		// 	cors({
+		// 		origin: (origin, callback) => {
+		// 			if (!origin) callback(null, true);
+		// 			else if (ACCEPTED_ORIGINS.includes(origin)) callback(null, true);
+		// 			else callback(new Error("Not allowed by CORS"));
+		// 		},
+		// 	}),
+		// );
+
+		this.app.use(cors())
 
 		this.app.use(express.json());
 		this.app.use(bodyParser.json({ limit: "50kb" }));
@@ -93,8 +93,11 @@ export default class Server {
 	loadRoutes() {
 		const router = Router();
 
-		// const patrullaService = new PatrullaService();
-		// router.use("/patrulla", createPatrullaRouter(patrullaService));
+		const authService = new AuthService();
+		router.use("/auth", createAuthRouter(authService));
+
+		const patrullaService = new PatrullaService();
+		router.use("/patrulla", createPatrullaRouter(patrullaService));
 
 		const scoutService = new ScoutService();
 		router.use("/scout", createScoutRouter(scoutService));
@@ -122,7 +125,7 @@ export default class Server {
 		// // });
 	}
 
-	createLogger() {}
+	createLogger() { }
 
 	async connectWhatsapp() {
 		await whatsappClientConnection();

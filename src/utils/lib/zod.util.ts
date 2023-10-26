@@ -15,9 +15,10 @@ export const errorMap: z.ZodErrorMap = (error, ctx) => {
 
 		case z.ZodIssueCode.custom: {
 			if (ctx.defaultError === "Invalid input") {
+
 				if (error.path.length === 2) {
 					return {
-						message: `El Parametro ${error.path[1]} '${ctx.data}' no esta ingresado en los datos`,
+						message: `El Parametro ${error.path[1]} '${ctx.data}' no esta registrado en el sistema`,
 					};
 				}
 			}
@@ -31,6 +32,9 @@ export const errorMap: z.ZodErrorMap = (error, ctx) => {
 		}
 
 		case z.ZodIssueCode.invalid_string: {
+
+			console.log("aca loco")
+
 			return {
 				message: `El valor enviado '${ctx.data}' no tiene el formato valido.`,
 			};

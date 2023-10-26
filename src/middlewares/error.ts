@@ -9,6 +9,7 @@ const errorMiddleware = (
 	next: NextFunction,
 ): void => {
 	if (error) {
+		console.log(error)
 		errorHandler.handleError(error, res);
 	} else {
 		next();

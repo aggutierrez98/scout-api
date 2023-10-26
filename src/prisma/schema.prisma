@@ -12,6 +12,17 @@ datasource db {
   relationMode = "prisma"
 }
 
+model User {
+  id       Int    @id @default(autoincrement())
+  uuid     String @unique @db.VarChar(10)
+  username String @unique @db.VarChar(20)
+  password String
+  role     Role   @default(EXTERNO)
+  active   Boolean @default(true)
+  scout    Scout  @relation(fields: [scoutId], references: [uuid])
+  scoutId  String @unique @db.VarChar(10)
+}
+
 model Scout {
   id                    Int                   @id @default(autoincrement())
   uuid                  String                @unique @db.VarChar(10)
@@ -35,6 +46,7 @@ model Scout {
   pagosRealizados       Pago[]
   fechaCreacion         DateTime              @default(now())
   fechaActualizacion    DateTime              @updatedAt
+  user                  User?
 
   @@index([patrullaId])
 }
@@ -69,7 +81,7 @@ model Pago {
   metodoPago    MetodosPago
   scout         Scout       @relation(fields: [scoutId], references: [uuid])
   scoutId       String      @db.VarChar(10)
-  fechaPago     DateTime    @default(now())
+  fechaPago     DateTime    @db.Date()
   fechaCreacion DateTime    @default(now())
 
   @@index([scoutId])
@@ -179,4 +191,12 @@ enum MetodosPago {
   EFECTIVO
   TRANSFERENCIA
   OTRO
+}
+
+enum Role {
+  ADMIN
+  JEFE
+  EDUCADOR
+  COLABORADOR
+  EXTERNO
 }

@@ -1,27 +1,70 @@
 import { NextFunction, Response, Request } from "express";
 import { verifyToken } from "../utils/lib/jwt.util";
 import { JwtPayload } from "jsonwebtoken";
+import { AppError, HttpCode } from "../utils";
+import { AuthService } from "../services/auth";
+import { validatePermissions, HTTPMethods, isPublicRoute } from '../utils/helpers/validatePermissions';
 
 interface RequestExt extends Request {
 	user?: JwtPayload | { id: string };
 }
-const checkJwt = (req: RequestExt, res: Response, next: NextFunction) => {
+
+export const checkSession = async (req: RequestExt, _: Response, next: NextFunction) => {
 	try {
-		const jwtByUser = req.headers.authorization || "";
-		const jwt = jwtByUser.split(" ").pop(); // 11111
-		const isUser = verifyToken(`${jwt}`) as { id: string };
+		const jwtByUser = req.headers.authorization?.split("Bearer ")[1];
+
+		if (!jwtByUser) {
+			throw new AppError({
+				name: "UNAUTHENTICATED",
+				description: "Debes estar autorizado",
+				httpCode: HttpCode.UNAUTHORIZED,
+			});
+		}
+		const jwt = jwtByUser.split(" ").pop();
+
+		let isUser;
+		try {
+			isUser = verifyToken(`${jwt}`) as { id: string };
+
+		} catch (error) {
+			throw new AppError({
+				name: "INVALID_TOKEN",
+				description: "Token expirado",
+				httpCode: HttpCode.UNAUTHORIZED,
+			});
+		}
+
 		if (!isUser) {
-			res.status(401);
-			res.send("NO_TIENES_UN_JWT_VALIDO");
+			throw new AppError({
+				name: "INVALID_TOKEN",
+				description: "Debes estar autorizado",
+				httpCode: HttpCode.UNAUTHORIZED,
+			});
+
 		} else {
-			req.user = isUser;
+			const resource = req.baseUrl.split("api/")[1];
+			const method = req.method as HTTPMethods
+
+			if (isPublicRoute({ resource, method })) return next()
+
+			const authService = new AuthService()
+			const user = await authService.getUser({ userId: isUser.id })!
+
+			const isAllowed = validatePermissions({ method, resource, userRole: user?.role })
+
+			if (!isAllowed) {
+				console.log("aca")
+				throw new AppError({
+					name: "UNAUTHORIZED",
+					description: "Sin permisos para acceder a la seccion",
+					httpCode: HttpCode.UNAUTHORIZED,
+				});
+			}
+
 			next();
 		}
-	} catch (e) {
-		console.log({ e });
-		res.status(400);
-		res.send("SESSION_NO_VALIDAD");
-	}
-};
 
-export { checkJwt };
+	} catch (e) {
+		next(e)
+	}
+}

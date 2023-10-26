@@ -5,6 +5,7 @@ import {
 	ProgresionType,
 	RelacionFamiliarType,
 	ReligionType,
+	RolesType,
 	SexoType,
 	TipoInsigniaType,
 } from "./constantTypes";
@@ -138,4 +139,16 @@ export interface IFamiliarScoutData extends IFamiliar {
 		fechaNacimiento: Date;
 		sexo: SexoType;
 	}[];
+}
+
+export interface IUser {
+	username: string,
+	password?: string
+}
+export interface IUserData {
+	id: string;
+	username: string,
+	token: unknown,
+	scout: IScoutData
+	role: RolesType
 }

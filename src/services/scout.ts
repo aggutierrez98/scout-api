@@ -9,6 +9,7 @@ import {
 import { PrismaClient } from "@prisma/client";
 import { OrderToGetScouts } from "../types";
 import { nanoid } from "nanoid";
+import { getAge } from "../utils";
 
 const prisma = new PrismaClient().$extends({
 	result: {
@@ -19,6 +20,12 @@ const prisma = new PrismaClient().$extends({
 			uuid: {
 				compute: () => undefined,
 			},
+			edad: {
+				needs: { fechaNacimiento: true },
+				compute(scout) {
+					return getAge(scout.fechaNacimiento)
+				},
+			}
 		},
 		documentoPresentado: {
 			id: {
@@ -63,11 +70,11 @@ type queryParams = {
 	orderBy?: OrderToGetScouts;
 	filters?: {
 		nombre?: string;
-		patrulla?: string;
-		sexo?: SexoType[];
-		insignia?: TipoInsigniaType[];
-		funcion?: FuncionType[];
-		progresion?: ProgresionType[];
+		patrullas?: string[];
+		sexo?: SexoType;
+		insignias?: TipoInsigniaType[];
+		funciones?: FuncionType[];
+		progresiones?: ProgresionType[];
 	};
 };
 
@@ -104,18 +111,17 @@ export class ScoutService implements IScoutService {
 		return responseInsert;
 	};
 	getScouts = async ({
-		limit = 10,
+		limit = 15,
 		offset = 0,
 		orderBy = "apellido",
 		filters = {},
 	}: queryParams) => {
 		const {
-			funcion = [],
-			progresion = [],
+			funciones,
+			progresiones,
 			nombre = "",
-			patrulla = "",
-			sexo = [],
-			insignia = [],
+			patrullas,
+			sexo,
 		} = filters;
 
 		const responseItem = await ScoutModel.findMany({
@@ -123,52 +129,57 @@ export class ScoutService implements IScoutService {
 			take: limit,
 			orderBy: { [orderBy]: "asc" },
 			where: {
+				sexo: sexo || undefined,
+				patrulla: {
+					uuid: patrullas ? { in: patrullas } : undefined,
+				},
+				progresionActual: {
+					in: progresiones,
+				},
+				funcion: {
+					in: funciones,
+				},
 				OR: [
 					{
-						OR: [
-							{
-								nombre: {
-									contains: nombre,
-								},
-							},
-							{
-								apellido: {
-									contains: nombre,
-								},
-							},
-						],
-					},
-					{
-						patrulla: {
-							uuid: patrulla,
+						nombre: {
+							contains: nombre,
 						},
 					},
 					{
-						funcion: {
-							in: funcion,
-						},
-					},
-					{
-						progresionActual: {
-							in: progresion,
-						},
-					},
-					{
-						sexo: { in: sexo },
-					},
-					{
-						insigniasObtenidas: {
-							some: {
-								insignia: { in: insignia },
-							},
+						apellido: {
+							contains: nombre,
 						},
 					},
 				],
+
+
 			},
 		});
 
 		return responseItem;
 	};
+
+	getAllScouts = async () => {
+		const response = await ScoutModel.findMany({
+			orderBy: { apellido: "asc" },
+			select: {
+				id: true,
+				uuid: true,
+				apellido: true,
+				nombre: true,
+			},
+			where: {
+				funcion: {
+					not: "JOVEN"
+				},
+				user: {
+					is: null
+				}
+			},
+		});
+		return response.map(({ id, apellido, nombre }) => ({ id: id, nombre: `${apellido} ${nombre}`.toLocaleUpperCase() }))
+	}
+
 	getScout = async (id: string) => {
 		try {
 			const responseItem = await ScoutModel.findUnique({
@@ -242,9 +253,12 @@ export class ScoutService implements IScoutService {
 		}
 	};
 	updateScout = async (id: string, dataUpdated: IScout) => {
+
+		const { direccion, localidad, funcion, mail, telefono, patrullaId, religion, progresionActual } = dataUpdated
+
 		const responseItem = await ScoutModel.update({
 			where: { uuid: id },
-			data: dataUpdated,
+			data: { direccion, localidad, funcion, mail, telefono, patrullaId, religion, progresionActual },
 		});
 		return responseItem;
 	};

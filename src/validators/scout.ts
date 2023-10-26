@@ -26,13 +26,12 @@ export const ScoutSchema = z.object({
 	sexo: z.enum(VALID_SEX),
 	localidad: z.string().max(100).regex(lettersReg),
 	direccion: z.string().max(100).regex(directionReg),
-	telefono: z.string().max(15).regex(numberReg),
-	mail: z.string().min(1).email(),
-	progresion: z.enum(VALID_PROGRESSIONS),
+	telefono: z.string().max(15).regex(numberReg).nullable(),
+	mail: z.string().min(1).email().nullable(),
 	religion: z.enum(VALID_RELIGIONS),
-	patrullaId: IdSchema.max(10),
+	patrullaId: IdSchema.max(10).nullable().nullable(),
 	funcion: z.enum(VALID_FUNCTIONS),
-	progresionActual: z.enum(VALID_PROGRESSIONS),
+	progresionActual: z.enum(VALID_PROGRESSIONS).nullable(),
 }) satisfies z.Schema<IScout>;
 
 export const GetScoutsSchema = z.object({

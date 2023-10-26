@@ -21,3 +21,5 @@ export const shouldCompress = (req: Request, res: Response) => {
 		return false;
 	return compression.filter(req, res);
 };
+
+export const getAge = (birthDate: Date) => Math.floor((new Date().getTime() - new Date(birthDate).getTime()) / 3.15576e+10)

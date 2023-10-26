@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { cacheMiddleware, cleanCacheMiddleware } from "../middlewares";
+import { cacheMiddleware, checkSession, cleanCacheMiddleware } from "../middlewares";
 import { FamiliarController } from "../controllers/familiar";
 import { FamiliarService } from "../services/familiar";
 import { validate } from "../middlewares/validate";
@@ -19,27 +19,35 @@ export const createFamiliarRouter = (familiarService: FamiliarService) => {
 
 	router.get(
 		"/:id",
+		checkSession,
 		validate(GetFamiliarSchema),
 		cacheMiddleware,
 		familiarController.getItem,
 	);
 
-	router.post("/", validate(PostFamiliarSchema), familiarController.insertItem);
+	router.post("/",
+		checkSession,
+		validate(PostFamiliarSchema),
+		familiarController.insertItem
+	);
 
 	router.put(
 		"/relate/:id",
+		checkSession,
 		validate(RelateFamiliarParams),
 		familiarController.relateItem,
 	);
 
 	router.put(
 		"/unrelate/:id",
+		checkSession,
 		validate(UnrelateFamiliarSchema),
 		familiarController.unrelateItem,
 	);
 
 	router.put(
 		"/:id",
+		checkSession,
 		validate(PutFamiliarSchema),
 		cleanCacheMiddleware,
 		familiarController.updateItem,
@@ -47,6 +55,7 @@ export const createFamiliarRouter = (familiarService: FamiliarService) => {
 
 	router.delete(
 		"/:id",
+		checkSession,
 		validate(DeleteFamiliarSchema),
 		cleanCacheMiddleware,
 		familiarController.deleteItem,

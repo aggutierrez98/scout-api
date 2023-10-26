@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { cacheMiddleware, cleanCacheMiddleware } from "../middlewares";
+import { cacheMiddleware, checkSession, cleanCacheMiddleware } from "../middlewares";
 import { DocumentoController } from "../controllers/documento";
 import { validate } from "../middlewares/validate";
 import {
@@ -14,20 +14,27 @@ export const createDocumentoRouter = (documentoService: DocumentoService) => {
 	const router = Router();
 	const documentoController = new DocumentoController({ documentoService });
 
-	router.get("/", validate(GetDocumentosSchema), documentoController.getItems);
+	router.get("/",
+		checkSession,
+		validate(GetDocumentosSchema),
+		documentoController.getItems
+	);
 	router.get(
 		"/:id",
+		checkSession,
 		validate(GetDocumentoSchema),
 		cacheMiddleware,
 		documentoController.getItem,
 	);
 	router.post(
 		"/",
+		checkSession,
 		validate(PostDocumentoSchema),
 		documentoController.insertItem,
 	);
 	router.delete(
 		"/:id",
+		checkSession,
 		validate(DeleteDocumentoSchema),
 		cleanCacheMiddleware,
 		documentoController.deleteItem,
