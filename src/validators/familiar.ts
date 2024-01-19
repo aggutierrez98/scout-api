@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { VALID_RELATIONSHIPS, VALID_SEX } from "../utils";
+import { VALID_ESTADO_CIVIL, VALID_RELATIONSHIPS, VALID_SEX } from "../utils";
 import { PrismaClient } from "@prisma/client";
 import { IFamiliar } from "../types";
-import { lettersReg, numberReg } from "../utils/regex";
+import { directionReg, lettersReg, nameRegex, numberReg } from "../utils/regex";
 import { validScoutID } from ".";
-import { IdSchema } from "./generics";
+import { IdSchema, QuerySearchSchema } from "./generics";
 
 export const validFamiliarID = async (id: string) => {
 	const prisma = new PrismaClient();
@@ -15,13 +15,26 @@ export const validFamiliarID = async (id: string) => {
 	return !!respItem;
 };
 
+// export const idIsNotFamily = async (id: string) => {
+// 	const prisma = new PrismaClient();
+// 	const FamiliarScoutModel = prisma.familiarScout;
+// 	const respItem = await FamiliarScoutModel.findUnique({
+// 		where: { scoutId: id,  },
+// 	});
+// 	return !!respItem;
+// };
+
 export const FamiliarSchema = z.object({
 	nombre: z.string().max(100).regex(lettersReg),
 	apellido: z.string().max(100).regex(lettersReg),
 	fechaNacimiento: z.date(),
 	dni: z.string().max(10).regex(numberReg),
 	sexo: z.enum(VALID_SEX),
-	telefono: z.string().max(15).regex(numberReg),
+	localidad: z.string().max(100).regex(lettersReg),
+	direccion: z.string().max(100).regex(directionReg),
+	telefono: z.string().max(15).regex(numberReg).nullable(),
+	mail: z.string().min(1).email().nullable(),
+	estadoCivil: z.enum(VALID_ESTADO_CIVIL).optional()
 }) satisfies z.Schema<IFamiliar>;
 
 export const UnrelateFamiliarSchema = z.object({
@@ -33,16 +46,33 @@ export const UnrelateFamiliarSchema = z.object({
 	}),
 });
 
-export const RelateFamiliarParams = UnrelateFamiliarSchema.extend({
+export const RelateFamiliarParams = z.object({
 	body: z.object({
 		scoutId: IdSchema.refine(validScoutID),
 		relation: z.enum(VALID_RELATIONSHIPS).optional(),
 	}),
-});
+	params: z.object({
+		id: IdSchema.refine(validFamiliarID),
+	})
+}).refine(async ({ body, params }) => {
+	const prisma = new PrismaClient();
+	const FamiliarScoutModel = prisma.familiarScout;
+	const respItem = await FamiliarScoutModel.findFirst({
+		where: { scoutId: body.scoutId, familiarId: params.id },
+	});
+
+	return !respItem
+}, "El parametro enviado ya esta registrado como familiar dentro del sistema");
 
 export const GetFamiliarSchema = z.object({
 	params: z.object({
 		id: IdSchema.refine(validFamiliarID),
+	}),
+});
+
+export const GetFamiliaresSchema = z.object({
+	query: QuerySearchSchema.extend({
+		// nombre: z.string().max(85).regex(nameRegex).optional(),
 	}),
 });
 

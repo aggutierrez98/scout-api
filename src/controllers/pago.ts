@@ -28,6 +28,7 @@ export class PagoController {
 	};
 
 	getItems = async (req: Request, res: Response, next: NextFunction) => {
+
 		const { offset, limit, ...filters } = req.query;
 
 		try {
@@ -80,6 +81,7 @@ export class PagoController {
 	) => {
 		try {
 			const { id } = params;
+
 			const response = await this.pagoService.deletePago(id);
 
 			if (!response) {

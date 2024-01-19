@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 
 import { AppError, HttpCode } from "../utils/classes/AppError";
 import { getAge } from "../utils/helpers/helpers";
-import { OrderToGetScouts } from "../types";
+import { FuncionType, OrderToGetScouts } from "../types";
 import { ScoutService } from "../services/scout";
 
 export class ScoutController {
@@ -48,9 +48,18 @@ export class ScoutController {
 	};
 
 
-	getAllItems = async (_: Request, res: Response, next: NextFunction) => {
+	getAllItems = async (req: Request, res: Response, next: NextFunction) => {
+
+		const reqType = req.url.split("all")[1]
+
 		try {
-			const response = await this.scoutService.getAllScouts()
+			let response;
+			if (reqType === "Educadores") {
+				response = await this.scoutService.getAllEducadores()
+			}
+			else if (reqType === "Scouts") {
+				response = await this.scoutService.getAllScouts()
+			}
 			res.send(response);
 		} catch (e) {
 			next(e);

@@ -11,12 +11,20 @@ import {
 	PutFamiliarSchema,
 	UnrelateFamiliarSchema,
 	RelateFamiliarParams,
+	GetFamiliaresSchema,
 } from "../validators/familiar";
 
 export const createFamiliarRouter = (familiarService: FamiliarService) => {
 	const router = Router();
 	const familiarController = new FamiliarController({ familiarService });
 
+	router.get(
+		"/",
+		checkSession,
+		validate(GetFamiliaresSchema),
+		cacheMiddleware,
+		familiarController.getItems,
+	);
 	router.get(
 		"/:id",
 		checkSession,

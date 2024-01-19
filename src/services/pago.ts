@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { FuncionType, IPago, IPagoData } from "../types";
+import { FuncionType, IPago, IPagoData, MetodosPagoType } from "../types";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient().$extends({
@@ -33,6 +33,8 @@ type queryParams = {
 		nombre?: string;
 		concepto?: string;
 		patrulla?: string;
+		rendido?: string;
+		metodoPago?: MetodosPagoType
 		funcion?: FuncionType[];
 	};
 };
@@ -58,14 +60,16 @@ export class PagoService implements IPagoService {
 		return responseInsert;
 	};
 
-	getPagos = async ({ limit = 10, offset = 0, filters = {} }: queryParams) => {
+	getPagos = async ({ limit = 15, offset = 0, filters = {} }: queryParams) => {
 		const {
-			tiempoDesde,
-			tiempoHasta,
 			nombre = "",
 			concepto = "",
-			patrulla = "",
-			funcion = [],
+			patrulla,
+			funcion,
+			metodoPago,
+			rendido,
+			tiempoDesde,
+			tiempoHasta,
 		} = filters;
 
 		const responseItem = await PagoModel.findMany({
@@ -73,48 +77,42 @@ export class PagoService implements IPagoService {
 			take: limit,
 			orderBy: { fechaPago: "desc" },
 			where: {
+				metodoPago: metodoPago || undefined,
+				scout: {
+					patrulla: {
+						uuid: patrulla,
+					},
+					funcion: {
+						in: funcion,
+					},
+				},
+				rendido: rendido ? rendido === "true" ? true : false : undefined,
+				fechaPago: {
+					lte: tiempoHasta,
+					gte: tiempoDesde,
+				},
 				OR: [
 					{
 						scout: {
 							OR: [
 								{
-									OR: [
-										{
-											nombre: {
-												contains: nombre,
-											},
-										},
-										{
-											apellido: {
-												contains: nombre,
-											},
-										},
-									],
-								},
-								{
-									patrulla: {
-										uuid: patrulla,
+									nombre: {
+										contains: nombre,
 									},
 								},
 								{
-									funcion: {
-										in: funcion,
+									apellido: {
+										contains: nombre,
 									},
 								},
 							],
-						},
+						}
 					},
 					{
 						concepto: {
-							search: concepto,
+							contains: concepto,
 						},
-					},
-					{
-						fechaPago: {
-							lte: tiempoHasta,
-							gte: tiempoDesde,
-						},
-					},
+					}
 				],
 			},
 		});

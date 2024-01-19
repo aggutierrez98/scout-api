@@ -1,3 +1,5 @@
+import { VALID_METODOS_PAGO } from '../utils/constants';
+import { MetodosPagoType } from './constantTypes';
 export type ScoutXLSX = {
 	Documento: string;
 	Nombre: string;
@@ -16,6 +18,29 @@ export type ScoutXLSX = {
 	Patrulla: string;
 	Estado: string;
 	Progresion: string;
+	Padre: string
+	Madre: string
+	Tio: string
+	Tia: string
+	Hermano: string
+	Hermana: string
+	Abuelo: string
+	Abuela: string
+	Otro: string
+};
+
+export type FamiliarXLSX = {
+	Documento: string;
+	Nombre: string;
+	Sexo: string;
+	"Fecha Nacimiento": string;
+	Provincia: string;
+	Localidad: string;
+	Email: string;
+	Calle: string;
+	"Codigo Postal": string;
+	Telefono: string;
+	"Estado Civil": "SOLTERO" | "CASADO" | "SEPARADO";
 };
 
 export enum RelacionFamiliarScoutEnum {
@@ -56,4 +81,20 @@ export enum TipoInsigniaEnum {
 	ESPDEPORTES = "Especialidad - Deportes",
 	ESPCIENCIA = "Especialidad - Ciencia y Tecnologia",
 	SUPERACION = "Maxima superacion personal",
+}
+
+
+export type PagoXLSX = {
+	Concepto: string
+	Fecha: string
+	Monto: string
+	"Metodo de pago": MetodosPagoType
+	Rendido: string,
+	Scout: string
+}
+
+export type DocumentoXLSX = {
+	Fecha: string
+	Scout: string
+	Documento: string
 }

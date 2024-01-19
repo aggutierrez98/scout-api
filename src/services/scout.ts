@@ -151,8 +151,6 @@ export class ScoutService implements IScoutService {
 						},
 					},
 				],
-
-
 			},
 		});
 
@@ -160,6 +158,25 @@ export class ScoutService implements IScoutService {
 	};
 
 	getAllScouts = async () => {
+
+		const response = await ScoutModel.findMany({
+			orderBy: { apellido: "asc" },
+			select: {
+				id: true,
+				uuid: true,
+				apellido: true,
+				nombre: true,
+			},
+			where: {
+				funcion: "JOVEN",
+				user: {
+					is: null
+				}
+			},
+		});
+		return response.map(({ id, apellido, nombre }) => ({ id: id, nombre: `${apellido} ${nombre}`.toLocaleUpperCase() }))
+	}
+	getAllEducadores = async () => {
 		const response = await ScoutModel.findMany({
 			orderBy: { apellido: "asc" },
 			select: {
@@ -170,7 +187,7 @@ export class ScoutService implements IScoutService {
 			},
 			where: {
 				funcion: {
-					not: "JOVEN"
+					not: "JOVEN",
 				},
 				user: {
 					is: null

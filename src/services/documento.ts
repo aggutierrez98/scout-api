@@ -18,20 +18,31 @@ const prisma = new PrismaClient().$extends({
 				compute: () => undefined,
 			},
 		},
+		documento: {
+			id: {
+				compute: (data) => data.uuid,
+			},
+			uuid: {
+				compute: () => undefined,
+			},
+		}
 	},
 });
 const DocumentoModel = prisma.documentoPresentado;
+const DocumentosDataModel = prisma.documento;
 
 type getQueryParams = {
 	limit?: number;
 	offset?: number;
 	filters: {
-		documento?: string;
-		patrulla?: string;
 		nombre?: string;
-		funcion?: FuncionType[];
-		sexo?: SexoType[];
-		progresion?: ProgresionType[];
+		patrullas?: string[];
+		sexo?: SexoType;
+		funciones?: FuncionType[];
+		vence?: string;
+		progresiones?: ProgresionType[]
+		tiempoDesde?: Date;
+		tiempoHasta?: Date;
 	};
 };
 
@@ -76,12 +87,14 @@ export class DocumentoService implements IDocumentoService {
 		filters = {},
 	}: getQueryParams) => {
 		const {
-			funcion = [],
-			progresion = [],
 			nombre = "",
-			patrulla = "",
-			sexo = [],
-			documento = "",
+			funciones,
+			progresiones,
+			patrullas,
+			sexo,
+			vence,
+			tiempoDesde,
+			tiempoHasta,
 		} = filters;
 
 		const responseItem = await DocumentoModel.findMany({
@@ -103,55 +116,58 @@ export class DocumentoService implements IDocumentoService {
 				},
 			},
 			where: {
+				scout: {
+					patrulla: {
+						uuid: patrullas ? { in: patrullas } : undefined,
+					},
+					progresionActual: {
+						in: progresiones,
+					},
+					funcion: {
+						in: funciones,
+					},
+
+					sexo: sexo || undefined,
+				},
+				documento: {
+					vence: vence ? vence === "true" ? true : false : undefined,
+				},
+				fechaPresentacion: {
+					lte: tiempoHasta,
+					gte: tiempoDesde,
+				},
 				OR: [
 					{
 						scout: {
 							OR: [
 								{
-									OR: [
-										{
-											nombre: {
-												contains: nombre,
-											},
-										},
-										{
-											apellido: {
-												contains: nombre,
-											},
-										},
-									],
-								},
-								{
-									patrulla: {
-										id: patrulla ? Number(patrulla) : undefined,
+									nombre: {
+										contains: nombre,
 									},
 								},
 								{
-									funcion: {
-										in: funcion,
-									},
-								},
-								{
-									progresionActual: {
-										in: progresion,
-									},
-								},
-								{
-									sexo: {
-										in: sexo,
+									apellido: {
+										contains: nombre,
 									},
 								},
 							],
-						},
+						}
 					},
 					{
 						documento: {
-							uuid: documento,
+							nombre: {
+								contains: nombre,
+							},
+							// uuid: documento,
 						},
-					},
+					}
 				],
 			},
 		});
+		return responseItem;
+	};
+	getDocumentosData = async () => {
+		const responseItem = await DocumentosDataModel.findMany();
 		return responseItem;
 	};
 	getDocumento = async (id: string) => {

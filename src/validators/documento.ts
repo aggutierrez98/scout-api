@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { IDocumento } from "../types";
 import { validScoutID } from "./scout";
 import { VALID_FUNCTIONS, VALID_PROGRESSIONS, VALID_SEX } from "../utils";
-import { nameRegex, numberReg } from "../utils/regex";
+import { ISODateStringReg, nameRegex, numberReg } from "../utils/regex";
 import { IdSchema, QuerySearchSchema } from "./generics";
 
 export const validDocumentoId = async (id: string) => {
@@ -21,12 +21,13 @@ export const DocumentoSchema = z.object({
 
 export const GetDocumentosSchema = z.object({
 	query: QuerySearchSchema.extend({
-		documento: IdSchema.max(10).regex(numberReg).optional(),
-		patrulla: IdSchema.max(10).regex(numberReg).optional(),
-		nombre: z.string().max(85).regex(nameRegex).optional(),
-		funcion: z.enum(VALID_FUNCTIONS).optional(),
-		sexo: z.enum(VALID_SEX).optional(),
-		progresion: z.enum(VALID_PROGRESSIONS).optional(),
+		// patrulla: IdSchema.max(10).regex(numberReg).optional(),
+		// nombre: z.string().max(85).regex(nameRegex).optional(),
+		// funcion: z.enum(VALID_FUNCTIONS).optional(),
+		// sexo: z.enum(VALID_SEX).optional(),
+		// progresion: z.enum(VALID_PROGRESSIONS).optional(),
+		tiempoDesde: z.string().regex(ISODateStringReg).optional(),
+		tiempoHasta: z.string().regex(ISODateStringReg).optional(),
 	}),
 });
 

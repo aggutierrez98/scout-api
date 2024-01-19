@@ -28,6 +28,26 @@ export class FamiliarController {
 		}
 	};
 
+	getItems = async (req: Request, res: Response, next: NextFunction) => {
+		const { offset, limit, ...filters } = req.query;
+
+		try {
+			try {
+				const response = await this.familiarService.getFamiliares({
+					limit: limit ? Number(limit) : undefined,
+					offset: offset ? Number(offset) : undefined,
+					filters,
+				});
+				res.send(response);
+			} catch (e) {
+				next(e);
+			}
+
+		} catch (e) {
+			next(e);
+		}
+	};
+
 	relateItem = async (
 		{ body, params }: Request,
 		res: Response,
@@ -37,7 +57,7 @@ export class FamiliarController {
 			const { scoutId, relacion } = body;
 
 			const response = await this.familiarService.relateScoutToFamiliar(
-				params.familiarId,
+				params.id,
 				scoutId,
 				relacion,
 			);
@@ -61,12 +81,14 @@ export class FamiliarController {
 		next: NextFunction,
 	) => {
 		try {
-			const { scoutId, relacion } = body;
+			const { scoutId } = body;
 
 			const response = await this.familiarService.unrelateScoutToFamiliar(
-				params.familiarId,
+				params.id,
 				scoutId,
 			);
+
+			// console.log(response)
 
 			if (!response) {
 				throw new AppError({

@@ -19,6 +19,11 @@ export const createDocumentoRouter = (documentoService: DocumentoService) => {
 		validate(GetDocumentosSchema),
 		documentoController.getItems
 	);
+	router.get("/data",
+		checkSession,
+		// validate(GetDocumentosSchema),
+		documentoController.getData
+	);
 	router.get(
 		"/:id",
 		checkSession,

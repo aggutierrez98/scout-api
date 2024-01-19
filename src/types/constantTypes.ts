@@ -10,10 +10,12 @@ import {
 	VALID_GET_SCOUTS_FILTERS,
 	VALID_PROGRESSIONS,
 	VALID_RELIGIONS,
+	VALID_ESTADO_CIVIL
 } from "../utils";
 
 // ENTITIES Types
 export type RelacionFamiliarType = typeof VALID_RELATIONSHIPS[number];
+export type EstadoCivilType = typeof VALID_ESTADO_CIVIL[number];
 export type ReligionType = typeof VALID_RELIGIONS[number];
 export type SexoType = typeof VALID_SEX[number];
 export type ProgresionType = typeof VALID_PROGRESSIONS[number];

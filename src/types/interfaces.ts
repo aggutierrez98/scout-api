@@ -1,5 +1,6 @@
 import { Decimal } from "@prisma/client/runtime/library";
 import {
+	EstadoCivilType,
 	FuncionType,
 	MetodosPagoType,
 	ProgresionType,
@@ -41,14 +42,16 @@ export interface IScoutData extends IScout {
 		fechaObtencion: Date;
 	}[];
 	familiares?: {
-		relacion: RelacionFamiliarType;
-		id: string;
 		nombre: string;
 		apellido: string;
-		dni: string;
-		telefono: string;
 		sexo: SexoType;
+		dni: string;
 		fechaNacimiento: Date;
+		localidad: string;
+		direccion: string
+		mail?: string | null
+		telefono?: string | null;
+		estadoCivil?: EstadoCivilType | null
 	}[];
 	patrulla?: {
 		id: string;
@@ -108,9 +111,9 @@ export interface IDocumentoData {
 export interface IPago {
 	scoutId: string;
 	concepto: string;
-	monto: number | Decimal;
+	monto: number | Decimal | string;
 	metodoPago: MetodosPagoType;
-	fechaPago: Date;
+	fechaPago: Date | string;
 }
 
 export interface IPagoData extends IPago {
@@ -123,19 +126,23 @@ export interface IPagoData extends IPago {
 export interface IFamiliar {
 	nombre: string;
 	apellido: string;
-	fechaNacimiento: Date;
-	dni: string;
 	sexo: SexoType;
-	telefono: string;
+	dni: string;
+	fechaNacimiento: Date;
+	localidad: string;
+	direccion: string
+	mail?: string | null
+	telefono?: string | null;
+	estadoCivil?: EstadoCivilType | null
 }
 
 export interface IFamiliarScoutData extends IFamiliar {
 	id: string;
 	scoutFamiliares?: {
-		id: number;
+		id: string;
 		nombre: string;
 		apellido: string;
-		dni: string;
+		edad: number;
 		fechaNacimiento: Date;
 		sexo: SexoType;
 	}[];

@@ -13,14 +13,14 @@ datasource db {
 }
 
 model User {
-  id       Int    @id @default(autoincrement())
-  uuid     String @unique @db.VarChar(10)
-  username String @unique @db.VarChar(20)
+  id       Int     @id @default(autoincrement())
+  uuid     String  @unique @db.VarChar(10)
+  username String  @unique @db.VarChar(20)
   password String
-  role     Role   @default(EXTERNO)
+  role     Role    @default(EXTERNO)
   active   Boolean @default(true)
-  scout    Scout  @relation(fields: [scoutId], references: [uuid])
-  scoutId  String @unique @db.VarChar(10)
+  scout    Scout   @relation(fields: [scoutId], references: [uuid])
+  scoutId  String  @unique @db.VarChar(10)
 }
 
 model Scout {
@@ -95,7 +95,11 @@ model Familiar {
   fechaNacimiento    DateTime        @db.Date()
   dni                String          @db.VarChar(20)
   sexo               Sexo
-  telefono           String          @db.VarChar(25)
+  localidad          String          @db.VarChar(45)
+  direccion          String          @db.VarChar(65)
+  mail               String?         @db.VarChar(50)
+  telefono           String?         @db.VarChar(25)
+  estadoCivil        EstadoCivil?
   fechaCreacion      DateTime        @default(now())
   fechaActualizacion DateTime        @updatedAt
   padreScout         FamiliarScout[]
@@ -142,6 +146,8 @@ enum RelacionFamiliarScout {
   TIA
   HERMANO
   HERMANA
+  ABUELO
+  ABUELA
   OTRO
 }
 
@@ -150,6 +156,12 @@ enum Progresion {
   PISTA
   RUMBO
   TRAVESIA
+}
+
+enum EstadoCivil {
+  SOLTERO
+  CASADO
+  SEPARADO
 }
 
 enum Funcion {

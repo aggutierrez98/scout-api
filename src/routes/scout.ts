@@ -21,7 +21,8 @@ export const createScoutRouter = (scoutService: ScoutService) => {
 		validate(GetScoutsSchema),
 		scoutController.getItems
 	);
-	router.get("/all", checkSession, scoutController.getAllItems);
+	router.get("/allScouts", checkSession, scoutController.getAllItems);
+	router.get("/allEducadores", checkSession, scoutController.getAllItems);
 	router.get(
 		"/:id",
 		checkSession,

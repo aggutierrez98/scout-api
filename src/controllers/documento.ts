@@ -42,7 +42,14 @@ export class DocumentoController {
 			next(e);
 		}
 	};
-
+	getData = async (req: Request, res: Response, next: NextFunction) => {
+		try {
+			const response = await this.documentoService.getDocumentosData();
+			res.send(response);
+		} catch (e) {
+			next(e);
+		}
+	};
 	insertItem = async ({ body }: Request, res: Response, next: NextFunction) => {
 		try {
 			const responseDocumento = await this.documentoService.insertDocumento(

@@ -10,6 +10,11 @@ export const VALID_RELIGIONS = [
 	"BUDISTA",
 	"EVANGELICA",
 ] as const;
+export const VALID_ESTADO_CIVIL = [
+	"CASADO",
+	"SOLTERO",
+	"SEPARADO",
+] as const;
 export const VALID_FUNCTIONS = [
 	"JOVEN",
 	"JEFE",
@@ -31,6 +36,8 @@ export const VALID_RELATIONSHIPS = [
 	"TIA",
 	"HERMANO",
 	"HERMANA",
+	"ABUELO",
+	"ABUELA",
 	"OTRO",
 ] as const;
 
