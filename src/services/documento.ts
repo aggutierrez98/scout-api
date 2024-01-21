@@ -36,13 +36,13 @@ type getQueryParams = {
 	offset?: number;
 	filters: {
 		nombre?: string;
-		patrullas?: string[];
-		sexo?: SexoType;
-		funciones?: FuncionType[];
 		vence?: string;
-		progresiones?: ProgresionType[]
 		tiempoDesde?: Date;
 		tiempoHasta?: Date;
+		patrullas?: string[];
+		funciones?: FuncionType[];
+		progresiones?: ProgresionType[]
+
 	};
 };
 
@@ -91,7 +91,6 @@ export class DocumentoService implements IDocumentoService {
 			funciones,
 			progresiones,
 			patrullas,
-			sexo,
 			vence,
 			tiempoDesde,
 			tiempoHasta,
@@ -126,8 +125,6 @@ export class DocumentoService implements IDocumentoService {
 					funcion: {
 						in: funciones,
 					},
-
-					sexo: sexo || undefined,
 				},
 				documento: {
 					vence: vence ? vence === "true" ? true : false : undefined,
@@ -158,12 +155,12 @@ export class DocumentoService implements IDocumentoService {
 							nombre: {
 								contains: nombre,
 							},
-							// uuid: documento,
 						},
 					}
 				],
 			},
 		});
+
 		return responseItem;
 	};
 	getDocumentosData = async () => {

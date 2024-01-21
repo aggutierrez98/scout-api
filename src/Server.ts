@@ -24,6 +24,9 @@ import { PatrullaService } from "./services/patrulla";
 import { createPatrullaRouter } from "./routes/patrulla";
 import { AuthService } from "./services/auth";
 import { createAuthRouter } from "./routes/auth";
+import { entregaSchema } from './docs/swagger-ts/schemas/entrega';
+import { EntregaService } from "./services/entrega";
+import { createEntregaRouter } from "./routes/entrega";
 
 const PATH_ROUTER = `${__dirname}`;
 
@@ -110,6 +113,9 @@ export default class Server {
 
 		const familiarService = new FamiliarService();
 		router.use("/familiar", createFamiliarRouter(familiarService));
+
+		const entregaService = new EntregaService();
+		router.use("/entrega", createEntregaRouter(entregaService));
 
 		return router;
 

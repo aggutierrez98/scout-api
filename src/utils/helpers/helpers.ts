@@ -4,8 +4,8 @@ const NO_COMPRESS_HEADERS = ["x-no-compression"];
 
 export const parseDMYtoDate = (string: string) => {
 	const [d, m, y] = string.split(/\D/);
-	return new Date(Number(`${y}`), Number(m) - 1, Number(d));
-	// return new Date(Number(`20${y}`), Number(m) - 1, Number(d));
+	// return new Date(Number(`${y}`), Number(m) - 1, Number(d));
+	return new Date(Number(`${y.length === 2 ? "20" : ""}${y}`), Number(m) - 1, Number(d));
 };
 
 export const excelDateToJSDate = (serial: number) => {

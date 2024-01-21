@@ -92,6 +92,7 @@
     "import-scouts": "dotenv -e .env.production -- ts-node src/bin/updateScouts.ts",
     "import-scouts:dev": "dotenv -e .env.development -- ts-node src/bin/updateScouts.ts",
     "load-pagos:dev": "dotenv -e .env.development -- ts-node src/bin/loadPagos.ts",
+    "load-entregas:dev": "dotenv -e .env.development -- ts-node src/bin/loadEntregas.ts",
     "load-documentos:dev": "dotenv -e .env.development -- ts-node src/bin/loadDocumentos.ts",
     "load-familiares:dev": "dotenv -e .env.development -- ts-node src/bin/loadFamiliares.ts",
     "prebuild": "npm run swagger",

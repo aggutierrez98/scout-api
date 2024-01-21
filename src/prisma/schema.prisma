@@ -41,7 +41,7 @@ model Scout {
   patrullaId            String?               @db.VarChar(10)
   funcion               Funcion?              @default(JOVEN)
   documentosPresentados DocumentoPresentado[]
-  insigniasObtenidas    InsigniaObtenida[]
+  entregasObtenidas     EntregaRealizada[]
   familiarScout         FamiliarScout[]
   pagosRealizados       Pago[]
   fechaCreacion         DateTime              @default(now())
@@ -127,14 +127,14 @@ model Patrulla {
   scout              Scout[]
 }
 
-model InsigniaObtenida {
-  id             Int          @id @default(autoincrement())
-  uuid           String       @unique @db.VarChar(10)
-  scout          Scout        @relation(fields: [scoutId], references: [uuid])
-  scoutId        String       @db.VarChar(10)
-  insignia       TipoInsignia
-  progresion     Progresion?
-  fechaObtencion DateTime     @db.Date()
+model EntregaRealizada {
+  id            Int         @id @default(autoincrement())
+  uuid          String      @unique @db.VarChar(10)
+  scout         Scout       @relation(fields: [scoutId], references: [uuid])
+  scoutId       String      @db.VarChar(10)
+  tipoEntrega   TipoEntrega
+  fechaEntrega  DateTime    @db.Date()
+  fechaCreacion DateTime    @default(now())
 
   @@index([scoutId])
 }
@@ -172,16 +172,18 @@ enum Funcion {
   COLABORADOR
 }
 
-enum TipoInsignia {
+enum TipoEntrega {
   UNIFORME
   GUIA
   SUBGUIA
-  PROGRESION
+  PROGPISTA
+  PROGRUMBO
+  PROGTRAVESIA
   PROMESA
   SUPERACION
   ESPNATURALEZA
   ESPARTE
-  ESPECSERVICIO
+  ESPSERVICIO
   ESPESPIRITUALIDAD
   ESPDEPORTES
   ESPCIENCIA

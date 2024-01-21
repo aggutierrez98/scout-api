@@ -1,7 +1,7 @@
 import { OAS3Options } from "swagger-jsdoc";
-import { VALID_INSINGIAS_TYPE, VALID_PROGRESSIONS } from "../../../utils";
+import { VALID_ENTREGAS_TYPE } from "../../../utils";
 
-export const insigniaSchema: OAS3Options = {
+export const entregaSchema: OAS3Options = {
 	type: "object",
 	properties: {
 		id: { type: "string", readOnly: true },
@@ -12,13 +12,9 @@ export const insigniaSchema: OAS3Options = {
 				$ref: "#/components/schemas/scout",
 			},
 		},
-		tipoInsignia: {
+		tipoEntrega: {
 			type: "string",
-			enum: VALID_INSINGIAS_TYPE,
-		},
-		progresion: {
-			type: "string",
-			enum: VALID_PROGRESSIONS,
+			enum: VALID_ENTREGAS_TYPE,
 		},
 		fechaObtencion: { type: "date", readOnly: true },
 	},

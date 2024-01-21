@@ -4,6 +4,7 @@ export const EXTERNO_PERM = [
     "read_patrulla",
     "read_documento",
     "read_pago",
+    "read_entrega",
     "read_auth"
 ]
 export const COLABORADOR_PERM = [
@@ -19,6 +20,8 @@ export const EDUCADOR_PERM = [
     "create_scout",
     "create_patrulla",
     "create_familiar",
+    "create_entrega",
+    "modify_entrega",
     "modify_patrulla",
     "modify_familiar",
     "delete_patrulla",
@@ -30,6 +33,7 @@ export const JEFE_PERM = [
     "modify_scout",
     "delete_scout",
     "delete_familiar",
+    "delete_entrega",
 ]
 export const ADMIN_PERM = [
     ...JEFE_PERM,

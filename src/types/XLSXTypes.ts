@@ -1,5 +1,5 @@
 import { VALID_METODOS_PAGO } from '../utils/constants';
-import { MetodosPagoType } from './constantTypes';
+import { MetodosPagoType, TipoEntregaType } from './constantTypes';
 export type ScoutXLSX = {
 	Documento: string;
 	Nombre: string;
@@ -76,7 +76,7 @@ export enum TipoInsigniaEnum {
 	PROMESA = "Promesa Scout",
 	ESPNATURALEZA = "Especialidad - Vida en la naturaleza",
 	ESPARTE = "Especialidad - Arte, Expresion y Cultura",
-	ESPECSERVICIO = "Especialidad - Servicio a los demas",
+	ESPSERVICIO = "Especialidad - Servicio a los demas",
 	ESPESPIRITUALIDAD = "Especialidad - Espiritualidad",
 	ESPDEPORTES = "Especialidad - Deportes",
 	ESPCIENCIA = "Especialidad - Ciencia y Tecnologia",
@@ -97,4 +97,10 @@ export type DocumentoXLSX = {
 	Fecha: string
 	Scout: string
 	Documento: string
+}
+
+export type EntregaXLSX = {
+	Fecha: string
+	"Tipo de entrega": TipoEntregaType
+	Scout: string
 }

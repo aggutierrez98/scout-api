@@ -33,12 +33,18 @@ const loadPagos = async () => {
             const scout = (
                 await prisma.scout.findFirst({
                     where: {
-                        nombre: {
-                            contains: nombre
-                        },
-                        apellido: {
-                            contains: apellido
-                        },
+                        OR: [
+                            {
+                                nombre: {
+                                    contains: nombre
+                                },
+                            },
+                            {
+                                apellido: {
+                                    contains: apellido
+                                },
+                            }
+                        ]
                     },
                 })
             );

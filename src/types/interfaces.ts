@@ -4,11 +4,10 @@ import {
 	FuncionType,
 	MetodosPagoType,
 	ProgresionType,
-	RelacionFamiliarType,
 	ReligionType,
 	RolesType,
 	SexoType,
-	TipoInsigniaType,
+	TipoEntregaType,
 } from "./constantTypes";
 
 export interface IScout {
@@ -35,11 +34,10 @@ export interface IScoutData extends IScout {
 		vence: boolean;
 		fechaPresentacion: Date;
 	}[];
-	insigniasObtenidas?: {
+	entregasObtenidas?: {
 		id: string;
-		insignia: TipoInsigniaType;
-		progresion: ProgresionType | null;
-		fechaObtencion: Date;
+		tipoEntrega: TipoEntregaType;
+		fechaEntrega: Date;
 	}[];
 	familiares?: {
 		nombre: string;
@@ -83,7 +81,7 @@ export interface IFamiliarScout {
 export interface IInsignaObt {
 	id: string;
 	scoutId: string;
-	insignia: TipoInsigniaType;
+	tipoEntrega: TipoEntregaType;
 	progresion: ProgresionType | null;
 	fechaObtencion: Date;
 }
@@ -158,4 +156,16 @@ export interface IUserData {
 	token: unknown,
 	scout: IScoutData
 	role: RolesType
+}
+
+export interface IEntrega {
+	scoutId: string;
+	fechaEntrega: Date | string;
+	tipoEntrega: TipoEntregaType;
+}
+
+export interface IEntregaData extends IEntrega {
+	id: string;
+	uuid: undefined;
+	fechaCreacion: Date;
 }

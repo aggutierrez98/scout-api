@@ -4,7 +4,7 @@ import {
 	IScoutData,
 	ProgresionType,
 	SexoType,
-	TipoInsigniaType,
+	TipoEntregaType,
 } from "../types";
 import { PrismaClient } from "@prisma/client";
 import { OrderToGetScouts } from "../types";
@@ -35,7 +35,7 @@ const prisma = new PrismaClient().$extends({
 				compute: () => undefined,
 			},
 		},
-		insigniaObtenida: {
+		entregaRealizada: {
 			id: {
 				compute: (data) => data.uuid,
 			},
@@ -70,11 +70,10 @@ type queryParams = {
 	orderBy?: OrderToGetScouts;
 	filters?: {
 		nombre?: string;
-		patrullas?: string[];
 		sexo?: SexoType;
-		insignias?: TipoInsigniaType[];
-		funciones?: FuncionType[];
+		patrullas?: string[];
 		progresiones?: ProgresionType[];
+		funciones?: FuncionType[];
 	};
 };
 
@@ -202,15 +201,14 @@ export class ScoutService implements IScoutService {
 			const responseItem = await ScoutModel.findUnique({
 				where: { uuid: id },
 				include: {
-					insigniasObtenidas: {
+					entregasObtenidas: {
 						orderBy: {
-							fechaObtencion: "desc",
+							fechaEntrega: "desc",
 						},
 						select: {
 							id: true,
-							insignia: true,
-							progresion: true,
-							fechaObtencion: true,
+							fechaEntrega: true,
+							tipoEntrega: true,
 						},
 					},
 					documentosPresentados: {
@@ -270,7 +268,6 @@ export class ScoutService implements IScoutService {
 		}
 	};
 	updateScout = async (id: string, dataUpdated: IScout) => {
-
 		const { direccion, localidad, funcion, mail, telefono, patrullaId, religion, progresionActual } = dataUpdated
 
 		const responseItem = await ScoutModel.update({
