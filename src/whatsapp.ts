@@ -2,6 +2,8 @@ import qrCode from "qrcode-terminal";
 import whatsapp from "whatsapp-web.js";
 const { Client, LocalAuth } = whatsapp;
 
+//TODO: Crear todas las utilidades del bot de whatsapp
+
 async function whatsappClientConnection() {
 	try {
 		const client = new Client({

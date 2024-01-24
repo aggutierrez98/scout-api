@@ -1,5 +1,5 @@
-import { VALID_METODOS_PAGO } from '../utils/constants';
 import { MetodosPagoType, TipoEntregaType } from './constantTypes';
+
 export type ScoutXLSX = {
 	Documento: string;
 	Nombre: string;
@@ -103,4 +103,9 @@ export type EntregaXLSX = {
 	Fecha: string
 	"Tipo de entrega": TipoEntregaType
 	Scout: string
+}
+
+export type UsuarioXLSX = {
+	DNI: string
+	UserId: string
 }

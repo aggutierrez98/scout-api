@@ -12,3 +12,5 @@ mysql-data
 dist
 
 dbdata
+
+credentials.json

@@ -1,21 +1,23 @@
 import { PrismaClient, Prisma } from "@prisma/client";
-import * as XLSX from "xlsx";
 import ProgressBar from "progress";
 import { excelDateToJSDate, parseDMYtoDate } from "../utils";
 import { DocumentoXLSX } from "../types";
 import { nanoid } from "nanoid";
-const prisma = new PrismaClient();
+import { getDoc } from "../utils/helpers/googleDriveApi";
 
 const loadDocumentos = async () => {
+    const prisma = new PrismaClient();
+    await prisma.$connect()
+
     try {
         console.time("Tiempo de ejecucion");
         console.log(
             "------------ INICIANDO SCRIPT DE ACTUALIZACION DOCUMENTOS -------------\n",
         );
 
-        const file = XLSX.readFile("dbdata/documentos.xlsx");
-        const sheet = file.Sheets[file.SheetNames[0]];
-        const data: DocumentoXLSX[] = XLSX.utils.sheet_to_json(sheet);
+        const doc = await getDoc(process.env.GOOGLE_DOCUMENTOS_SPREADSHEET_KEY!)
+        const sheet = doc.sheetsByIndex[0];
+        const data = await sheet.getRows<DocumentoXLSX>();
 
         const bar = new ProgressBar(
             "-> Leyendo documentos desde xlsx: [:bar] :percent - Tiempo restante: :etas",
@@ -27,9 +29,10 @@ const loadDocumentos = async () => {
 
         const documentos: Prisma.DocumentoPresentadoCreateManyInput[] = [];
         let index = 0;
-        for (const documentoXLSX of data) {
+        for (const documentoSheetData of data) {
             index++
-            const [nombre, apellido] = documentoXLSX.Scout.toString().split(" ")
+            const documentoData = documentoSheetData.toObject()
+            const [apellido, nombre] = documentoData.Scout!.toString().split(", ")
 
             const scout = (
                 await prisma.scout.findFirst({
@@ -54,28 +57,28 @@ const loadDocumentos = async () => {
                 await prisma.documento.findFirst({
                     where: {
                         nombre: {
-                            contains: documentoXLSX.Documento
+                            contains: documentoData.Documento
                         },
                     },
                 })
             );
 
             if (!scout) {
-                console.log(`El scout con nombre: ${documentoXLSX.Scout} (I: ${index}) no existe en la bd`);
+                console.log(`El scout con nombre: ${documentoData.Scout} (I: ${index}) no existe en la bd`);
                 continue;
             }
             if (!documento) {
-                console.log(`El documento con nombre: ${documentoXLSX.Documento} (I: ${index}) no existe en la bd`);
+                console.log(`El documento con nombre: ${documentoData.Documento} (I: ${index}) no existe en la bd`);
                 continue;
             }
 
             let fecha = new Date();
 
-            if (typeof documentoXLSX.Fecha === "number") {
-                fecha = excelDateToJSDate(documentoXLSX.Fecha)
+            if (typeof documentoData.Fecha === "number") {
+                fecha = excelDateToJSDate(documentoData.Fecha)
             }
-            if (typeof documentoXLSX.Fecha === "string") {
-                fecha = parseDMYtoDate(documentoXLSX.Fecha)
+            if (typeof documentoData.Fecha === "string") {
+                fecha = parseDMYtoDate(documentoData.Fecha)
             }
 
             documentos.push({
@@ -89,6 +92,7 @@ const loadDocumentos = async () => {
         }
 
         console.log(`\n-> Cargando ${documentos.length} documentos a la bd...`);
+        await prisma.$queryRaw`ALTER TABLE DocumentoPresentado AUTO_INCREMENT = 1`;
         const result = await prisma.documentoPresentado.createMany({
             data: documentos,
             skipDuplicates: true,

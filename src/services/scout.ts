@@ -4,7 +4,6 @@ import {
 	IScoutData,
 	ProgresionType,
 	SexoType,
-	TipoEntregaType,
 } from "../types";
 import { PrismaClient } from "@prisma/client";
 import { OrderToGetScouts } from "../types";

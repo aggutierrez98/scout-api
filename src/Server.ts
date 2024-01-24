@@ -24,11 +24,8 @@ import { PatrullaService } from "./services/patrulla";
 import { createPatrullaRouter } from "./routes/patrulla";
 import { AuthService } from "./services/auth";
 import { createAuthRouter } from "./routes/auth";
-import { entregaSchema } from './docs/swagger-ts/schemas/entrega';
 import { EntregaService } from "./services/entrega";
 import { createEntregaRouter } from "./routes/entrega";
-
-const PATH_ROUTER = `${__dirname}`;
 
 const ACCEPTED_ORIGINS = ["http://localhost:3000"];
 const numberOfProxiesOnServer = 1;
@@ -56,6 +53,7 @@ export default class Server {
 			}),
 		);
 
+		//TODO: Terminar de configurar cors
 		// this.app.use(
 		// 	cors({
 		// 		origin: (origin, callback) => {
@@ -65,7 +63,6 @@ export default class Server {
 		// 		},
 		// 	}),
 		// );
-
 		this.app.use(cors())
 
 		this.app.use(express.json());
@@ -86,8 +83,6 @@ export default class Server {
 		this.app.use(tooBusy);
 		this.app.use(morganMiddleware);
 		this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDefinition));
-
-		// // this.app.use("/api", routes);
 		this.app.use("/api", this.loadRoutes());
 
 		this.app.use(errorMiddleware);
@@ -118,20 +113,7 @@ export default class Server {
 		router.use("/entrega", createEntregaRouter(entregaService));
 
 		return router;
-
-		// TODO: Reveer metodo de lectura dinamica de routers haciendo dependency injection
-		// // const PATH_ROUTER = `${__dirname}`;
-		// // readdirSync(PATH_ROUTER).filter((fileName) => {
-		// // 	const cleanName = cleanFileName(fileName);
-		// // 	if (cleanName !== "index") {
-		// // 		import(`./${cleanName}`).then(({ createRouter }) => {
-		// // 			router.use(`/${cleanName}`, createRouter());
-		// // 		});
-		// // 	}
-		// // });
 	}
-
-	createLogger() { }
 
 	async connectWhatsapp() {
 		await whatsappClientConnection();

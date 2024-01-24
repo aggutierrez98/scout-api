@@ -1,23 +1,26 @@
 import { PrismaClient, Prisma } from "@prisma/client";
-import * as XLSX from "xlsx";
 import ProgressBar from "progress";
 import { VALID_ENTREGAS_TYPE, excelDateToJSDate, parseDMYtoDate } from "../utils";
-import { TipoEntregaType, EntregaXLSX } from "../types";
+import { EntregaXLSX } from "../types";
 import { nanoid } from "nanoid";
-const prisma = new PrismaClient();
-const loaentregas = async () => {
+import { getDoc } from "../utils/helpers/googleDriveApi";
+
+const loadEntregas = async () => {
+    const prisma = new PrismaClient();
+    await prisma.$connect()
+
     try {
         console.time("Tiempo de ejecucion");
         console.log(
             "------------ INICIANDO SCRIPT DE ACTUALIZACION ENTREGAS -------------\n",
         );
 
-        const file = XLSX.readFile("dbdata/entregas.xlsx");
-        const sheet = file.Sheets[file.SheetNames[0]];
-        const data: EntregaXLSX[] = XLSX.utils.sheet_to_json(sheet);
+        const doc = await getDoc(process.env.GOOGLE_ENTREGAS_SPREADSHEET_KEY!)
+        const sheet = doc.sheetsByIndex[0];
+        const data = await sheet.getRows<EntregaXLSX>();
 
         const bar = new ProgressBar(
-            "-> Leyendo entregas desde xlsx: [:bar] :percent - Tiempo restante: :etas",
+            `-> Leyendo ${data.length} entregas desde xlsx: [:bar] :percent - Tiempo restante: :etas`,
             {
                 total: data.length,
                 width: 30,
@@ -26,9 +29,13 @@ const loaentregas = async () => {
 
         const entregas: Prisma.EntregaRealizadaCreateManyInput[] = [];
         let index = 0;
-        for (const entregaXLSX of data) {
+        for (const entregaSheetData of data) {
+
+
+            const entregaData = entregaSheetData.toObject()
+
             index++
-            const [nombre, apellido] = entregaXLSX.Scout.toString().split(" ")
+            const [apellido, nombre] = entregaData.Scout!.toString().split(", ")
 
             const scout = (
                 await prisma.scout.findFirst({
@@ -50,21 +57,21 @@ const loaentregas = async () => {
             );
 
             if (!scout) {
-                console.log(`El scout con nombre: ${entregaXLSX.Scout} (I: ${index}) no existe en la bd`);
+                console.log(`El scout con nombre: ${entregaData.Scout} (I: ${index}) no existe en la bd`);
                 continue;
             }
 
             let fecha = new Date();
-            if (typeof entregaXLSX.Fecha === "number") {
-                fecha = excelDateToJSDate(entregaXLSX.Fecha)
+            if (typeof entregaData.Fecha === "number") {
+                fecha = excelDateToJSDate(entregaData.Fecha)
             }
-            if (typeof entregaXLSX.Fecha === "string") {
-                fecha = parseDMYtoDate(entregaXLSX.Fecha)
+            if (typeof entregaData.Fecha === "string") {
+                fecha = parseDMYtoDate(entregaData.Fecha)
             }
 
-            const tipoEntrega = VALID_ENTREGAS_TYPE.find(entregaType => entregaType.includes(entregaXLSX["Tipo de entrega"].toLocaleUpperCase()))
+            const tipoEntrega = VALID_ENTREGAS_TYPE.find(entregaType => entregaType.includes(entregaData["Tipo de entrega"]!.toLocaleUpperCase()))
             if (!tipoEntrega) {
-                console.log(`El tipo de entrega ingresado como: ${entregaXLSX["Tipo de entrega"]} (I: ${index}) no existe en la bd`);
+                console.log(`El tipo de entrega ingresado como: ${entregaData["Tipo de entrega"]} (I: ${index}) no existe en la bd`);
                 continue;
             }
 
@@ -95,4 +102,4 @@ const loaentregas = async () => {
     }
 };
 
-loaentregas();
+loadEntregas();

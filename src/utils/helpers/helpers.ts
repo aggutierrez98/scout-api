@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import compression from "compression";
+import { Server, IncomingMessage, ServerResponse } from 'http';
 const NO_COMPRESS_HEADERS = ["x-no-compression"];
 
 export const parseDMYtoDate = (string: string) => {
@@ -32,3 +33,15 @@ export const shouldCompress = (req: Request, res: Response) => {
 };
 
 export const getAge = (birthDate: Date) => Math.floor((new Date().getTime() - new Date(birthDate).getTime()) / 3.15576e+10)
+
+
+export const gracefulShutdownMainProcess = (signal: string, server: Server<typeof IncomingMessage, typeof ServerResponse>) => {
+	console.log(`\nSe recibió una señal ${signal}, se cierran conexiones antes de terminar el proceso`)
+	server.close(() => {
+		console.log("Servidor HTTP desconectado")
+		//Si es necesario cerrar otras conexiones aquí:
+
+		console.log("Conexiones cerradas correctamente, se finaliza el proceso")
+		process.exit(0)
+	})
+}

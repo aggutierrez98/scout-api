@@ -1,21 +1,23 @@
 import { PrismaClient, Prisma, EstadoCivil } from "@prisma/client";
-import * as XLSX from "xlsx";
 import ProgressBar from "progress";
 import { excelDateToJSDate, parseDMYtoDate } from "../utils";
 import { FamiliarXLSX } from "../types";
 import { nanoid } from "nanoid";
-const prisma = new PrismaClient();
+import { getDoc } from "../utils/helpers/googleDriveApi";
 
 const insertFamiliares = async () => {
+    const prisma = new PrismaClient();
+    await prisma.$connect()
+
     try {
         console.time("Tiempo de ejecucion");
         console.log(
             "------------ INICIANDO SCRIPT DE ACTUALIZACION FAMILIARES -------------\n",
         );
 
-        const file = XLSX.readFile("dbdata/familiares.xlsx");
-        const sheet = file.Sheets[file.SheetNames[0]];
-        const data: FamiliarXLSX[] = XLSX.utils.sheet_to_json(sheet);
+        const doc = await getDoc(process.env.GOOGLE_FAMILIARES_SPREADSHEET_KEY!)
+        const sheet = doc.sheetsByIndex[0];
+        const data = await sheet.getRows<FamiliarXLSX>();
 
         const bar = new ProgressBar(
             "-> Leyendo familiares desde xlsx: [:bar] :percent - Tiempo restante: :etas",
@@ -26,18 +28,20 @@ const insertFamiliares = async () => {
         );
 
         const familiares: Prisma.FamiliarCreateManyInput[] = [];
-        for (const familiarXLSX of data) {
 
-            const [apellido, nombre] = familiarXLSX.Nombre.split(", ");
+        for (const familiarSheetData of data) {
+            const familiarData = familiarSheetData.toObject()
+
+            const [apellido, nombre] = familiarData.Nombre!.split(", ");
             let fechaNacimiento = new Date();
-            if (typeof familiarXLSX["Fecha Nacimiento"] === "number") {
-                fechaNacimiento = excelDateToJSDate(familiarXLSX["Fecha Nacimiento"])
+            if (typeof familiarData["Fecha Nacimiento"] === "number") {
+                fechaNacimiento = excelDateToJSDate(familiarData["Fecha Nacimiento"])
             }
-            if (typeof familiarXLSX["Fecha Nacimiento"] === "string") {
-                fechaNacimiento = parseDMYtoDate(familiarXLSX["Fecha Nacimiento"])
+            if (typeof familiarData["Fecha Nacimiento"] === "string") {
+                fechaNacimiento = parseDMYtoDate(familiarData["Fecha Nacimiento"])
             }
 
-            const sexo = familiarXLSX.Sexo === "Masculino" ? "M" : "F";
+            const sexo = familiarData.Sexo === "Masculino" ? "M" : "F";
 
             familiares.push({
                 uuid: nanoid(10),
@@ -45,19 +49,19 @@ const insertFamiliares = async () => {
                 apellido,
                 fechaNacimiento,
                 sexo,
-                dni: String(familiarXLSX.Documento),
-                localidad: familiarXLSX.Localidad,
-                direccion: familiarXLSX.Calle,
-                telefono: String(familiarXLSX.Telefono),
-                mail: familiarXLSX.Email,
-                estadoCivil: familiarXLSX["Estado Civil"].toLocaleUpperCase() as EstadoCivil,
+                dni: String(familiarData.Documento),
+                localidad: familiarData.Localidad!,
+                direccion: familiarData.Calle!,
+                telefono: String(familiarData.Telefono),
+                mail: familiarData.Email,
+                estadoCivil: familiarData["Estado Civil"]!.toLocaleUpperCase() as EstadoCivil,
             });
 
             bar.tick(1);
         }
 
         console.log(`\n-> Cargando ${familiares.length} familiares a la bd...`);
-        // await prisma.$queryRaw`ALTER TABLE familiar AUTO_INCREMENT = 1`;
+        await prisma.$queryRaw`ALTER TABLE Familiar AUTO_INCREMENT = 1`;
         const result = await prisma.familiar.createMany({
             data: familiares,
             skipDuplicates: true,

@@ -1,20 +1,24 @@
 import { PrismaClient, Prisma } from "@prisma/client";
-import * as XLSX from "xlsx";
 import ProgressBar from "progress";
 import { excelDateToJSDate, parseDMYtoDate } from "../utils";
 import { MetodosPagoType, PagoXLSX } from "../types";
 import { nanoid } from "nanoid";
-const prisma = new PrismaClient();
+import { getDoc } from "../utils/helpers/googleDriveApi";
+
 const loadPagos = async () => {
+    const prisma = new PrismaClient();
+    await prisma.$connect()
+
     try {
+
         console.time("Tiempo de ejecucion");
         console.log(
             "------------ INICIANDO SCRIPT DE ACTUALIZACION PAGOS -------------\n",
         );
 
-        const file = XLSX.readFile("dbdata/pagos.xlsx");
-        const sheet = file.Sheets[file.SheetNames[0]];
-        const data: PagoXLSX[] = XLSX.utils.sheet_to_json(sheet);
+        const doc = await getDoc(process.env.GOOGLE_PAGOS_SPREADSHEET_KEY!)
+        const sheet = doc.sheetsByIndex[0];
+        const data = await sheet.getRows<PagoXLSX>();
 
         const bar = new ProgressBar(
             "-> Leyendo pagos desde xlsx: [:bar] :percent - Tiempo restante: :etas",
@@ -26,9 +30,11 @@ const loadPagos = async () => {
 
         const pagos: Prisma.PagoCreateManyInput[] = [];
         let index = 0;
-        for (const pagoXLSX of data) {
+        for (const pagoSheetData of data) {
+            const pagoData = pagoSheetData.toObject()
+
             index++
-            const [nombre, apellido] = pagoXLSX.Scout.toString().split(" ")
+            const [apellido, nombre] = pagoData.Scout!.toString().split(", ")
 
             const scout = (
                 await prisma.scout.findFirst({
@@ -50,26 +56,26 @@ const loadPagos = async () => {
             );
 
             if (!scout) {
-                console.log(`El scout con nombre: ${pagoXLSX.Scout} (I: ${index}) no existe en la bd`);
+                console.log(`El scout con nombre: ${pagoData.Scout} (I: ${index}) no existe en la bd`);
                 continue;
             }
 
             let fecha = new Date();
-            if (typeof pagoXLSX.Fecha === "number") {
-                fecha = excelDateToJSDate(pagoXLSX.Fecha)
+            if (typeof pagoData.Fecha === "number") {
+                fecha = excelDateToJSDate(pagoData.Fecha)
             }
-            if (typeof pagoXLSX.Fecha === "string") {
-                fecha = parseDMYtoDate(pagoXLSX.Fecha)
+            if (typeof pagoData.Fecha === "string") {
+                fecha = parseDMYtoDate(pagoData.Fecha)
             }
 
             pagos.push({
                 uuid: nanoid(10),
                 scoutId: scout.uuid,
                 fechaPago: fecha,
-                concepto: pagoXLSX.Concepto.toLocaleUpperCase(),
-                metodoPago: pagoXLSX["Metodo de pago"].toLocaleUpperCase() as MetodosPagoType,
-                monto: pagoXLSX.Monto,
-                rendido: pagoXLSX.Rendido === "si",
+                concepto: (pagoData.Concepto ?? "").toLocaleUpperCase(),
+                metodoPago: pagoData["Metodo de pago"]!.toLocaleUpperCase() as MetodosPagoType,
+                monto: pagoData.Monto ?? "",
+                rendido: pagoData.Rendido === "si",
             });
 
             bar.tick(1);

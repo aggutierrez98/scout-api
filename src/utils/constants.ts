@@ -73,3 +73,7 @@ export const VALID_ROLES = [
 	"COLABORADOR",
 	"EXTERNO",
 ] as const
+export const VALID_ESTADOS = [
+	"ACTIVO",
+	"INACTIVO",
+] as const
