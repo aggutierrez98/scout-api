@@ -1,9 +1,8 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import ProgressBar from "progress";
 import { excelDateToJSDate, parseDMYtoDate } from "../utils";
-import { DocumentoXLSX } from "../types";
 import { nanoid } from "nanoid";
-import { getDoc } from "../utils/helpers/googleDriveApi";
+import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
 
 const loadDocumentos = async () => {
     const prisma = new PrismaClient();
@@ -15,9 +14,7 @@ const loadDocumentos = async () => {
             "------------ INICIANDO SCRIPT DE ACTUALIZACION DOCUMENTOS -------------\n",
         );
 
-        const doc = await getDoc(process.env.GOOGLE_DOCUMENTOS_SPREADSHEET_KEY!)
-        const sheet = doc.sheetsByIndex[0];
-        const data = await sheet.getRows<DocumentoXLSX>();
+        const data = await getSpreadSheetData("documentos")
 
         const bar = new ProgressBar(
             "-> Leyendo documentos desde xlsx: [:bar] :percent - Tiempo restante: :etas",
@@ -29,9 +26,8 @@ const loadDocumentos = async () => {
 
         const documentos: Prisma.DocumentoPresentadoCreateManyInput[] = [];
         let index = 0;
-        for (const documentoSheetData of data) {
+        for (const documentoData of data) {
             index++
-            const documentoData = documentoSheetData.toObject()
             const [apellido, nombre] = documentoData.Scout!.toString().split(", ")
 
             const scout = (

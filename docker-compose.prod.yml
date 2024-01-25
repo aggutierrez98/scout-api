@@ -7,12 +7,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.prod
-    volumes: 
+    volumes:
       - ./.wwebjs_auth/session-client-master/:/.wwebjs_auth/session-client-master
-    env_file: .env
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - WHATSAPP_US_CHAT_ID=${WHATSAPP_US_CHAT_ID}
-      - PORT=${PORT}
+    env_file: .env.production
+    # environment:
+    #   - DATABASE_URL=${DATABASE_URL}
+    #   - WHATSAPP_US_CHAT_ID=${WHATSAPP_US_CHAT_ID}
+    #   - PORT=${PORT}
+    #   - JWT_SECRET=${JWT_SECRET}
+    #   - LOGTAIL_TOKEN=${LOGTAIL_TOKEN}
+    #   - GOOGLE_SERVICE_ACCOUNT_EMAIL=${GOOGLE_SERVICE_ACCOUNT_EMAIL}
+    #   - GOOGLE_PRIVATE_KEY=${GOOGLE_PRIVATE_KEY}
+    #   - GOOGLE_SPREADSHEET_DATA_KEY=${GOOGLE_SPREADSHEET_DATA_KEY}
     ports:
       - ${PORT}:${PORT}

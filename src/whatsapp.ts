@@ -8,7 +8,7 @@ async function whatsappClientConnection() {
 	try {
 		const client = new Client({
 			authStrategy: new LocalAuth({
-				// clientId: "sbot",
+				clientId: "sbot",
 			}),
 			puppeteer: {
 				args: [
@@ -32,6 +32,7 @@ async function whatsappClientConnection() {
 		});
 
 		client.on("qr", (qr) => {
+			console.log("aca")
 			qrCode.generate(qr, { small: true });
 		});
 
@@ -55,6 +56,7 @@ async function whatsappClientConnection() {
 		});
 
 		client.initialize();
+
 	} catch (error) {
 		console.log(error);
 	}

@@ -3,7 +3,7 @@ import ProgressBar from "progress";
 import { VALID_RELATIONSHIPS, excelDateToJSDate, parseDMYtoDate } from "../utils";
 import { EstadosType, RelacionFamiliarType, ReligionType, ScoutXLSX, UsuarioXLSX } from "../types";
 import { nanoid } from "nanoid";
-import { getDoc } from "../utils/helpers/googleDriveApi";
+import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
 import { GoogleSpreadsheetRow } from "google-spreadsheet";
 
 const loadPagos = async () => {
@@ -17,19 +17,8 @@ const loadPagos = async () => {
             "------------ INICIANDO SCRIPT DE ACTUALIZACION SCOUTS -------------\n",
         );
 
-        let data: GoogleSpreadsheetRow<ScoutXLSX>[] = []
-        let dataUsers: GoogleSpreadsheetRow<UsuarioXLSX>[] = []
-        try {
-            const doc = await getDoc(process.env.GOOGLE_SCOUTS_SPREADSHEET_KEY!)
-            const sheet = doc.sheetsByIndex[0];
-            data = await sheet.getRows<ScoutXLSX>();
-
-            const docUsers = await getDoc(process.env.GOOGLE_USUARIOS_SPREADSHEET_KEY!)
-            const sheetUsers = docUsers.sheetsByIndex[0];
-            dataUsers = await sheetUsers.getRows<UsuarioXLSX>();
-        } catch (error) {
-            console.log("errorsini")
-        }
+        const data = await getSpreadSheetData("scouts")
+        const dataUsers = await getSpreadSheetData("usuarios")
 
         const bar = new ProgressBar(
             "-> Leyendo scouts desde xlsx: [:bar] :percent - Tiempo restante: :etas",
@@ -40,8 +29,7 @@ const loadPagos = async () => {
         );
 
         const scouts: Prisma.ScoutCreateManyInput[] = [];
-        for (const scoutSheetData of data) {
-            const scoutData = scoutSheetData.toObject()
+        for (const scoutData of data) {
 
             const [apellido, nombre] = scoutData.Nombre!.split(", ");
 
@@ -144,11 +132,11 @@ const loadPagos = async () => {
             }
 
             // Actualizamos data dentro del usuario
-            const scoutUser = dataUsers.find((user) => user.get("DNI") === scoutData.Documento)
+            const scoutUser = dataUsers.find((user) => user.DNI === scoutData.Documento)
             if (scoutUser) {
                 await prisma.user.update({
                     where: {
-                        uuid: scoutUser.get("UserId")
+                        uuid: scoutUser.UserId
                     },
                     data: {
                         scoutId: id

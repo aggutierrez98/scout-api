@@ -1,7 +1,15 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
+import { DocumentoXLSX, EntregaXLSX, FamiliarXLSX, PagoXLSX, ScoutXLSX, UsuarioXLSX } from '../../types';
+type SheetIndexType = "familiares" | "scouts" | "entregas" | "usuarios" | "pagos" | "documentos"
 
-export const getDoc = async (sheetId: string) => {
+export function getSpreadSheetData(sheetIndex: "familiares"): Promise<Partial<FamiliarXLSX>[]>;
+export function getSpreadSheetData(sheetIndex: "scouts"): Promise<Partial<ScoutXLSX>[]>;
+export function getSpreadSheetData(sheetIndex: "entregas"): Promise<Partial<EntregaXLSX>[]>;
+export function getSpreadSheetData(sheetIndex: "usuarios"): Promise<Partial<UsuarioXLSX>[]>;
+export function getSpreadSheetData(sheetIndex: "pagos"): Promise<Partial<PagoXLSX>[]>;
+export function getSpreadSheetData(sheetIndex: "documentos"): Promise<Partial<DocumentoXLSX>[]>;
+export async function getSpreadSheetData(sheetIndex: SheetIndexType) {
     const serviceAccountAuth = new JWT({
         email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
         key: process.env.GOOGLE_PRIVATE_KEY,
@@ -10,7 +18,9 @@ export const getDoc = async (sheetId: string) => {
         ],
     });
 
-    const doc = new GoogleSpreadsheet(sheetId, serviceAccountAuth);
+    const doc = new GoogleSpreadsheet(process.env.GOOGLE_SPREADSHEET_DATA_KEY!, serviceAccountAuth);
     await doc.loadInfo();
-    return doc
+    const rows = await doc.sheetsByTitle[sheetIndex].getRows()
+    const data = rows.map(docData => docData.toObject()!)
+    return data
 }

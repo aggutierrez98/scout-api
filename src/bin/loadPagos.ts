@@ -3,7 +3,7 @@ import ProgressBar from "progress";
 import { excelDateToJSDate, parseDMYtoDate } from "../utils";
 import { MetodosPagoType, PagoXLSX } from "../types";
 import { nanoid } from "nanoid";
-import { getDoc } from "../utils/helpers/googleDriveApi";
+import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
 
 const loadPagos = async () => {
     const prisma = new PrismaClient();
@@ -16,9 +16,7 @@ const loadPagos = async () => {
             "------------ INICIANDO SCRIPT DE ACTUALIZACION PAGOS -------------\n",
         );
 
-        const doc = await getDoc(process.env.GOOGLE_PAGOS_SPREADSHEET_KEY!)
-        const sheet = doc.sheetsByIndex[0];
-        const data = await sheet.getRows<PagoXLSX>();
+        const data = await getSpreadSheetData("pagos")
 
         const bar = new ProgressBar(
             "-> Leyendo pagos desde xlsx: [:bar] :percent - Tiempo restante: :etas",
@@ -30,8 +28,7 @@ const loadPagos = async () => {
 
         const pagos: Prisma.PagoCreateManyInput[] = [];
         let index = 0;
-        for (const pagoSheetData of data) {
-            const pagoData = pagoSheetData.toObject()
+        for (const pagoData of data) {
 
             index++
             const [apellido, nombre] = pagoData.Scout!.toString().split(", ")

@@ -3,7 +3,7 @@ import ProgressBar from "progress";
 import { VALID_ENTREGAS_TYPE, excelDateToJSDate, parseDMYtoDate } from "../utils";
 import { EntregaXLSX } from "../types";
 import { nanoid } from "nanoid";
-import { getDoc } from "../utils/helpers/googleDriveApi";
+import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
 
 const loadEntregas = async () => {
     const prisma = new PrismaClient();
@@ -15,9 +15,7 @@ const loadEntregas = async () => {
             "------------ INICIANDO SCRIPT DE ACTUALIZACION ENTREGAS -------------\n",
         );
 
-        const doc = await getDoc(process.env.GOOGLE_ENTREGAS_SPREADSHEET_KEY!)
-        const sheet = doc.sheetsByIndex[0];
-        const data = await sheet.getRows<EntregaXLSX>();
+        const data = await getSpreadSheetData("entregas")
 
         const bar = new ProgressBar(
             `-> Leyendo ${data.length} entregas desde xlsx: [:bar] :percent - Tiempo restante: :etas`,
@@ -29,10 +27,7 @@ const loadEntregas = async () => {
 
         const entregas: Prisma.EntregaRealizadaCreateManyInput[] = [];
         let index = 0;
-        for (const entregaSheetData of data) {
-
-
-            const entregaData = entregaSheetData.toObject()
+        for (const entregaData of data) {
 
             index++
             const [apellido, nombre] = entregaData.Scout!.toString().split(", ")

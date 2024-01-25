@@ -3,7 +3,7 @@ import ProgressBar from "progress";
 import { excelDateToJSDate, parseDMYtoDate } from "../utils";
 import { FamiliarXLSX } from "../types";
 import { nanoid } from "nanoid";
-import { getDoc } from "../utils/helpers/googleDriveApi";
+import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
 
 const insertFamiliares = async () => {
     const prisma = new PrismaClient();
@@ -15,9 +15,7 @@ const insertFamiliares = async () => {
             "------------ INICIANDO SCRIPT DE ACTUALIZACION FAMILIARES -------------\n",
         );
 
-        const doc = await getDoc(process.env.GOOGLE_FAMILIARES_SPREADSHEET_KEY!)
-        const sheet = doc.sheetsByIndex[0];
-        const data = await sheet.getRows<FamiliarXLSX>();
+        const data = await getSpreadSheetData("familiares")
 
         const bar = new ProgressBar(
             "-> Leyendo familiares desde xlsx: [:bar] :percent - Tiempo restante: :etas",
@@ -29,8 +27,7 @@ const insertFamiliares = async () => {
 
         const familiares: Prisma.FamiliarCreateManyInput[] = [];
 
-        for (const familiarSheetData of data) {
-            const familiarData = familiarSheetData.toObject()
+        for (const familiarData of data) {
 
             const [apellido, nombre] = familiarData.Nombre!.split(", ");
             let fechaNacimiento = new Date();
