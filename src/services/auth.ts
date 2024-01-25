@@ -190,6 +190,33 @@ export class AuthService implements IAuthService {
         }
     }
 
+    createUAdminUser = async ({ password, username, scoutId }: CreateParams) => {
+        const uuid = nanoid(10);
+        const passHash = await encrypt(password)
+
+        const user = await UserModel.create({
+            data: {
+                uuid,
+                username,
+                password: passHash,
+                scoutId: scoutId,
+                role: "ADMIN"
+            },
+            include: {
+                scout: true
+            }
+        });
+
+        const token = generateToken(user.id)
+        return {
+            id: user.id,
+            scout: user.scout,
+            username: user.username,
+            role: user.role,
+            token
+        }
+    }
+
     modifyUser = async ({ active, role, userId }: ModifyParams) => {
 
         const user = await UserModel.update({

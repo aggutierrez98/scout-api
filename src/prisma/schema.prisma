@@ -160,6 +160,7 @@ enum EstadoCivil {
   SOLTERO
   CASADO
   SEPARADO
+  VIUDO
 }
 
 enum Funcion {

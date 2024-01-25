@@ -32,10 +32,12 @@ async function whatsappClientConnection() {
 		});
 
 		client.on("qr", (qr) => {
-			console.log("aca")
 			qrCode.generate(qr, { small: true });
 		});
 
+		client.on("auth_failure", () => {
+			console.log("aca error en sesion")
+		})
 		client.on("ready", () => {
 			console.log("Whatsapp client ready");
 		});

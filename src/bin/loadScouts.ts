@@ -4,7 +4,6 @@ import { VALID_RELATIONSHIPS, excelDateToJSDate, parseDMYtoDate } from "../utils
 import { EstadosType, RelacionFamiliarType, ReligionType, ScoutXLSX, UsuarioXLSX } from "../types";
 import { nanoid } from "nanoid";
 import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
-import { GoogleSpreadsheetRow } from "google-spreadsheet";
 
 const loadPagos = async () => {
     const prisma = new PrismaClient();
@@ -94,7 +93,7 @@ const loadPagos = async () => {
 
                 for (const { name, relacion } of familiaresData) {
                     if (!name) continue
-                    const [nombre, apellido] = name.split(" ")
+                    const [apellido, nombre] = name.split(", ");
 
                     const familiarId = (
                         await prisma.familiar.findFirst({
@@ -133,6 +132,8 @@ const loadPagos = async () => {
 
             // Actualizamos data dentro del usuario
             const scoutUser = dataUsers.find((user) => user.DNI === scoutData.Documento)
+
+
             if (scoutUser) {
                 await prisma.user.update({
                     where: {

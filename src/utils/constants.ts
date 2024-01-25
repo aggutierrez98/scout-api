@@ -14,6 +14,7 @@ export const VALID_ESTADO_CIVIL = [
 	"CASADO",
 	"SOLTERO",
 	"SEPARADO",
+	"VIUDO"
 ] as const;
 export const VALID_FUNCTIONS = [
 	"JOVEN",
