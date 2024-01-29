@@ -1,12 +1,9 @@
 node_modules
-
 .env
 .env.development
 .env.production
-
 .wwebjs_auth
 .wwebjs_cache
-
 mysql-data
-
 dist
+**-ssh.pem

@@ -1,10 +1,11 @@
-import { PrismaClient } from "@prisma/client";
-import { IUser, IUserData } from '../types/interfaces';
+import { PrismaClient, Prisma } from "@prisma/client";
+import { IUser, IUserData, IScout } from '../types/interfaces';
 import { nanoid } from "nanoid";
 import { encrypt, verified } from "../utils/lib/bcrypt.util";
 import { generateToken } from "../utils/lib/jwt.util";
 import { RolesType } from "../types";
 import { getAge } from "../utils";
+
 
 const prisma = new PrismaClient().$extends({
     result: {
@@ -25,13 +26,14 @@ const prisma = new PrismaClient().$extends({
             },
             edad: {
                 needs: { fechaNacimiento: true },
-                compute(scout) {
+                compute(scout: IScout) {
                     return getAge(scout.fechaNacimiento)
                 },
             }
         }
     },
 });
+
 const UserModel = prisma.user;
 
 interface LoginParams {

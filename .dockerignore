@@ -4,3 +4,4 @@ npm-debug.log
 .wwebjs_cache
 mysql-data
 dist
+**-ssh.pem

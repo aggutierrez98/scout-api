@@ -1,6 +1,5 @@
 import qrCode from "qrcode-terminal";
-import whatsapp from "whatsapp-web.js";
-const { Client, LocalAuth } = whatsapp;
+import { Client, LocalAuth } from "whatsapp-web.js";
 
 //TODO: Crear todas las utilidades del bot de whatsapp
 
@@ -27,7 +26,6 @@ async function whatsappClientConnection() {
 					"--single-process",
 					"--window-size=10,10",
 				],
-				headless: true,
 			},
 		});
 
@@ -36,10 +34,11 @@ async function whatsappClientConnection() {
 		});
 
 		client.on("auth_failure", () => {
-			console.log("aca error en sesion")
+			throw new Error("Error al iniciar sesion")
 		})
+
 		client.on("ready", () => {
-			console.log("Whatsapp client ready");
+			console.log("Cliente de Whatsapp listo");
 		});
 
 		client.on("message", async (message) => {
@@ -53,8 +52,15 @@ async function whatsappClientConnection() {
 			}
 		});
 
-		client.on("remote_session_saved", () => {
-			console.log("Whatsapp remote session saved");
+		client.on("message_create", async (message) => {
+			const chat = await message.getChat();
+			if (chat.isGroup) {
+				if (chat.id._serialized === process.env.WHATSAPP_US_CHAT_ID) {
+					if (message.body === "!sb") {
+						client.sendMessage(message.from, "Soy sbot para vos y tu vieja");
+					}
+				}
+			}
 		});
 
 		client.initialize();
