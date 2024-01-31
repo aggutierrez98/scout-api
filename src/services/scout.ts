@@ -61,7 +61,7 @@ const prisma = new PrismaClient().$extends({
 	},
 });
 
-const ScoutModel = prisma.scout;
+export const ScoutModel = prisma.scout;
 
 type queryParams = {
 	limit?: number;

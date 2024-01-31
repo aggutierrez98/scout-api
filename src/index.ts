@@ -2,10 +2,6 @@ import { IncomingMessage, Server, ServerResponse } from "http";
 import ServerModel from "./Server";
 import { gracefulShutdownMainProcess } from "./utils";
 
-//TODO: APLICAR PM2 Y DESPLEGAR EN INSTANCIA VM GOOGLE:
-// https://console.cloud.google.com/compute/instances?onCreate=true&hl=es&project=scout-api-398021
-// https://www.youtube.com/watch?v=T1QFGwOnQxQ
-
 //TODO: PROBAR DOCUMENTADO AUTOMATICO EN SWAGGER CON TSOA
 //TODO: APLICAR VARIABLES DE ENTORNO USANDO SWAGGER
 
@@ -22,5 +18,6 @@ import { gracefulShutdownMainProcess } from "./utils";
 
 	const serverInstance = new ServerModel();
 	await serverInstance.connectWhatsapp();
+	serverInstance.loadCrons();
 	server = serverInstance.listen();
 })();

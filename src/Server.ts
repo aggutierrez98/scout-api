@@ -1,7 +1,6 @@
 import express, { Router } from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
-import whatsappClientConnection from "./whatsapp";
 import { errorMiddleware, morganMiddleware } from "./middlewares";
 import swaggerUi from "swagger-ui-express";
 import { config } from "dotenv";
@@ -26,6 +25,8 @@ import { AuthService } from "./services/auth";
 import { createAuthRouter } from "./routes/auth";
 import { EntregaService } from "./services/entrega";
 import { createEntregaRouter } from "./routes/entrega";
+import { WhatsAppSbot } from "./whatsapp/WhatsappSession";
+import rememberBirthdays from "./bin/recordatorioCumpleaños";
 
 const ACCEPTED_ORIGINS = ["http://localhost:3000"];
 const numberOfProxiesOnServer = 1;
@@ -116,7 +117,11 @@ export default class Server {
 	}
 
 	async connectWhatsapp() {
-		await whatsappClientConnection();
+		WhatsAppSbot.getInstance()
+	}
+
+	loadCrons() {
+		rememberBirthdays()
 	}
 
 	listen() {

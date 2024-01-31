@@ -56,6 +56,7 @@ const loadPagos = async () => {
                 scoutData.Progresion?.toUpperCase() as Progresion;
             const religion = scoutData.Religion?.toUpperCase() as ReligionType;
 
+            //Todo: Solucionar error en script que por defecto los pone en la pantera
             const patrullaId = (
                 await prisma.patrulla.findFirst({
                     where: { nombre: scoutData.Patrulla },
