@@ -59,6 +59,24 @@ export const VALID_ENTREGAS_TYPE = [
 	"SUPERACION",
 ] as const;
 
+export enum EntregaFromEntregaType {
+	UNIFORME = "Uniforme Scout",
+	GUIA = "Insignia de Guia de patrulla",
+	SUBGUIA = "Insignia de Subguia de patrulla",
+	PROGPISTA = "Insignia de progresion PISTA",
+	PROGRUMBO = "Insignia de progresion RUMBO",
+	PROGTRAVESIA = "Insignia de progresion TRAVESIA",
+	PROMESA = "Insignia de Promesa",
+	ESPNATURALEZA = "Especialidad de Vida en la naturaleza",
+	ESPARTE = "Especialidad de Arte, Expresión y Cultura	",
+	ESPSERVICIO = "Especialidad de Servicio a los demás	",
+	ESPESPIRITUALIDAD = "Especialidad de Espiritualidad",
+	ESPDEPORTES = "Especialidad de Deportes",
+	ESPCIENCIA = "Especialidad de Ciencia y Tecnología",
+	SUPERACION = "Insignia de Maxima Superacion",
+
+}
+
 export const VALID_SEX = ["M", "F"] as const;
 
 export const VALID_METODOS_PAGO = [
@@ -78,3 +96,5 @@ export const VALID_ESTADOS = [
 	"ACTIVO",
 	"INACTIVO",
 ] as const
+
+export const MENU_COMMANDS = ["pagos", "documentos", "scouts", "familiares", "entregas"]

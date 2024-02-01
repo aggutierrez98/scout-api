@@ -1,7 +1,19 @@
 import { Client, Message } from "whatsapp-web.js";
 import qrCode from "qrcode-terminal";
 import clientConfig from "./clientConfig";
-import { obtenerPagosScout, obtenerPagosSemana, obtenerScouts, obtenerScoutsPorCumplirAños } from "./useCases";
+import {
+    obtenerDocumentosFaltantes,
+    obtenerDocumentosScout,
+    obtenerEntregas,
+    obtenerFamiliar,
+    obtenerFamiliaresScout,
+    obtenerPagosScout,
+    obtenerPagosSemana,
+    obtenerScouts,
+    obtenerScoutsPorCumplirAños
+} from "./useCases";
+import options from "./options";
+import { MENU_COMMANDS } from "../utils";
 
 export class WhatsAppSbot {
     private static instance: WhatsAppSbot;
@@ -63,115 +75,156 @@ export class WhatsAppSbot {
 
         if (msg.body === "#sb" || msg.body.startsWith('#sb ')) {
             const [command, ...commandSubOption] = msg.body.split("#sb")[1].split(" ").slice(1)
+            const subCommand = commandSubOption[0];
 
             if (!command) await msg.reply("Soy _SBot_ para lo que necesites pa.\nSi necesitas ayuda escribi *#sb menu*");
-
             else {
-                const subCommand = commandSubOption[0];
+                // @ts-ignore
+                if (!subCommand && MENU_COMMANDS.includes(command)) return await msg.reply(this.GetMenu((command), options[command]));
 
                 switch (command) {
                     case "menu":
-                        await msg.reply(this.MenuPrincipal());
+                        await msg.reply(this.GetMenu(command, options[command]));
                         break;
+
+                    case "scouts":
+                        switch (subCommand) {
+                            case "total":
+                                const scoutsInfo = await obtenerScouts()
+                                await msg.reply(scoutsInfo);
+                                break;
+
+                            case "patrulla":
+                                const patrulla = commandSubOption[1]
+                                if (!patrulla) await msg.reply("Enviar (nombre.apellido) del scout")
+                                else {
+                                    const scoutsInfo = await obtenerScouts("", patrulla)
+                                    await msg.reply(scoutsInfo)
+                                }
+                                break;
+
+                            case "scout":
+                                const scout = commandSubOption[1]
+                                if (!scout) await msg.reply("Enviar scout")
+                                else {
+                                    const scoutInfo = await obtenerScouts(scout)
+                                    await msg.reply(scoutInfo)
+                                }
+                                break;
+
+                            default:
+                                await msg.reply("Opcion invalida")
+                                break;
+                        }
+                        break
+
+                    case "pagos":
+                        switch (subCommand) {
+                            case "semana":
+                                const pagosSemana = await obtenerPagosSemana()
+                                await msg.reply(pagosSemana);
+                                break;
+
+                            case "scout":
+                                const nombreScout = commandSubOption[1]
+                                if (!nombreScout) await msg.reply("Enviar (nombre.apellido) del scout")
+                                else {
+                                    const concepto = commandSubOption[2]
+                                    const cuotasScout = await obtenerPagosScout(nombreScout, concepto)
+                                    await msg.reply(cuotasScout)
+                                }
+                                break;
+
+                            case "concepto":
+                                const concepto = commandSubOption[1]
+                                if (!concepto) await msg.reply("Enviar concepto")
+                                else {
+                                    const concepto = commandSubOption[2]
+                                    const cuotasScout = await obtenerPagosScout("", concepto)
+                                    await msg.reply(cuotasScout)
+                                }
+                                break;
+
+                            default:
+                                await msg.reply("Opcion invalida")
+                                break;
+
+                        }
+                        break
+
+                    case "documentos":
+                        const nombreScout = commandSubOption[1]
+                        switch (subCommand) {
+                            case "entregados":
+                                if (!nombreScout) await msg.reply("Enviar (nombre.apellido) del scout")
+                                else {
+                                    const docsScout = await obtenerDocumentosScout(nombreScout)
+                                    await msg.reply(docsScout)
+                                }
+                                break;
+
+                            case "faltantes":
+                                if (!nombreScout) await msg.reply("Enviar (nombre.apellido) del scout")
+                                else {
+                                    const docsFaltantesScout = await obtenerDocumentosFaltantes(nombreScout)
+                                    await msg.reply(docsFaltantesScout)
+                                }
+                                break;
+
+                            default:
+                                await msg.reply("Opcion invalida")
+                                break;
+                        }
+                        break
+
+                    case "familiares":
+                        switch (subCommand) {
+                            case "scout":
+                                const nombreScout = commandSubOption[1]
+                                if (!nombreScout) await msg.reply("Enviar (nombre.apellido) del scout")
+                                else {
+                                    const familiaScout = await obtenerFamiliaresScout(nombreScout)
+                                    await msg.reply(familiaScout)
+                                }
+                                break;
+
+                            default:
+                                const nombreFamiliar = subCommand;
+                                const familiar = await obtenerFamiliar(nombreFamiliar)
+                                await msg.reply(familiar)
+                                break;
+                        }
+                        break
+
+                    case "entregas":
+                        switch (subCommand) {
+                            case "scout":
+                                const scout = commandSubOption[1]
+                                if (!scout) await msg.reply("Enviar (nombre.apellido) del scout")
+                                else {
+                                    const scoutEntregas = await obtenerEntregas(scout)
+                                    await msg.reply(scoutEntregas)
+                                }
+                                break;
+
+                            case "patrulla":
+                                const patrulla = commandSubOption[1]
+                                if (!patrulla) await msg.reply("Enviar (nombre) de la patrulla")
+                                else {
+                                    const patrullaEntregas = await obtenerEntregas("", patrulla)
+                                    await msg.reply(patrullaEntregas)
+                                }
+                                break;
+
+                            default:
+                                await msg.reply("Opcion invalida")
+                                break;
+                        }
+                        break
 
                     case "cumpleaños":
                         const listaScouts = await obtenerScoutsPorCumplirAños()
                         await msg.reply(listaScouts)
-                        break;
-
-                    case "scouts":
-                        if (!subCommand) await msg.reply(this.MenuScouts());
-                        else {
-                            switch (subCommand) {
-                                case "total":
-                                    const scoutsInfo = await obtenerScouts()
-                                    await msg.reply(scoutsInfo);
-                                    break;
-
-                                case "patrulla":
-                                    const patrulla = commandSubOption[1]
-                                    if (!patrulla) await msg.reply("Enviar nombre/apellido del scout")
-                                    else {
-                                        const scoutsInfo = await obtenerScouts("", patrulla)
-                                        await msg.reply(scoutsInfo)
-                                    }
-                                    break;
-
-                                case "scout":
-                                    const scout = commandSubOption[1]
-                                    if (!scout) await msg.reply("Enviar scout")
-                                    else {
-                                        const scoutInfo = await obtenerScouts(scout)
-                                        await msg.reply(scoutInfo)
-                                    }
-                                    break;
-
-                                default:
-                                    await msg.reply("Opcion invalida")
-                                    break;
-
-                            }
-                        }
-                        break;
-
-                    case "pagos":
-                        if (!subCommand) await msg.reply(this.MenuPagos());
-                        else {
-                            switch (subCommand) {
-                                case "semana":
-                                    const pagosSemana = await obtenerPagosSemana()
-                                    await msg.reply(pagosSemana);
-                                    break;
-
-                                case "scout":
-                                    const nombreScout = commandSubOption[1]
-                                    if (!nombreScout) await msg.reply("Enviar nombre/apellido del scout")
-                                    else {
-                                        const concepto = commandSubOption[2]
-                                        const cuotasScout = await obtenerPagosScout(nombreScout, concepto)
-                                        await msg.reply(cuotasScout)
-                                    }
-                                    break;
-
-                                case "concepto":
-                                    const concepto = commandSubOption[1]
-                                    if (!concepto) await msg.reply("Enviar concepto")
-                                    else {
-                                        const concepto = commandSubOption[2]
-                                        const cuotasScout = await obtenerPagosScout("", concepto)
-                                        await msg.reply(cuotasScout)
-                                    }
-                                    break;
-
-                                default:
-                                    await msg.reply("Opcion invalida")
-                                    break;
-
-                            }
-                        }
-                        break;
-
-                    case "documentos":
-                        //TODO Hacer las siguientes usecases
-                        // Documentos entregados por scout
-                        // Documentos faltantes para este año por scout
-                        // Total de documentos faltantes
-                        // Documentos entregados la ultima semana
-                        await msg.reply("documentos ponele...")
-                        break;
-
-                    case "familiares":
-                        //TODO Hacer las siguientes usecases
-                        // Familiares del scout
-                        // Informacion del famiiar por nombre
-                        await msg.reply("familiares ponele...")
-                        break;
-
-                    case "entregas":
-                        //TODO Hacer las siguientes usecases
-                        // Entregas realizadas para un scout
-                        // Entregas realizadas por patrulla
-                        await msg.reply("entregas ponele...")
                         break;
 
                     default:
@@ -182,35 +235,9 @@ export class WhatsAppSbot {
         }
     }
 
-    private MenuPrincipal(): string {
-        const options = [
-            "scouts: Consultar Scouts",
-            "pagos: Consultar Pagos",
-            "cumpleaños: Fechas de cumpleaños proximas",
-            "scouts:",
-        ];
-        const formattedOptions = options.map((option, index) => `${index + 1}. ${option}`).join('\n');
-        return `Menu de opciones (Todas comienzan con *#sb*):\n${formattedOptions}`;
-    }
-
-    private MenuPagos(): string {
-        const options = [
-            "semana: Consultar Pagos ultima semana",
-            "scout (nombre/apellido): Consultar Pagos de (xxx)",
-            "scout concepto (nombre/apellido - concepto): Consultar Pagos de (xxx) con concepto (xxx)",
-            "concepto (concepto): Consultar pagos segun concepto (xxx)",
-        ];
-        const formattedOptions = options.map((option, index) => `${index + 1}. ${option}`).join('\n');
-        return `Menu de opciones pagos (Todas comienzan con *#sb pagos*):\n${formattedOptions}`;
-    }
-
-    private MenuScouts(): string {
-        const options = [
-            "total: Consultar numeros totales de scouts",
-            "patrulla (nombre): Consultar scouts de patrulla (xxx)",
-            "scout (nombre/apellido): Consultar Scout (xxx)",
-        ];
-        const formattedOptions = options.map((option, index) => `${index + 1}. ${option}`).join('\n');
-        return `Menu de opciones scouts (Todas comienzan con *#sb scouts*):\n${formattedOptions}`;
+    private GetMenu(section: string, options: string[]): string {
+        const formattedOptions = options.map((option, index) => `${index + 1}. ${option}`).join('\n')
+        const isMain = section === "menu"
+        return `${isMain ? "_MENU PRINCIPAL_" : "Menu de opciones"} ${section} (Todas comienzan con *#sb${!isMain ? ` ${section}` : ""}*):\n${formattedOptions}`;
     }
 }
