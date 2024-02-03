@@ -109,3 +109,25 @@ export type UsuarioXLSX = {
 	DNI: string
 	UserId: string
 }
+
+export type PatrullaXLSX = {
+	Nombre: string
+	Lema: string
+}
+
+export type DocDataXLSX = {
+	Nombre: string
+	Vence: "Si" | "No"
+}
+
+export type SheetIndexType = "familiares" | "scouts" | "entregas" | "usuarios" | "pagos" | "documentos" | "docs-data" | "patrullas"
+export type SpreadsheetDataMap = {
+	familiares: FamiliarXLSX[];
+	scouts: ScoutXLSX[];
+	entregas: EntregaXLSX[];
+	usuarios: UsuarioXLSX[];
+	pagos: PagoXLSX[];
+	documentos: DocumentoXLSX[];
+	'docs-data': DocDataXLSX[];
+	patrullas: PatrullaXLSX[];
+};

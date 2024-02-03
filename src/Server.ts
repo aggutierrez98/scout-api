@@ -1,15 +1,15 @@
 import express, { Router } from "express";
-import cors from "cors";
 import bodyParser from "body-parser";
-import { errorMiddleware, morganMiddleware } from "./middlewares";
-import swaggerUi from "swagger-ui-express";
-import { config } from "dotenv";
-config();
-import { swaggerDefinition } from "./docs/swagger-ts/swagger";
+import compression from "compression";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
+import swaggerUi from "swagger-ui-express";
+import { config } from "dotenv";
+import cors from "cors";
+config();
+import { errorMiddleware, morganMiddleware } from "./middlewares";
+import { swaggerDefinition } from "./docs/swagger-ts/swagger";
 import { tooBusy } from "./middlewares/tooBusy";
-import compression from "compression";
 import { shouldCompress } from "./utils";
 import { createScoutRouter } from "./routes/scout";
 import { ScoutService } from "./services/scout";
@@ -26,7 +26,7 @@ import { createAuthRouter } from "./routes/auth";
 import { EntregaService } from "./services/entrega";
 import { createEntregaRouter } from "./routes/entrega";
 import { WhatsAppSbot } from "./whatsapp/WhatsappSession";
-import rememberBirthdays from "./bin/recordatorioCumpleaños";
+import recordarCumpleaños from "./whatsapp/recordarCumpleaños";
 
 const ACCEPTED_ORIGINS = ["http://localhost:3000"];
 const numberOfProxiesOnServer = 1;
@@ -121,7 +121,7 @@ export default class Server {
 	}
 
 	loadCrons() {
-		rememberBirthdays()
+		recordarCumpleaños()
 	}
 
 	listen() {

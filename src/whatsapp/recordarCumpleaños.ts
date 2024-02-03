@@ -2,7 +2,7 @@ import cron from 'node-cron';
 import { WhatsAppSbot } from '../whatsapp/WhatsappSession';
 import { obtenerCumpleañosHoy } from '../whatsapp/useCases';
 
-export default async function rememberBirthdays() {
+export default async function recordarCumpleaños() {
     function logMessage() {
         console.log('Cronjob realizado! - Fecha y Hora:', new Date().toLocaleString());
     }

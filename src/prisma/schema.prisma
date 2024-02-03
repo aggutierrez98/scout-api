@@ -16,8 +16,8 @@ model User {
   password String
   role     Role    @default(EXTERNO)
   active   Boolean @default(true)
-  scout    Scout   @relation(fields: [scoutId], references: [uuid])
-  scoutId  String  @unique @db.VarChar(10)
+  scout    Scout?  @relation(fields: [scoutId], references: [uuid])
+  scoutId  String? @unique @db.VarChar(10)
 }
 
 model Scout {
@@ -118,7 +118,7 @@ model FamiliarScout {
 model Patrulla {
   id                 Int      @id @default(autoincrement())
   uuid               String   @unique @db.VarChar(10)
-  nombre             String   @db.VarChar(45)
+  nombre             String   @unique @db.VarChar(45)
   lema               String?  @db.VarChar(100)
   fechaCreacion      DateTime @default(now())
   fechaActualizacion DateTime @updatedAt

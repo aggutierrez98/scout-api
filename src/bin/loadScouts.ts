@@ -1,7 +1,7 @@
 import { PrismaClient, Prisma, Funcion, Progresion } from "@prisma/client";
 import ProgressBar from "progress";
-import { VALID_RELATIONSHIPS, excelDateToJSDate, parseDMYtoDate } from "../utils";
-import { EstadosType, RelacionFamiliarType, ReligionType, ScoutXLSX, UsuarioXLSX } from "../types";
+import { SPLIT_STRING, VALID_RELATIONSHIPS, excelDateToJSDate, parseDMYtoDate } from "../utils";
+import { EstadosType, RelacionFamiliarType, ReligionType, ScoutXLSX } from "../types";
 import { nanoid } from "nanoid";
 import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
 
@@ -28,9 +28,10 @@ const loadPagos = async () => {
         );
 
         const scouts: Prisma.ScoutCreateManyInput[] = [];
+        let index = 0
         for (const scoutData of data) {
 
-            const [apellido, nombre] = scoutData.Nombre!.split(", ");
+            const [apellido, nombre] = scoutData.Nombre!.split(SPLIT_STRING);
 
             let fechaNacimiento = new Date();
             if (typeof scoutData["Fecha Nacimiento"] === "number") {
@@ -94,7 +95,7 @@ const loadPagos = async () => {
 
                 for (const { name, relacion } of familiaresData) {
                     if (!name) continue
-                    const [apellido, nombre] = name.split(", ");
+                    const [apellido, nombre] = name.split(SPLIT_STRING);
 
                     const familiarId = (
                         await prisma.familiar.findFirst({
@@ -110,7 +111,10 @@ const loadPagos = async () => {
                     )?.uuid;
 
                     if (!familiarId) {
-                        console.log(`El familiar con nombre: ${nombre} no existe en la bd`);
+
+                        console.log(scoutData)
+
+                        console.log(`\nEl familiar con nombre: "${nombre}" con relacion ${relacion} no existe en la bd. (I-scout: ${index})`);
                         continue;
                     }
 
@@ -119,21 +123,19 @@ const loadPagos = async () => {
                         relacion: relacion.toLocaleUpperCase() as RelacionFamiliarType,
                         scoutId: id
                     })
-
-                    console.log(`\n-> Cargando ${familiares.length} familiares a la bd...`);
-                    await prisma.$queryRaw`ALTER TABLE FamiliarScout AUTO_INCREMENT = 1`;
-                    const result = await prisma.familiarScout.createMany({
-                        data: familiares,
-                        skipDuplicates: true,
-                    });
-
-                    console.log(`\n-> Se cargaron exitosamente ${result.count} familiares para el scout ${scoutData.Nombre} a la bd!\n`);
                 }
+
+                await prisma.$queryRaw`ALTER TABLE FamiliarScout AUTO_INCREMENT = 1`;
+                const result = await prisma.familiarScout.createMany({
+                    data: familiares,
+                    skipDuplicates: true,
+                });
+
+                // console.log(`-> Se cargaron exitosamente ${result.count} familiares para el scout ${scoutData.Nombre} a la bd!`);
             }
 
             // Actualizamos data dentro del usuario
             const scoutUser = dataUsers.find((user) => user.DNI === scoutData.Documento)
-
 
             if (scoutUser) {
                 await prisma.user.update({
@@ -141,11 +143,12 @@ const loadPagos = async () => {
                         uuid: scoutUser.UserId
                     },
                     data: {
-                        scoutId: id
+                        scoutId: id,
                     }
                 })
             }
 
+            index++
             bar.tick(1);
         }
 

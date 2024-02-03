@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { MetodosPagoType } from "../types";
 import { Decimal } from "@prisma/client/runtime/library";
 import { getAge, getEntregaFromType } from "../utils";
-const INTERVALO_DIAS = 30
+const INTERVALO_DIAS_CUMPLEAÑOS = 30
 
 const prisma = new PrismaClient().$extends({
     result: {
@@ -94,30 +94,19 @@ interface ScoutDocumento {
     fechaPresentacion: Date;
 }
 
-interface ScoutFamiliar {
-    padreScout: {
-        nombre: string
-        apellido: string
-    }
-    documento: {
-        nombre: string
-    }
-    fechaPresentacion: Date;
-}
-
 export const obtenerScoutsPorCumplirAños = async () => {
     let scoutsResp: ScoutBirthday[] = []
     try {
         scoutsResp = await prisma.$queryRaw`
             SELECT sc.nombre,sc.apellido,sc.fechaNacimiento,
             -- p.nombre as patrulla,
-            DATE(CONCAT_WS('/',YEAR(CURDATE()), MONTH(fechaNacimiento), DAY(fechaNacimiento))) as fechaCumpleanos,
-            TIMESTAMPDIFF(YEAR, fechaNacimiento, NOW())+1 AS edadCumple
+            DATE(CONCAT_WS('-',YEAR(CURDATE()), MONTH(fechaNacimiento), DAY(fechaNacimiento))) as fechaCumpleanos,
+            TIMESTAMPDIFF(YEAR, fechaNacimiento, DATE_ADD(CURDATE(),INTERVAL ${INTERVALO_DIAS_CUMPLEAÑOS} DAY)) AS edadCumple
             FROM Scout sc
             -- LEFT JOIN Patrulla p
             -- ON (sc.patrullaId = p.uuid)
             WHERE DATE(CONCAT_WS('-', YEAR(CURDATE()), MONTH(fechaNacimiento), DAY(fechaNacimiento)))
-            BETWEEN CURDATE() AND DATE_ADD(CURDATE(),INTERVAL ${INTERVALO_DIAS} DAY)
+            BETWEEN CURDATE() AND DATE_ADD(CURDATE(),INTERVAL ${INTERVALO_DIAS_CUMPLEAÑOS} DAY)
             AND estado = 'ACTIVO'
             ORDER BY fechaCumpleanos ASC;
         `
@@ -127,7 +116,7 @@ export const obtenerScoutsPorCumplirAños = async () => {
 
     if (!scoutsResp.length) return "No hay cumpleaños durante el proximo mes"
 
-    const formattedBD = scoutsResp.map((scout) => `${scout.fechaCumpleanos.toLocaleDateString()} → _${scout.nombre} ${scout.apellido}_ cumple *${scout.edadCumple}* años`).join('\n');
+    const formattedBD = scoutsResp.map((scout) => `${scout.fechaCumpleanos.toLocaleDateString('es-AR', { timeZone: 'UTC' })} → _${scout.nombre} ${scout.apellido}_ cumple *${scout.edadCumple}* años`).join('\n');
     return `*Cumpleaños del proximo mes*:\n${formattedBD}`
 }
 
@@ -190,7 +179,7 @@ export const obtenerPagosSemana = async () => {
 
     if (!paymentsLastWeek.length) return "No hay pagos de la ultima semana"
 
-    const formattedBD = paymentsLastWeek.map((pago) => `_${pago.fechaPago.toLocaleDateString()}_ → *${pago.scout.nombre} ${pago.scout.apellido}*: ${pago.concepto} - $${pago.monto}`).join('\n');
+    const formattedBD = paymentsLastWeek.map((pago) => `_${pago.fechaPago.toLocaleDateString('es-AR', { timeZone: 'UTC' })}_ → *${pago.scout.nombre} ${pago.scout.apellido}*: ${pago.concepto} - $${pago.monto}`).join('\n');
     return `*Pagos de la semana*:\n${formattedBD}`
 }
 
@@ -250,7 +239,7 @@ export const obtenerPagosScout = async (nombreScout: string, concepto?: string) 
 
     if (!pagos.length) return "No hay cuotas de grupo pagadas"
 
-    const formattedBD = pagos.map((pago) => `_${pago.fechaPago.toLocaleDateString()}_ → *${pago.scout.nombre} ${pago.scout.apellido}*: ${pago.concepto} - $${pago.monto}`).join('\n');
+    const formattedBD = pagos.map((pago) => `_${pago.fechaPago.toLocaleDateString('es-AR', { timeZone: 'UTC' })}_ → *${pago.scout.nombre} ${pago.scout.apellido}*: ${pago.concepto} - $${pago.monto}`).join('\n');
     return `*Cuotas de grupo pagadas de ${nombreScout}*:\n${formattedBD}`
 }
 
@@ -290,7 +279,7 @@ export const obtenerScouts = async (nombreScout?: string, nombrePatrulla?: strin
         })
         if (!scout) return "No hay scout registrado con ese nombre"
 
-        const formattedScout = `${scout.apellido} ${scout.nombre}\nSexo: ${scout.sexo === "M" ? "Masculino" : "Femenino"}\nDNI: ${scout.dni}\nPatrulla: ${scout.patrulla?.nombre}\nProgresion: ${scout.progresionActual}\nEdad: ${scout.edad} años\nFecha de nacimiento: ${scout.fechaNacimiento.toLocaleDateString()}`
+        const formattedScout = `${scout.apellido} ${scout.nombre}\nSexo: ${scout.sexo === "M" ? "Masculino" : "Femenino"}\nDNI: ${scout.dni}\nPatrulla: ${scout.patrulla?.nombre}\nProgresion: ${scout.progresionActual}\nEdad: ${scout.edad} años\nFecha de nacimiento: ${scout.fechaNacimiento.toLocaleDateString('es-AR', { timeZone: 'UTC' })}`
         return `*Info de scout ${nombreScout}*:\n${formattedScout}`
 
     } else {
@@ -413,7 +402,7 @@ export const obtenerDocumentosScout = async (nombreScout: string) => {
 
     if (!documentos.length) return "No hay documentos entregados"
 
-    const formattedBD = documentos.map((documento) => `_${documento.fechaPresentacion.toLocaleDateString()}_ → *${documento.scout.nombre} ${documento.scout.apellido}*: ${documento.documento.nombre}`).join('\n');
+    const formattedBD = documentos.map((documento) => `_${documento.fechaPresentacion.toLocaleDateString('es-AR', { timeZone: 'UTC' })}_ → *${documento.scout.nombre} ${documento.scout.apellido}*: ${documento.documento.nombre}`).join('\n');
     return `*Documentos entregados por ${nombreScout}*:\n${formattedBD}`
 }
 
@@ -697,13 +686,13 @@ export const obtenerEntregas = async (nombreScout: string, nombrePatrulla?: stri
             }, {});
 
             // @ts-ignore
-            const formattedEntregas = Object.keys(entregasPorScout).map((key) => `\nEntregas de *${key}*:\n ${entregasPorScout[key].map((entrega) => `_${entrega.fechaEntrega.toLocaleDateString()}_: *${entrega.tipoEntrega}*`).join('\n')}`).join('\n');
+            const formattedEntregas = Object.keys(entregasPorScout).map((key) => `\nEntregas de *${key}*:\n ${entregasPorScout[key].map((entrega) => `_${entrega.fechaEntrega.toLocaleDateString('es-AR', { timeZone: 'UTC' })}_: *${entrega.tipoEntrega}*`).join('\n')}`).join('\n');
             entregasStr = `*Entregas de insignias/camisa/reconocimientos de la patrulla ${nombrePatrulla}*:\n${formattedEntregas}`
 
         } else if (nombreScout.length) {
             if (!entregas.length) return `No hay entregas para el scout ${nombreScout}`
 
-            const formattedBD = entregas.map((entrega) => `_${entrega.fechaEntrega.toLocaleDateString()}_: *${entrega.tipoEntrega}*`).join('\n');
+            const formattedBD = entregas.map((entrega) => `_${entrega.fechaEntrega.toLocaleDateString('es-AR', { timeZone: 'UTC' })}_: *${entrega.tipoEntrega}*`).join('\n');
             entregasStr = `*Entregas de insignias/camisa/reconocimientos de ${nombreScout}*:\n${formattedBD}`
         }
 

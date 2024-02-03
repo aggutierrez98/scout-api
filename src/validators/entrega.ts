@@ -53,7 +53,15 @@ export const PutEntregaSchema = z.object({
         id: IdSchema.refine(validEntregaId),
     }),
     body: EntregaSchema.deepPartial(),
-});
+}).refine(async ({ body }) => {
+    const prisma = new PrismaClient();
+    const EntregaRealizaModel = prisma.entregaRealizada;
+    const respItem = await EntregaRealizaModel.findFirst({
+        where: { scoutId: body.scoutId, tipoEntrega: body.tipoEntrega },
+    });
+
+    return !respItem
+}, "Los parametros enviados ya estan registrados como entrega dentro del sistema");
 
 export const DeleteEntregaSchema = z.object({
     params: z.object({

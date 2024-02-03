@@ -1,7 +1,6 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import ProgressBar from "progress";
-import { VALID_ENTREGAS_TYPE, excelDateToJSDate, parseDMYtoDate } from "../utils";
-import { EntregaXLSX } from "../types";
+import { SPLIT_STRING, VALID_ENTREGAS_TYPE, excelDateToJSDate, parseDMYtoDate } from "../utils";
 import { nanoid } from "nanoid";
 import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
 
@@ -30,7 +29,7 @@ const loadEntregas = async () => {
         for (const entregaData of data) {
 
             index++
-            const [apellido, nombre] = entregaData.Scout!.toString().split(", ")
+            const [apellido, nombre] = entregaData.Scout!.toString().split(SPLIT_STRING);
 
             const scout = (
                 await prisma.scout.findFirst({
@@ -52,7 +51,7 @@ const loadEntregas = async () => {
             );
 
             if (!scout) {
-                console.log(`El scout con nombre: ${entregaData.Scout} (I: ${index}) no existe en la bd`);
+                console.log(`\nEl scout con nombre: ${entregaData.Scout} (I: ${index}) no existe en la bd`);
                 continue;
             }
 
@@ -66,7 +65,7 @@ const loadEntregas = async () => {
 
             const tipoEntrega = VALID_ENTREGAS_TYPE.find(entregaType => entregaType.includes(entregaData["Tipo de entrega"]!.toLocaleUpperCase()))
             if (!tipoEntrega) {
-                console.log(`El tipo de entrega ingresado como: ${entregaData["Tipo de entrega"]} (I: ${index}) no existe en la bd`);
+                console.log(`\nEl tipo de entrega ingresado como: ${entregaData["Tipo de entrega"]} (I: ${index}) no existe en la bd`);
                 continue;
             }
 

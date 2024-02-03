@@ -1,9 +1,10 @@
 import { PrismaClient, Prisma, EstadoCivil } from "@prisma/client";
 import ProgressBar from "progress";
-import { excelDateToJSDate, parseDMYtoDate } from "../utils";
-import { FamiliarXLSX } from "../types";
+import { SPLIT_STRING, excelDateToJSDate, parseDMYtoDate } from "../utils";
 import { nanoid } from "nanoid";
 import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
+
+
 
 const insertFamiliares = async () => {
     const prisma = new PrismaClient();
@@ -29,7 +30,7 @@ const insertFamiliares = async () => {
 
         for (const familiarData of data) {
 
-            const [apellido, nombre] = familiarData.Nombre!.split(", ");
+            const [apellido, nombre] = familiarData.Nombre!.split(SPLIT_STRING);
             let fechaNacimiento = new Date();
             if (typeof familiarData["Fecha Nacimiento"] === "number") {
                 fechaNacimiento = excelDateToJSDate(familiarData["Fecha Nacimiento"])

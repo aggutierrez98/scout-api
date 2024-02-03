@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import { FuncionType, IEntrega, IEntregaData, ProgresionType, TipoEntregaType } from "../types";
 import { PrismaClient } from "@prisma/client";
 import { getAge } from "../utils";
+import { ScoutModel } from "./scout";
 
 const prisma = new PrismaClient().$extends({
     result: {
@@ -76,6 +77,20 @@ export class EntregaService implements IEntregaService {
                 },
             },
         });
+
+        if (entrega.tipoEntrega.includes("PROG")) {
+            const progresion = entrega.tipoEntrega.split("PROG")[1] as ProgresionType
+
+            await ScoutModel.update({
+                where: {
+                    uuid: entrega.scoutId
+                },
+                data: {
+                    progresionActual: progresion
+                }
+            })
+        }
+
         return responseInsert;
     };
 

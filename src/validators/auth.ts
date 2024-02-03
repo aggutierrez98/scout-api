@@ -27,8 +27,8 @@ export const validUserID = async (id: string) => {
 };
 
 export const UserSchema = z.object({
-    username: z.string(),
-    password: z.string(),
+    username: z.string().min(8).max(20).regex(lettersReg),
+    password: z.string().regex(passRegex),
 
 }) satisfies z.Schema<IUser>;
 
@@ -39,9 +39,9 @@ export const LoginSchema = z.object({
 
 export const RegisterSchema = z.object({
     body: UserSchema.extend({
-        scoutId: IdSchema.refine(validScoutID),
-        username: z.string().min(8).max(20).regex(lettersReg).refine(alreadyExistsUser, "El nombre de usuario se encuentra en uso"),
-        password: z.string().regex(passRegex),
+        // scoutId: IdSchema.refine(validScoutID),
+        username: z.string().min(8, { message: "El nombre de usuario debe tener al menos 8 caracteres" }).max(20, { message: "El nombre de usuario debe tener como maximo 20 caracteres" }).regex(lettersReg, { message: "El nombre de usuario solo puede contener letras" }).refine(alreadyExistsUser, "El nombre de usuario se encuentra en uso"),
+        password: z.string().regex(passRegex, { message: "La contraseña debe tener entre 8 y 12 caracteres, al menos una letra mayúscula, una letra minúscula y un número" }),
         role: z.enum(VALID_ROLES).optional()
     })
 });

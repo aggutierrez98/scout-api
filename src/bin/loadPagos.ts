@@ -1,7 +1,7 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import ProgressBar from "progress";
-import { excelDateToJSDate, parseDMYtoDate } from "../utils";
-import { MetodosPagoType, PagoXLSX } from "../types";
+import { SPLIT_STRING, excelDateToJSDate, parseDMYtoDate } from "../utils";
+import { MetodosPagoType } from "../types";
 import { nanoid } from "nanoid";
 import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
 
@@ -31,7 +31,7 @@ const loadPagos = async () => {
         for (const pagoData of data) {
 
             index++
-            const [apellido, nombre] = pagoData.Scout!.toString().split(", ")
+            const [apellido, nombre] = pagoData.Scout!.toString().split(SPLIT_STRING);
 
             const scout = (
                 await prisma.scout.findFirst({
@@ -53,7 +53,7 @@ const loadPagos = async () => {
             );
 
             if (!scout) {
-                console.log(`El scout con nombre: ${pagoData.Scout} (I: ${index}) no existe en la bd`);
+                console.log(`\nEl scout con nombre: ${pagoData.Scout} (I: ${index}) no existe en la bd`);
                 continue;
             }
 

@@ -154,7 +154,7 @@ export interface IUserData {
 	id: string;
 	username: string,
 	token: unknown,
-	scout: IScoutData
+	scout: IScoutData | null
 	role: RolesType
 }
 

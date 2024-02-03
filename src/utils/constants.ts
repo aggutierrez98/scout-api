@@ -68,8 +68,8 @@ export enum EntregaFromEntregaType {
 	PROGTRAVESIA = "Insignia de progresion TRAVESIA",
 	PROMESA = "Insignia de Promesa",
 	ESPNATURALEZA = "Especialidad de Vida en la naturaleza",
-	ESPARTE = "Especialidad de Arte, Expresión y Cultura	",
-	ESPSERVICIO = "Especialidad de Servicio a los demás	",
+	ESPARTE = "Especialidad de Arte, Expresión y Cultura",
+	ESPSERVICIO = "Especialidad de Servicio a los demás",
 	ESPESPIRITUALIDAD = "Especialidad de Espiritualidad",
 	ESPDEPORTES = "Especialidad de Deportes",
 	ESPCIENCIA = "Especialidad de Ciencia y Tecnología",
@@ -98,3 +98,5 @@ export const VALID_ESTADOS = [
 ] as const
 
 export const MENU_COMMANDS = ["pagos", "documentos", "scouts", "familiares", "entregas"]
+
+export const SPLIT_STRING = process.env.NODE_ENV === "development" ? " " : ", "
