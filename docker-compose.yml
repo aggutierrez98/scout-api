@@ -1,23 +1,32 @@
-version: "3.8"
+version: "3"
 
 services:
-  app:
-    container_name: scout-api
-    restart: always
-    build:
-      context: .
-      dockerfile: Dockerfile
+  db-service:
+    container_name: dev-database
+    image: mysql
+    user: root
     volumes:
-      - ./.wwebjs_auth/session-client-master/:/.wwebjs_auth/session-client-master
-    env_file: .env
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - WHATSAPP_US_CHAT_ID=${WHATSAPP_US_CHAT_ID}
-      - PORT=${PORT}
-      - JWT_SECRET=${JWT_SECRET}
-      - LOGTAIL_TOKEN=${LOGTAIL_TOKEN}
-      - GOOGLE_SERVICE_ACCOUNT_EMAIL=${GOOGLE_SERVICE_ACCOUNT_EMAIL}
-      - GOOGLE_PRIVATE_KEY=${GOOGLE_PRIVATE_KEY}
-      - GOOGLE_SPREADSHEET_DATA_KEY=${GOOGLE_SPREADSHEET_DATA_KEY}
+      - db-data:/var/lib/mysql
+    env_file: .env.development
     ports:
-      - ${PORT}:${PORT}
+      - 3306:3306
+    networks:
+      - db-network
+
+  phpmyadmin:
+    image: phpmyadmin
+    ports:
+      - 3000:80
+    restart: always
+    environment:
+      PMA_HOST: db-service
+    depends_on:
+      - db-service
+    networks:
+      - db-network
+
+volumes:
+  db-data:
+networks:
+  db-network:
+    driver: bridge
