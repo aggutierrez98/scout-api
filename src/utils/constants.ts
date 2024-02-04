@@ -97,6 +97,6 @@ export const VALID_ESTADOS = [
 	"INACTIVO",
 ] as const
 
-export const MENU_COMMANDS = ["pagos", "documentos", "scouts", "familiares", "entregas"]
+export const MENU_COMMANDS = ["pagos", "documentos", "scouts", "familiares", "entregas", "cumpleaños"]
 
 export const SPLIT_STRING = process.env.NODE_ENV === "development" ? " " : ", "

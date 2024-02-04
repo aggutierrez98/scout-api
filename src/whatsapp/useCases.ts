@@ -94,19 +94,47 @@ interface ScoutDocumento {
     fechaPresentacion: Date;
 }
 
-export const obtenerScoutsPorCumplirAños = async () => {
+export const obtenerCumpleañosPrevios = async (dateInterval: number) => {
+    let scoutsResp: ScoutBirthday[] = []
+
+    if (isNaN(dateInterval)) return "El argumento (dias) debe ser un numero"
+
+    try {
+        scoutsResp = await prisma.$queryRaw`
+            SELECT sc.nombre,sc.apellido,sc.fechaNacimiento,
+            DATE(CONCAT_WS('-',YEAR(CURDATE()), MONTH(fechaNacimiento), DAY(fechaNacimiento))) as fechaCumpleanos,
+            TIMESTAMPDIFF(YEAR, fechaNacimiento, CURDATE()) AS edadCumple
+            FROM Scout sc
+            WHERE DATE(CONCAT_WS('-', YEAR(CURDATE()), MONTH(fechaNacimiento), DAY(fechaNacimiento)))
+            BETWEEN DATE_SUB(CURDATE(),INTERVAL ${dateInterval} DAY) AND CURDATE() AND estado = 'ACTIVO'
+            ORDER BY fechaCumpleanos DESC;
+        `
+    } catch (error) {
+        console.log("Error en consulta: ", error)
+    }
+
+    if (!scoutsResp.length) return `No hubo cumpleaños que hayan pasado durante los ultimos ${dateInterval} dias`
+
+    const formattedBD = scoutsResp.map((scout) => `${scout.fechaCumpleanos.toLocaleDateString('es-AR', { timeZone: 'UTC' })} → _${scout.nombre} ${scout.apellido}_ cumplio *${scout.edadCumple}* años`).join('\n');
+    return `*Cumpleaños que pasaron los ultimos ${dateInterval} dias*:\n${formattedBD}`
+}
+
+export const obtenerScoutsPorCumplirAños = async (dateInterval: number) => {
+
+    if (isNaN(dateInterval)) return "El argumento (dias) debe ser un numero"
+
     let scoutsResp: ScoutBirthday[] = []
     try {
         scoutsResp = await prisma.$queryRaw`
             SELECT sc.nombre,sc.apellido,sc.fechaNacimiento,
             -- p.nombre as patrulla,
             DATE(CONCAT_WS('-',YEAR(CURDATE()), MONTH(fechaNacimiento), DAY(fechaNacimiento))) as fechaCumpleanos,
-            TIMESTAMPDIFF(YEAR, fechaNacimiento, DATE_ADD(CURDATE(),INTERVAL ${INTERVALO_DIAS_CUMPLEAÑOS} DAY)) AS edadCumple
+            TIMESTAMPDIFF(YEAR, fechaNacimiento, DATE_ADD(CURDATE(),INTERVAL ${dateInterval} DAY)) AS edadCumple
             FROM Scout sc
             -- LEFT JOIN Patrulla p
             -- ON (sc.patrullaId = p.uuid)
             WHERE DATE(CONCAT_WS('-', YEAR(CURDATE()), MONTH(fechaNacimiento), DAY(fechaNacimiento)))
-            BETWEEN CURDATE() AND DATE_ADD(CURDATE(),INTERVAL ${INTERVALO_DIAS_CUMPLEAÑOS} DAY)
+            BETWEEN CURDATE() AND DATE_ADD(CURDATE(),INTERVAL ${dateInterval} DAY)
             AND estado = 'ACTIVO'
             ORDER BY fechaCumpleanos ASC;
         `
@@ -114,10 +142,10 @@ export const obtenerScoutsPorCumplirAños = async () => {
         console.log("Error en consulta: ", error)
     }
 
-    if (!scoutsResp.length) return "No hay cumpleaños durante el proximo mes"
+    if (!scoutsResp.length) return `No hay cumpleaños durante los proximos ${dateInterval} dias`
 
     const formattedBD = scoutsResp.map((scout) => `${scout.fechaCumpleanos.toLocaleDateString('es-AR', { timeZone: 'UTC' })} → _${scout.nombre} ${scout.apellido}_ cumple *${scout.edadCumple}* años`).join('\n');
-    return `*Cumpleaños del proximo mes*:\n${formattedBD}`
+    return `*Cumpleaños del los proximos ${dateInterval} dias*:\n${formattedBD}`
 }
 
 export const obtenerCumpleañosHoy = async () => {

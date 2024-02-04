@@ -1,7 +1,7 @@
 import { Client, Message } from "whatsapp-web.js";
 import qrCode from "qrcode-terminal";
-import clientConfig from "./clientConfig";
 import {
+    obtenerCumpleañosPrevios,
     obtenerDocumentosFaltantes,
     obtenerDocumentosScout,
     obtenerEntregas,
@@ -14,53 +14,67 @@ import {
 } from "./useCases";
 import options from "./options";
 import { MENU_COMMANDS } from "../utils";
+import { MongoStore } from "wwebjs-mongo";
+import mongoose from 'mongoose';
+import getConfig from "./clientConfig";
 
 export class WhatsAppSbot {
     private static instance: WhatsAppSbot;
-    private client: Client;
+    private client: Client | null;
 
     private constructor() {
-        this.client = new Client(clientConfig);
-        this.initialize();
+        this.client = null
+
+        this.connectMongo().then((store) => {
+            this.client = new Client(getConfig(store));
+            this.initialize();
+        })
     }
 
-    private initialize() {
-        this.client.on('qr', (qr: string) => {
+    public async connectMongo() {
+        await mongoose.connect(process.env.MONGODB_URI!)
+        return new MongoStore({ mongoose: mongoose });
+    }
+
+    public initialize() {
+        // this.client = new Client(getConfig(this.store));
+
+        this.client!.on('qr', (qr: string) => {
             qrCode.generate(qr, { small: true });
         });
 
-        // //   this.client.on('authenticated', (session) => {
-        // //     console.log('Authenticated');
-        // //   });
-
-        this.client.on('auth_failure', (msg) => {
+        this.client!.on('auth_failure', (msg) => {
             console.error('Error de autenticacion:', msg);
         });
 
-        this.client.on('ready', () => {
+        this.client!.on('ready', () => {
             console.log("Cliente de Whatsapp SB listo");
         });
 
-        this.client.on('message', async (msg) => {
+        this.client!.on('remote_session_saved', () => {
+            console.log("Session guardada en mongo");
+        });
+
+        this.client!.on('message', async (msg) => {
             const chat = await msg.getChat();
             if (chat.id._serialized === process.env.WHATSAPP_US_CHAT_ID) await this.ManageMessage(msg)
         });
 
-        this.client.on('message_create', async (msg) => {
+        this.client!.on('message_create', async (msg) => {
             const chat = await msg.getChat();
             if (chat.id._serialized === process.env.WHATSAPP_US_CHAT_ID) await this.ManageMessage(msg)
         });
 
-        this.client.initialize();
+        this.client!.initialize();
     }
 
     public async sendMessage(message: string, phoneNumber: string) {
         const chatId = phoneNumber.substring(1) + "@c.us";
-        await this.client.sendMessage(chatId, message);
+        await this.client!.sendMessage(chatId, message);
     }
 
     public async sendMessageToGroup(message: string, groupId?: string) {
-        await this.client.sendMessage(groupId ?? process.env.WHATSAPP_US_CHAT_ID!, message);
+        await this.client!.sendMessage(groupId ?? process.env.WHATSAPP_US_CHAT_ID!, message);
     }
 
     public static getInstance(): WhatsAppSbot {
@@ -69,7 +83,6 @@ export class WhatsAppSbot {
         }
         return WhatsAppSbot.instance;
     }
-
 
     public async ManageMessage(msg: Message) {
 
@@ -223,9 +236,29 @@ export class WhatsAppSbot {
                         break
 
                     case "cumpleaños":
-                        const listaScouts = await obtenerScoutsPorCumplirAños()
-                        await msg.reply(listaScouts)
-                        break;
+                        const dias = commandSubOption[1]
+                        switch (subCommand) {
+                            case "previos":
+                                if (!dias) await msg.reply("Enviar dias para buscar")
+                                else {
+                                    const scoutsQueCumplieron = await obtenerCumpleañosPrevios(Number(dias))
+                                    await msg.reply(scoutsQueCumplieron)
+                                }
+                                break;
+
+                            case "proximos":
+                                if (!dias) await msg.reply("Enviar dias para buscar")
+                                else {
+                                    const scoutsPorCumplir = await obtenerScoutsPorCumplirAños(Number(dias))
+                                    await msg.reply(scoutsPorCumplir)
+                                }
+                                break;
+
+                            default:
+                                await msg.reply("Opcion invalida")
+                                break;
+                        }
+                        break
 
                     default:
                         await msg.reply("Opcion invalida")
@@ -236,8 +269,9 @@ export class WhatsAppSbot {
     }
 
     private GetMenu(section: string, options: string[]): string {
-        const formattedOptions = options.map((option, index) => `${index + 1}. ${option}`).join('\n')
+        const formattedOptions = options.map((option) => `- ${option}`).join('\n')
         const isMain = section === "menu"
-        return `${isMain ? "_MENU PRINCIPAL_" : "Menu de opciones"} ${section} (Todas comienzan con *#sb${!isMain ? ` ${section}` : ""}*):\n${formattedOptions}`;
+        const sectionString = isMain ? "" : ` ${section}`
+        return `${isMain ? "_MENU PRINCIPAL" : "_Menu de opciones"}${sectionString}_ (Todas comienzan con *#sb${sectionString}*):\n${formattedOptions}`;
     }
 }

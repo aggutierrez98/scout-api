@@ -10,7 +10,7 @@ export default async function recordarCumpleaños() {
     cron.schedule('0 8 * * *', async () => {
         const wb = WhatsAppSbot.getInstance()
         const resp = await obtenerCumpleañosHoy()
-        if (resp) await wb.sendMessageToGroup(resp)
+        if (resp) await wb.sendMessage(resp, process.env.WHATSAPP_OWNER_NUM!)
         logMessage()
     });
 }

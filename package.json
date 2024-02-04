@@ -92,7 +92,7 @@
   },
   "scripts": {
     "build": "npx tsc",
-    "dev": "dotenv -e .env.development -- nodemon",
+    "dev": "NODE_ENV=development dotenv -e .env.development -- nodemon",
     "dev:old": "dotenv -e .env -- npm run doc:generate && nodemon",
     "create-admin:dev": "dotenv -e .env.development -- ts-node src/bin/createAdminUser.ts",
     "save-users:dev": "dotenv -e .env.development -- ts-node src/bin/saveUsersData.ts",
