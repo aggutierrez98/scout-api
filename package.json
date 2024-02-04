@@ -91,7 +91,7 @@
     "url": "git+https://github.com/aggutierrez98/scout-api.git"
   },
   "scripts": {
-    "build": "npx tsc",
+    "build": "dotenv -e .env npx tsc",
     "dev": "NODE_ENV=development dotenv -e .env.development -- nodemon",
     "dev:old": "dotenv -e .env -- npm run doc:generate && nodemon",
     "create-admin:dev": "dotenv -e .env.development -- ts-node src/bin/createAdminUser.ts",
