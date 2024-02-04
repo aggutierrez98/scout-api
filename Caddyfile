@@ -1,3 +1,0 @@
-3.90.147.118.nip.io {
-        reverse_proxy localhost:8080
-}
