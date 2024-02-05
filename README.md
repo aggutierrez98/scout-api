@@ -27,10 +27,11 @@
     DATABASE_URL  # Database url for connection with prisma.
     # Example of uri you have to create with the variables defined previously:
     # DATABASE_URL=mysql://root:<MYSQL_ROOT_PASSWORD>@127.0.0.1/<MYSQL_DATABASE>
-    GOOGLE_SERVICE_ACCOUNT_EMAIL  # Google drive SpreadSheets account email
-    GOOGLE_PRIVATE_KEY  # Google drive SpreadSheets private ssh key
+    JWT_SECRET  # Secret phrase needed for generation of jwt.
+    GOOGLE_SERVICE_ACCOUNT_EMAIL  # Google drive SpreadSheets account email.
+    GOOGLE_PRIVATE_KEY  # Google drive SpreadSheets private ssh key.
     GOOGLE_SPREADSHEET_DATA_KEY  # Google drive Spreadsheet key (sheet with data to load for development purposes).
-    MONGODB_URI  # MongoDB uri to save whatsappweb remote session data
+    MONGODB_URI  # MongoDB uri to save whatsappweb remote session data.
    ```
 
 3. Run container for development database with phpmyadmin included.
