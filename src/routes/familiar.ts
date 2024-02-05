@@ -14,7 +14,7 @@ import {
 	GetFamiliaresSchema,
 } from "../validators/familiar";
 
-export const createFamiliarRouter = (familiarService: FamiliarService) => {
+export default function createFamiliarRouter(familiarService: FamiliarService) {
 	const router = Router();
 	const familiarController = new FamiliarController({ familiarService });
 

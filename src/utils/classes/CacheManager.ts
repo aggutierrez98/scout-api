@@ -1,7 +1,4 @@
 import { createClient } from "redis";
-// import { IScoutData } from "./interfaces/scout.interface";
-
-// rome-ignore lint/suspicious/noExplicitAny: <explanation>
 type CacheValue = any | null;
 
 export class CacheManager {
@@ -11,9 +8,9 @@ export class CacheManager {
 		this.client = createClient({
 			url: "redis://127.0.0.1:6379",
 		});
-		// this.client.on("error", (error) => {
-		// 	console.error("Redis client error", error);
-		// });
+		this.client.on("error", (error) => {
+			console.error("Redis client error", error);
+		});
 	}
 
 	async connectIfNecessary(): Promise<void> {

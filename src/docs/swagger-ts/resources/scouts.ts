@@ -97,6 +97,51 @@ export const getScout: OAS3Options = {
 	},
 };
 
+export const getAllScouts: OAS3Options = {
+	tags: ["scouts"],
+	summary: "Read all Scouts ids",
+	parameters: [
+		{
+			in: "path",
+			name: "id",
+			required: true,
+			schema: {
+				type: "number",
+			},
+		},
+	],
+	responses: {
+		200: {
+			description: "Returns one object from collection.",
+		},
+		400: {
+			description: "User input error.",
+		},
+	},
+};
+export const getAllEducadores: OAS3Options = {
+	tags: ["scouts"],
+	summary: "Read Specific Scout data",
+	parameters: [
+		{
+			in: "path",
+			name: "id",
+			required: true,
+			schema: {
+				type: "number",
+			},
+		},
+	],
+	responses: {
+		200: {
+			description: "Returns one object from collection.",
+		},
+		400: {
+			description: "User input error.",
+		},
+	},
+};
+
 export const updateScout: OAS3Options = {
 	tags: ["scouts"],
 	summary: "Update Specific Scout in repository with given data",

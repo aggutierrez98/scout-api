@@ -33,6 +33,12 @@ const swaggerDefinition: OAS3Definition = {
 			put: updateScout,
 			delete: deleteScout,
 		},
+		"allScouts": {
+			get: getScout,
+		},
+		"allEducadores": {
+			get: getScout,
+		},
 	},
 	components: {
 		securitySchemes: {

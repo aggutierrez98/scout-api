@@ -29,6 +29,7 @@ const createAdmin = async () => {
         }
 
         const uuid = nanoid(10);
+
         const passHash = await encrypt(password)
 
         const res = await prisma.user.create({

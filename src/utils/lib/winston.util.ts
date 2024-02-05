@@ -1,7 +1,6 @@
 import winston from "winston";
 import { Logtail } from "@logtail/node";
 import { LogtailTransport } from "@logtail/winston";
-const logtailConfig = new Logtail(process.env.LOGTAIL_TOKEN ?? "");
 
 // This method set the current severity based on the current NODE_ENV
 const level = () => {
@@ -45,7 +44,7 @@ const defineTransports = () => {
 	const isDevelopment = env === "development";
 	return isDevelopment
 		? [new winston.transports.Console()]
-		: [new winston.transports.Console(), new LogtailTransport(logtailConfig)];
+		: [new winston.transports.Console(), new LogtailTransport(new Logtail(process.env.LOGTAIL_TOKEN ?? ""))];
 };
 
 // Create the logger instance

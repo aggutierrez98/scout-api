@@ -27,8 +27,8 @@ export const validUserID = async (id: string) => {
 };
 
 export const UserSchema = z.object({
-    username: z.string().min(8).max(20).regex(lettersReg),
-    password: z.string().regex(passRegex),
+    username: z.string(),
+    password: z.string(),
 
 }) satisfies z.Schema<IUser>;
 

@@ -8,25 +8,27 @@ import { config } from "dotenv";
 import cors from "cors";
 config();
 import { errorMiddleware, morganMiddleware } from "./middlewares";
-import { swaggerDefinition } from "./docs/swagger-ts/swagger";
 import { tooBusy } from "./middlewares/tooBusy";
 import { shouldCompress } from "./utils";
-import { createScoutRouter } from "./routes/scout";
+import createScoutRouter from "./routes/scout";
 import { ScoutService } from "./services/scout";
 import { DocumentoService } from "./services/documento";
-import { createDocumentoRouter } from "./routes/documento";
+import createDocumentoRouter from "./routes/documento";
 import { PagoService } from "./services/pago";
-import { createPagoRouter } from "./routes/pago";
+import createPagoRouter from "./routes/pago";
 import { FamiliarService } from "./services/familiar";
-import { createFamiliarRouter } from "./routes/familiar";
+import createFamiliarRouter from "./routes/familiar";
 import { PatrullaService } from "./services/patrulla";
-import { createPatrullaRouter } from "./routes/patrulla";
+import createPatrullaRouter from "./routes/patrulla";
 import { AuthService } from "./services/auth";
-import { createAuthRouter } from "./routes/auth";
+import createAuthRouter from "./routes/auth";
 import { EntregaService } from "./services/entrega";
-import { createEntregaRouter } from "./routes/entrega";
+import createEntregaRouter from "./routes/entrega";
 import { WhatsAppSbot } from "./whatsapp/WhatsappSession";
 import recordarCumpleaños from "./whatsapp/recordarCumpleaños";
+import expressOasGenerator, { SPEC_OUTPUT_FILE_BEHAVIOR } from 'express-oas-generator';
+import swaggerSpecJSON from "./docs/spec.json";
+// import { swaggerDefinition } from "./docs/swagger-ts/swagger";
 
 const ACCEPTED_ORIGINS = ["http://localhost:3000"];
 const numberOfProxiesOnServer = 1;
@@ -46,6 +48,21 @@ export default class Server {
 	}
 
 	middlewares() {
+		expressOasGenerator.handleResponses(this.app, {
+			specOutputFileBehavior: SPEC_OUTPUT_FILE_BEHAVIOR.PRESERVE,
+			swaggerDocumentOptions: {
+				customSiteTitle: "Scout API",
+				// swaggerOptions: []
+				swaggerUrl: "http://localhost:8080/api"
+			},
+			specOutputPath: './src/docs/spec.json',
+			alwaysServeDocs: true,
+			// predefinedSpec: function(spec) {
+			// 	_.set(spec, 'paths["/students/{name}"].get.parameters[0].description', 'description of a parameter');
+			// 	return spec;
+			//   },
+		});
+
 		this.app.disable("x-powered-by");
 
 		this.app.use(
@@ -83,10 +100,13 @@ export default class Server {
 		this.app.use(limiter);
 		this.app.use(tooBusy);
 		this.app.use(morganMiddleware);
-		this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDefinition));
+		// this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDefinition));
+		this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpecJSON));
 		this.app.use("/api", this.loadRoutes());
 
 		this.app.use(errorMiddleware);
+
+		expressOasGenerator.handleRequests();
 	}
 
 	loadRoutes() {

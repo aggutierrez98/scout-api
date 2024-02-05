@@ -11,7 +11,7 @@ import {
 	PutPagoSchema,
 } from "../validators/pago";
 
-export const createPagoRouter = (pagoService: PagoService) => {
+export default function createPagoRouter(pagoService: PagoService) {
 	const router = Router();
 	const pagoController = new PagoController({ pagoService });
 

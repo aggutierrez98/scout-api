@@ -25,8 +25,17 @@ services:
     networks:
       - db-network
 
+  redis:
+    image: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/var/lib/redis/data
+
 volumes:
   db-data:
+  redis_data:
 networks:
   db-network:
     driver: bridge

@@ -2,16 +2,22 @@ import { Router } from "express";
 import { readdirSync } from "fs";
 import { cleanFileName } from "../utils";
 
-const PATH_ROUTER = `${__dirname}`;
 const router = Router();
 
-readdirSync(PATH_ROUTER).filter((fileName) => {
-	const cleanName = cleanFileName(fileName);
-	if (cleanName !== "index") {
-		import(`./${cleanName}`).then(({ createRouter }) => {
-			router.use(`/${cleanName}`, createRouter());
-		});
-	}
-});
+export default (async () => {
+	const PATH_ROUTER = `${__dirname}`;
+	const paths = readdirSync(PATH_ROUTER).filter((fileName) => cleanFileName(fileName) !== "index")
+	for (const path of paths) {
+		// import(`./${path}`)
+		// 	.then(({ default: createRouter }) => {
+		// 		router.use(`/${path}`, createRouter());
+		// 		console.log(router)
+		// 	});
 
-export default router;
+		const { default: createRouter } = await import(`./${path}`)
+		router.use(`/${path}`, createRouter());
+	}
+
+	console.log(router)
+	return router
+})()

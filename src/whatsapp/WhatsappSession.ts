@@ -20,11 +20,9 @@ import getConfig from "./clientConfig";
 
 export class WhatsAppSbot {
     private static instance: WhatsAppSbot;
-    private client: Client | null;
+    private client: Client | null = null;
 
     private constructor() {
-        this.client = null
-
         this.connectMongo().then((store) => {
             this.client = new Client(getConfig(store));
             this.initialize();
@@ -37,8 +35,6 @@ export class WhatsAppSbot {
     }
 
     public initialize() {
-        // this.client = new Client(getConfig(this.store));
-
         this.client!.on('qr', (qr: string) => {
             qrCode.generate(qr, { small: true });
         });

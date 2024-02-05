@@ -10,7 +10,7 @@ import {
 } from "../validators/documento";
 import { DocumentoService } from "../services/documento";
 
-export const createDocumentoRouter = (documentoService: DocumentoService) => {
+export default function createDocumentoRouter(documentoService: DocumentoService) {
 	const router = Router();
 	const documentoController = new DocumentoController({ documentoService });
 

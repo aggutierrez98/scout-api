@@ -53,7 +53,6 @@ export const checkSession = async (req: RequestExt, _: Response, next: NextFunct
 			const isAllowed = validatePermissions({ method, resource, userRole: user?.role })
 
 			if (!isAllowed) {
-				console.log("aca")
 				throw new AppError({
 					name: "UNAUTHORIZED",
 					description: "Sin permisos para acceder a la seccion",

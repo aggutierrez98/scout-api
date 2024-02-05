@@ -1,7 +1,4 @@
 import { RemoteAuth } from "whatsapp-web.js";
-import { MongoStore } from 'wwebjs-mongo';
-import mongoose from 'mongoose';
-const store = new MongoStore({ mongoose: mongoose });
 
 export default function getConfig(store: any) {
     return {

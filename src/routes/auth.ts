@@ -9,7 +9,7 @@ import {
 import { AuthService } from "../services/auth";
 import { checkSession } from "../middlewares";
 
-export const createAuthRouter = (authService: AuthService) => {
+export default function createAuthRouter(authService: AuthService) {
     const router = Router();
     const authController = new AuthController({ authService });
     router.get("/renew", checkSession, authController.renew);

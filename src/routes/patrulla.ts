@@ -16,7 +16,7 @@ import {
 	PutPatrullaSchema,
 } from "../validators";
 
-export const createPatrullaRouter = (patrullaService: PatrullaService) => {
+export default function createPatrullaRouter(patrullaService: PatrullaService) {
 	const router = Router();
 	const patrullaController = new PatrullaController({ patrullaService });
 

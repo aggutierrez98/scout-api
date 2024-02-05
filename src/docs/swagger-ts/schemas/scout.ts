@@ -82,6 +82,15 @@ export const scoutSchema: OAS3Options = {
 				$ref: "#/components/schemas/familiar",
 			},
 		},
+		user: {
+			$ref: "#/components/schemas/User"
+		},
+		userId: {
+			type: "string",
+			maxLength: 10,
+			uniqueItems: true,
+			writeOnly: true,
+		},
 		fechaCreacion: { type: "date", readOnly: true },
 		fechaActualizacion: { type: "date", readOnly: true },
 	},

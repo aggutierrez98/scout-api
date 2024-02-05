@@ -12,7 +12,7 @@ import {
 	PutScoutSchema,
 } from "../validators/scout";
 
-export const createScoutRouter = (scoutService: ScoutService) => {
+export default function createScoutRouter(scoutService: ScoutService) {
 	const router = Router();
 	const scoutController = new ScoutController({ scoutService });
 

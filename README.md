@@ -33,22 +33,22 @@
     MONGODB_URI  # MongoDB uri to save whatsappweb remote session data
    ```
 
-3. Run container for development database with phpmyadmin included.
+3. Run container for development database with phpmyadmin included. Also runs a container with redis-server to save application cache.
 
    ```sh
    docker compose -f docker-compose.yml up -d
    ```
 
-4. Run script to generate data for development purposes in database.
+4. Run this script to create Tables in database.
+
+   ```sh
+   npm run push:dev
+   ```
+
+5. Run script to generate data for development purposes in database.
 
    ```sh
    sh src/bin/dumpData.sh
-   ```
-
-5. Run container for development database with phpmyadmin included.
-
-   ```sh
-   docker-compose.yml up -d
    ```
 
 6. Run this script to create an admin user (login in app using your the credentials you insert).

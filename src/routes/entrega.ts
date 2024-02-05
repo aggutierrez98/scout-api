@@ -11,7 +11,7 @@ import {
     PutEntregaSchema,
 } from "../validators/entrega";
 
-export const createEntregaRouter = (entregaService: EntregaService) => {
+export default function createEntregaRouter(entregaService: EntregaService) {
     const router = Router();
     const entregaController = new EntregaController({ entregaService });
 

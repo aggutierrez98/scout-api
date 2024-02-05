@@ -1,0 +1,804 @@
+{
+  "definitions": {},
+  "info": {
+    "title": "scout-api",
+    "version": "1.0.0",
+    "license": {
+      "name": "ISC"
+    },
+    "description": "Specification JSONs: [v2](/api-spec/v2), [v3](/api-spec/v3).\n\nScout api for personal use"
+  },
+  "paths": {
+    "/api/auth/renew": {
+      "get": {
+        "summary": "/api/auth/renew",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "token": {
+                  "type": "string",
+                  "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZ0dVRVX3JKc3YiLCJpYXQiOjE3MDcxNjQyMzAsImV4cCI6MTcwNzE3MTQzMH0.WUCF3oBLw7x040xrMAlCKPMxD_FNalQM7Bg_ao0OtDc"
+                },
+                "id": {
+                  "type": "string",
+                  "example": "6tuTU_rJsv"
+                },
+                "role": {
+                  "type": "string",
+                  "example": "EXTERNO"
+                },
+                "scout": {
+                  "type": "null",
+                  "example": null
+                },
+                "username": {
+                  "type": "string",
+                  "example": "userprueba"
+                }
+              }
+            }
+          }
+        },
+        "tags": [],
+        "produces": [
+          "application/json"
+        ]
+      }
+    },
+    "/api/auth/users": {
+      "get": {
+        "summary": "/api/auth/users",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "username": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string"
+                  },
+                  "active": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "username",
+                  "role",
+                  "active"
+                ]
+              }
+            }
+          }
+        },
+        "tags": [],
+        "produces": [
+          "application/json"
+        ]
+      }
+    },
+    "/api/auth/users/{id}": {
+      "get": {
+        "summary": "/api/auth/users/{id}",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "example": "hXW6HCQ1xD"
+                },
+                "username": {
+                  "type": "string",
+                  "example": "agusgutierrez"
+                },
+                "scout": {
+                  "type": "null",
+                  "example": null
+                },
+                "role": {
+                  "type": "string",
+                  "example": "ADMIN"
+                },
+                "active": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "BAD_PARAMETERS"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Parametros incorrectos: \n[1 → id]: El Parametro id 'BrIMXvSIxE' no esta registrado en el sistema \n"
+                }
+              }
+            }
+          }
+        },
+        "tags": [],
+        "produces": [
+          "application/json"
+        ]
+      }
+    },
+    "/api/auth": {
+      "post": {
+        "summary": "/api/auth",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "example": "hXW6HCQ1xD"
+                },
+                "username": {
+                  "type": "string",
+                  "example": "agusgutierrez"
+                },
+                "scout": {
+                  "type": "null",
+                  "example": null
+                },
+                "role": {
+                  "type": "string",
+                  "example": "ADMIN"
+                },
+                "token": {
+                  "type": "string",
+                  "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImhYVzZIQ1ExeEQiLCJpYXQiOjE3MDcxNjQxNzMsImV4cCI6MTcwNzE3MTM3M30.XoZVffXDAhXf_9fMTx_0NxYHSbXZZQ0eKCE5P_Kt8fU"
+                }
+              }
+            }
+          }
+        },
+        "tags": [],
+        "produces": [
+          "application/json"
+        ]
+      }
+    },
+    "/api/auth/create": {
+      "post": {
+        "summary": "/api/auth/create",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "example": "6tuTU_rJsv"
+                },
+                "scout": {
+                  "type": "null",
+                  "example": null
+                },
+                "username": {
+                  "type": "string",
+                  "example": "userprueba"
+                },
+                "role": {
+                  "type": "string",
+                  "example": "EXTERNO"
+                },
+                "token": {
+                  "type": "string",
+                  "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZ0dVRVX3JKc3YiLCJpYXQiOjE3MDcxNjQyMjIsImV4cCI6MTcwNzE3MTQyMn0.RHWf_7SsHNICGGaDLWjlIii1fJFwkxryzEuQJvjLwSs"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "BAD_PARAMETERS"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Parametros incorrectos: \n[1 → password]: La contraseña debe tener entre 8 y 12 caracteres, al menos una letra mayúscula, una letra minúscula y un número \n"
+                }
+              }
+            }
+          }
+        },
+        "tags": [],
+        "produces": [
+          "application/json"
+        ]
+      }
+    },
+    "/api/auth/{id}": {
+      "put": {
+        "summary": "/api/auth/{id}",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "example": "6tuTU_rJsv"
+                },
+                "scout": {
+                  "type": "null",
+                  "example": null
+                },
+                "username": {
+                  "type": "string",
+                  "example": "userprueba"
+                },
+                "role": {
+                  "type": "string",
+                  "example": "COLABORADOR"
+                },
+                "active": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "UNAUTHORIZED"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Sin permisos para acceder a la seccion"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "SERVER_TOO_BUSY"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Server too busy right now"
+                }
+              }
+            }
+          }
+        },
+        "tags": [],
+        "produces": [
+          "application/json"
+        ]
+      }
+    },
+    "/api/patrulla": {
+      "get": {
+        "summary": "/api/patrulla",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {},
+        "tags": []
+      },
+      "post": {
+        "summary": "/api/patrulla",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {},
+        "tags": []
+      }
+    },
+    "/api/patrulla/{id}": {
+      "get": {
+        "summary": "/api/patrulla/{id}",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {},
+        "tags": []
+      },
+      "put": {
+        "summary": "/api/patrulla/{id}",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {},
+        "tags": []
+      },
+      "delete": {
+        "summary": "/api/patrulla/{id}",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {},
+        "tags": []
+      }
+    },
+    "/api/scout": {
+      "get": {
+        "summary": "/api/scout",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {},
+        "tags": []
+      },
+      "post": {
+        "summary": "/api/scout",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {},
+        "tags": []
+      }
+    },
+    "/api/scout/allScouts": {
+      "get": {
+        "summary": "/api/scout/allScouts",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {},
+        "tags": []
+      }
+    },
+    "/api/scout/allEducadores": {
+      "get": {
+        "summary": "/api/scout/allEducadores",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {},
+        "tags": []
+      }
+    },
+    "/api/scout/{id}": {
+      "get": {
+        "summary": "/api/scout/{id}",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {},
+        "tags": []
+      },
+      "put": {
+        "summary": "/api/scout/{id}",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {},
+        "tags": []
+      },
+      "delete": {
+        "summary": "/api/scout/{id}",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {},
+        "tags": []
+      }
+    },
+    "/api/documento": {
+      "get": {
+        "summary": "/api/documento",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {},
+        "tags": []
+      },
+      "post": {
+        "summary": "/api/documento",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {},
+        "tags": []
+      }
+    },
+    "/api/documento/data": {
+      "get": {
+        "summary": "/api/documento/data",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {},
+        "tags": []
+      }
+    },
+    "/api/documento/{id}": {
+      "get": {
+        "summary": "/api/documento/{id}",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {},
+        "tags": []
+      },
+      "delete": {
+        "summary": "/api/documento/{id}",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {},
+        "tags": []
+      }
+    },
+    "/api/pago": {
+      "get": {
+        "summary": "/api/pago",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {},
+        "tags": []
+      },
+      "post": {
+        "summary": "/api/pago",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {},
+        "tags": []
+      }
+    },
+    "/api/pago/{id}": {
+      "get": {
+        "summary": "/api/pago/{id}",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {},
+        "tags": []
+      },
+      "put": {
+        "summary": "/api/pago/{id}",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {},
+        "tags": []
+      },
+      "delete": {
+        "summary": "/api/pago/{id}",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {},
+        "tags": []
+      }
+    },
+    "/api/familiar": {
+      "get": {
+        "summary": "/api/familiar",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {},
+        "tags": []
+      },
+      "post": {
+        "summary": "/api/familiar",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {},
+        "tags": []
+      }
+    },
+    "/api/familiar/{id}": {
+      "get": {
+        "summary": "/api/familiar/{id}",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {},
+        "tags": []
+      },
+      "put": {
+        "summary": "/api/familiar/{id}",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {},
+        "tags": []
+      },
+      "delete": {
+        "summary": "/api/familiar/{id}",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {},
+        "tags": []
+      }
+    },
+    "/api/familiar/relate/{id}": {
+      "put": {
+        "summary": "/api/familiar/relate/{id}",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {},
+        "tags": []
+      }
+    },
+    "/api/familiar/unrelate/{id}": {
+      "put": {
+        "summary": "/api/familiar/unrelate/{id}",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {},
+        "tags": []
+      }
+    },
+    "/api/entrega": {
+      "get": {
+        "summary": "/api/entrega",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {},
+        "tags": []
+      },
+      "post": {
+        "summary": "/api/entrega",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {},
+        "tags": []
+      }
+    },
+    "/api/entrega/{id}": {
+      "get": {
+        "summary": "/api/entrega/{id}",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {},
+        "tags": []
+      },
+      "put": {
+        "summary": "/api/entrega/{id}",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {},
+        "tags": []
+      },
+      "delete": {
+        "summary": "/api/entrega/{id}",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {},
+        "tags": []
+      }
+    }
+  },
+  "swagger": "2.0",
+  "tags": []
+}
