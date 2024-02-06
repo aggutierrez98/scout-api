@@ -2,9 +2,6 @@ import { IncomingMessage, Server, ServerResponse } from "http";
 import ServerModel from "./Server";
 import { gracefulShutdownMainProcess } from "./utils";
 
-//TODO: PROBAR DOCUMENTADO AUTOMATICO EN SWAGGER CON TSOA
-//TODO: APLICAR VARIABLES DE ENTORNO USANDO SWAGGER
-
 //TODO: APLICAR CLEAN ARCHITECTURE COMBINADA CON SCREAMING ACHITECTURE
 // https://www.youtube.com/watch?v=bdnpXzgj1oY
 // https://www.npmjs.com/package/eslint-plugin-hexagonal-architecture
