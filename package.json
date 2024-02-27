@@ -42,12 +42,12 @@
   },
   "description": "Scout api for personal use",
   "devDependencies": {
-    "@types/morgan": "^1.9.5",
     "@types/bcryptjs": "^2.4.3",
     "@types/compression": "^1.7.3",
     "@types/cors": "2.8.13",
     "@types/express": "4.17.17",
     "@types/jsonwebtoken": "^9.0.2",
+    "@types/morgan": "^1.9.5",
     "@types/node": "20.5.0",
     "@types/node-cron": "^3.0.11",
     "@types/progress": "^2.0.5",
@@ -82,8 +82,6 @@
     "url": "git+https://github.com/aggutierrez98/scout-api.git"
   },
   "scripts": {
-    "build": "dotenv -e .env npx tsc",
-    "dev": "NODE_ENV=development dotenv -e .env.development -- nodemon",
     "create-admin:dev": "dotenv -e .env.development -- ts-node src/bin/createAdminUser.ts",
     "save-users:dev": "NODE_ENV=development dotenv -e .env.development -- ts-node src/bin/saveUsersData.ts",
     "load-pagos:dev": "NODE_ENV=development dotenv -e .env.development -- ts-node src/bin/loadPagos.ts",
@@ -105,7 +103,9 @@
     "deleteDBData": "dotenv -e .env -- ts-node src/bin/deleteDBData.ts",
     "push:dev": "dotenv -e .env.development -- prisma db push",
     "push": "dotenv -e .env -- prisma db push",
-    "start": "dotenv -e .env -- node dist/index.js",
+    "build": "NODE_ENV=production dotenv -e .env npx tsc",
+    "dev": "NODE_ENV=development dotenv -e .env.development -- nodemon --trace-sync-io",
+    "start": "NODE_ENV=production dotenv -e .env -- node dist/index.js",
     "studio:dev": "dotenv -e .env.development -- prisma studio",
     "studio": "dotenv -e .env -- prisma studio",
     "test": "npm run test"

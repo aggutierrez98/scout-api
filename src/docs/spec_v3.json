@@ -42,6 +42,88 @@
                     }
                   }
                 }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZ0dVRVX3JKc3YiLCJpYXQiOjE3MDcxNjQyMzAsImV4cCI6MTcwNzE3MTQzMH0.WUCF3oBLw7x040xrMAlCKPMxD_FNalQM7Bg_ao0OtDc"
+                    },
+                    "id": {
+                      "type": "string",
+                      "example": "6tuTU_rJsv"
+                    },
+                    "role": {
+                      "type": "string",
+                      "example": "EXTERNO"
+                    },
+                    "scout": {
+                      "example": null,
+                      "nullable": true
+                    },
+                    "username": {
+                      "type": "string",
+                      "example": "userprueba"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "INVALID_TOKEN"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Token expirado"
+                    }
+                  }
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "INVALID_TOKEN"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Token expirado"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Too many requests, please try again later."
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "example": "Too many requests, please try again later."
+                }
               }
             }
           }
@@ -81,6 +163,29 @@
                       "role",
                       "active"
                     ]
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "INVALID_TOKEN"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Token expirado"
+                    }
                   }
                 }
               }
@@ -136,6 +241,9 @@
               }
             }
           },
+          "304": {
+            "description": ""
+          },
           "400": {
             "description": "Bad Request",
             "content": {
@@ -190,6 +298,147 @@
                     "token": {
                       "type": "string",
                       "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImhYVzZIQ1ExeEQiLCJpYXQiOjE3MDcxNjQxNzMsImV4cCI6MTcwNzE3MTM3M30.XoZVffXDAhXf_9fMTx_0NxYHSbXZZQ0eKCE5P_Kt8fU"
+                    }
+                  }
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "hXW6HCQ1xD"
+                    },
+                    "username": {
+                      "type": "string",
+                      "example": "agusgutierrez"
+                    },
+                    "scout": {
+                      "example": null,
+                      "nullable": true
+                    },
+                    "role": {
+                      "type": "string",
+                      "example": "ADMIN"
+                    },
+                    "token": {
+                      "type": "string",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImhYVzZIQ1ExeEQiLCJpYXQiOjE3MDcxNjQxNzMsImV4cCI6MTcwNzE3MTM3M30.XoZVffXDAhXf_9fMTx_0NxYHSbXZZQ0eKCE5P_Kt8fU"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "INVALID_CREDENTIALS"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Credenciales incorrectas"
+                    }
+                  }
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "INVALID_CREDENTIALS"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Credenciales incorrectas"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Too many requests, please try again later."
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "example": "Too many requests, please try again later."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Error Interno del Servidor"
+                    }
+                  }
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Error Interno del Servidor"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "SERVER_TOO_BUSY"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Server too busy right now"
+                    }
+                  }
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "SERVER_TOO_BUSY"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Server too busy right now"
                     }
                   }
                 }
@@ -353,7 +602,132 @@
     "/api/patrulla": {
       "get": {
         "summary": "/api/patrulla",
-        "responses": {},
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "nombre": {
+                        "type": "string"
+                      },
+                      "lema": {
+                        "type": "string"
+                      },
+                      "fechaCreacion": {
+                        "type": "string"
+                      },
+                      "fechaActualizacion": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "nombre",
+                      "lema",
+                      "fechaCreacion",
+                      "fechaActualizacion"
+                    ]
+                  }
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "nombre": {
+                        "type": "string"
+                      },
+                      "lema": {
+                        "type": "string"
+                      },
+                      "fechaCreacion": {
+                        "type": "string"
+                      },
+                      "fechaActualizacion": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "nombre",
+                      "lema",
+                      "fechaCreacion",
+                      "fechaActualizacion"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "INVALID_TOKEN"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Token expirado"
+                    }
+                  }
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "INVALID_TOKEN"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Token expirado"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Too many requests, please try again later."
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "example": "Too many requests, please try again later."
+                }
+              }
+            }
+          }
+        },
         "tags": []
       },
       "post": {
@@ -412,7 +786,236 @@
     "/api/scout": {
       "get": {
         "summary": "/api/scout",
-        "responses": {},
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "nombre": {
+                        "type": "string"
+                      },
+                      "apellido": {
+                        "type": "string"
+                      },
+                      "fechaNacimiento": {
+                        "type": "string"
+                      },
+                      "dni": {
+                        "type": "string"
+                      },
+                      "sexo": {
+                        "type": "string"
+                      },
+                      "localidad": {
+                        "type": "string"
+                      },
+                      "direccion": {
+                        "type": "string"
+                      },
+                      "telefono": {
+                        "type": "string"
+                      },
+                      "mail": {
+                        "type": "string"
+                      },
+                      "progresionActual": {
+                        "type": "string"
+                      },
+                      "religion": {
+                        "type": "string"
+                      },
+                      "patrullaId": {
+                        "type": "string"
+                      },
+                      "funcion": {
+                        "type": "string"
+                      },
+                      "estado": {
+                        "type": "string"
+                      },
+                      "fechaCreacion": {
+                        "type": "string"
+                      },
+                      "fechaActualizacion": {
+                        "type": "string"
+                      },
+                      "edad": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "nombre",
+                      "apellido",
+                      "fechaNacimiento",
+                      "dni",
+                      "sexo",
+                      "localidad",
+                      "direccion",
+                      "telefono",
+                      "mail",
+                      "progresionActual",
+                      "religion",
+                      "patrullaId",
+                      "funcion",
+                      "estado",
+                      "fechaCreacion",
+                      "fechaActualizacion",
+                      "edad"
+                    ]
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "nombre": {
+                        "type": "string"
+                      },
+                      "apellido": {
+                        "type": "string"
+                      },
+                      "fechaNacimiento": {
+                        "type": "string"
+                      },
+                      "dni": {
+                        "type": "string"
+                      },
+                      "sexo": {
+                        "type": "string"
+                      },
+                      "localidad": {
+                        "type": "string"
+                      },
+                      "direccion": {
+                        "type": "string"
+                      },
+                      "telefono": {
+                        "type": "string"
+                      },
+                      "mail": {
+                        "type": "string"
+                      },
+                      "progresionActual": {
+                        "type": "string"
+                      },
+                      "religion": {
+                        "type": "string"
+                      },
+                      "patrullaId": {
+                        "type": "string"
+                      },
+                      "funcion": {
+                        "type": "string"
+                      },
+                      "estado": {
+                        "type": "string"
+                      },
+                      "fechaCreacion": {
+                        "type": "string"
+                      },
+                      "fechaActualizacion": {
+                        "type": "string"
+                      },
+                      "edad": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "nombre",
+                      "apellido",
+                      "fechaNacimiento",
+                      "dni",
+                      "sexo",
+                      "localidad",
+                      "direccion",
+                      "telefono",
+                      "mail",
+                      "progresionActual",
+                      "religion",
+                      "patrullaId",
+                      "funcion",
+                      "estado",
+                      "fechaCreacion",
+                      "fechaActualizacion",
+                      "edad"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "INVALID_TOKEN"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Token expirado"
+                    }
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "INVALID_TOKEN"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Token expirado"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "example": "Too many requests, please try again later."
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Too many requests, please try again later."
+                }
+              }
+            }
+          }
+        },
         "tags": []
       },
       "post": {
@@ -424,14 +1027,22 @@
     "/api/scout/allScouts": {
       "get": {
         "summary": "/api/scout/allScouts",
-        "responses": {},
+        "responses": {
+          "304": {
+            "description": ""
+          }
+        },
         "tags": []
       }
     },
     "/api/scout/allEducadores": {
       "get": {
         "summary": "/api/scout/allEducadores",
-        "responses": {},
+        "responses": {
+          "304": {
+            "description": ""
+          }
+        },
         "tags": []
       }
     },
@@ -448,7 +1059,63 @@
             }
           }
         ],
-        "responses": {},
+        "responses": {
+          "304": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "INVALID_TOKEN"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Token expirado"
+                    }
+                  }
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "INVALID_TOKEN"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Token expirado"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Too many requests, please try again later."
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "example": "Too many requests, please try again later."
+                }
+              }
+            }
+          }
+        },
         "tags": []
       },
       "put": {
@@ -485,7 +1152,172 @@
     "/api/documento": {
       "get": {
         "summary": "/api/documento",
-        "responses": {},
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "documentoId": {
+                        "type": "string"
+                      },
+                      "scoutId": {
+                        "type": "string"
+                      },
+                      "fechaPresentacion": {
+                        "type": "string"
+                      },
+                      "documento": {
+                        "type": "object",
+                        "properties": {
+                          "nombre": {
+                            "type": "string"
+                          },
+                          "vence": {
+                            "type": "boolean"
+                          }
+                        }
+                      },
+                      "scout": {
+                        "type": "object",
+                        "properties": {
+                          "nombre": {
+                            "type": "string"
+                          },
+                          "apellido": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "documentoId",
+                      "scoutId",
+                      "fechaPresentacion",
+                      "documento",
+                      "scout"
+                    ]
+                  }
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "documentoId": {
+                        "type": "string"
+                      },
+                      "scoutId": {
+                        "type": "string"
+                      },
+                      "fechaPresentacion": {
+                        "type": "string"
+                      },
+                      "documento": {
+                        "type": "object",
+                        "properties": {
+                          "nombre": {
+                            "type": "string"
+                          },
+                          "vence": {
+                            "type": "boolean"
+                          }
+                        }
+                      },
+                      "scout": {
+                        "type": "object",
+                        "properties": {
+                          "nombre": {
+                            "type": "string"
+                          },
+                          "apellido": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "documentoId",
+                      "scoutId",
+                      "fechaPresentacion",
+                      "documento",
+                      "scout"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "INVALID_TOKEN"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Token expirado"
+                    }
+                  }
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "INVALID_TOKEN"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Token expirado"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Too many requests, please try again later."
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "example": "Too many requests, please try again later."
+                }
+              }
+            }
+          }
+        },
         "tags": []
       },
       "post": {
@@ -497,7 +1329,116 @@
     "/api/documento/data": {
       "get": {
         "summary": "/api/documento/data",
-        "responses": {},
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "nombre": {
+                        "type": "string"
+                      },
+                      "vence": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "nombre",
+                      "vence"
+                    ]
+                  }
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "nombre": {
+                        "type": "string"
+                      },
+                      "vence": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "nombre",
+                      "vence"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "INVALID_TOKEN"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Token expirado"
+                    }
+                  }
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "INVALID_TOKEN"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Token expirado"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Too many requests, please try again later."
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "example": "Too many requests, please try again later."
+                }
+              }
+            }
+          }
+        },
         "tags": []
       }
     },
@@ -514,7 +1455,65 @@
             }
           }
         ],
-        "responses": {},
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "u1cbw7bLmq"
+                    },
+                    "documentoId": {
+                      "type": "string",
+                      "example": "lc8dCo80_0"
+                    },
+                    "scoutId": {
+                      "type": "string",
+                      "example": "tjpOa5eQY_"
+                    },
+                    "fechaPresentacion": {
+                      "type": "string",
+                      "example": "2024-01-13T00:00:00.000Z"
+                    },
+                    "documento": {
+                      "type": "object",
+                      "properties": {
+                        "nombre": {
+                          "type": "string",
+                          "example": "Historia Clinica"
+                        },
+                        "vence": {
+                          "type": "boolean",
+                          "example": false
+                        }
+                      }
+                    },
+                    "scout": {
+                      "type": "object",
+                      "properties": {
+                        "nombre": {
+                          "type": "string",
+                          "example": "Bortoloni"
+                        },
+                        "apellido": {
+                          "type": "string",
+                          "example": "Waylon"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": ""
+          }
+        },
         "tags": []
       },
       "delete": {
@@ -529,19 +1528,157 @@
             }
           }
         ],
-        "responses": {},
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "BLBrMs1rUr"
+                    },
+                    "documentoId": {
+                      "type": "string",
+                      "example": "gy7cp-lqSO"
+                    },
+                    "scoutId": {
+                      "type": "string",
+                      "example": "CbwKybmS0Y"
+                    },
+                    "fechaPresentacion": {
+                      "type": "string",
+                      "example": "2024-01-06T00:00:00.000Z"
+                    },
+                    "documento": {
+                      "type": "object",
+                      "properties": {
+                        "nombre": {
+                          "type": "string",
+                          "example": "Fotocopia carnet/credencial obra social"
+                        },
+                        "vence": {
+                          "type": "boolean",
+                          "example": false
+                        }
+                      }
+                    },
+                    "scout": {
+                      "type": "object",
+                      "properties": {
+                        "nombre": {
+                          "type": "string",
+                          "example": "Garnul"
+                        },
+                        "apellido": {
+                          "type": "string",
+                          "example": "Hilarius"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "tags": []
       }
     },
     "/api/pago": {
       "get": {
         "summary": "/api/pago",
-        "responses": {},
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {}
+                }
+              }
+            }
+          },
+          "304": {
+            "description": ""
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "example": "Too many requests, please try again later."
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Too many requests, please try again later."
+                }
+              }
+            }
+          }
+        },
         "tags": []
       },
       "post": {
         "summary": "/api/pago",
-        "responses": {},
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "9JGNKkM_17"
+                    },
+                    "concepto": {
+                      "type": "string",
+                      "example": "TUVIEJAPUTACONMIPINGOSEAHOGA"
+                    },
+                    "monto": {
+                      "type": "string",
+                      "example": "1200"
+                    },
+                    "rendido": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "metodoPago": {
+                      "type": "string",
+                      "example": "TRANSFERENCIA"
+                    },
+                    "scoutId": {
+                      "type": "string",
+                      "example": "tGStuNB-6Y"
+                    },
+                    "fechaPago": {
+                      "type": "string",
+                      "example": "2024-02-14T00:00:00.000Z"
+                    },
+                    "fechaCreacion": {
+                      "type": "string",
+                      "example": "2024-02-22T20:39:53.561Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "tags": []
       }
     },
@@ -558,7 +1695,88 @@
             }
           }
         ],
-        "responses": {},
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "i8OlJ22GvX"
+                    },
+                    "concepto": {
+                      "type": "string",
+                      "example": "ENCUENTRO DISTRITAL"
+                    },
+                    "monto": {
+                      "type": "string",
+                      "example": "125272"
+                    },
+                    "rendido": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "metodoPago": {
+                      "type": "string",
+                      "example": "EFECTIVO"
+                    },
+                    "scoutId": {
+                      "type": "string",
+                      "example": "1Mk1UXMDXg"
+                    },
+                    "fechaPago": {
+                      "type": "string",
+                      "example": "2024-01-09T00:00:00.000Z"
+                    },
+                    "fechaCreacion": {
+                      "type": "string",
+                      "example": "2024-02-05T19:56:25.184Z"
+                    },
+                    "scout": {
+                      "type": "object",
+                      "properties": {
+                        "nombre": {
+                          "type": "string",
+                          "example": "Gilyott"
+                        },
+                        "apellido": {
+                          "type": "string",
+                          "example": "Collin"
+                        },
+                        "dni": {
+                          "type": "string",
+                          "example": "42562254"
+                        },
+                        "funcion": {
+                          "type": "string",
+                          "example": "AYUDANTE"
+                        },
+                        "fechaNacimiento": {
+                          "type": "string",
+                          "example": "2010-06-16T00:00:00.000Z"
+                        },
+                        "sexo": {
+                          "type": "string",
+                          "example": "M"
+                        },
+                        "telefono": {
+                          "type": "string",
+                          "example": "675-207-7330"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": ""
+          }
+        },
         "tags": []
       },
       "put": {
@@ -573,7 +1791,52 @@
             }
           }
         ],
-        "responses": {},
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "9JGNKkM_17"
+                    },
+                    "concepto": {
+                      "type": "string",
+                      "example": "TUVIEJAPUTACONMIPINGOSEAHOGA"
+                    },
+                    "monto": {
+                      "type": "string",
+                      "example": "1200"
+                    },
+                    "rendido": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "metodoPago": {
+                      "type": "string",
+                      "example": "TRANSFERENCIA"
+                    },
+                    "scoutId": {
+                      "type": "string",
+                      "example": "tGStuNB-6Y"
+                    },
+                    "fechaPago": {
+                      "type": "string",
+                      "example": "2024-02-14T00:00:00.000Z"
+                    },
+                    "fechaCreacion": {
+                      "type": "string",
+                      "example": "2024-02-22T20:39:53.561Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "tags": []
       },
       "delete": {
@@ -588,14 +1851,119 @@
             }
           }
         ],
-        "responses": {},
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "9JGNKkM_17"
+                    },
+                    "concepto": {
+                      "type": "string",
+                      "example": "TUVIEJAPUTACONMIPINGOSEAHOGA"
+                    },
+                    "monto": {
+                      "type": "string",
+                      "example": "1200"
+                    },
+                    "rendido": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "metodoPago": {
+                      "type": "string",
+                      "example": "TRANSFERENCIA"
+                    },
+                    "scoutId": {
+                      "type": "string",
+                      "example": "tGStuNB-6Y"
+                    },
+                    "fechaPago": {
+                      "type": "string",
+                      "example": "2024-02-14T00:00:00.000Z"
+                    },
+                    "fechaCreacion": {
+                      "type": "string",
+                      "example": "2024-02-22T20:39:53.561Z"
+                    }
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "9JGNKkM_17"
+                    },
+                    "concepto": {
+                      "type": "string",
+                      "example": "TUVIEJAPUTACONMIPINGOSEAHOGA"
+                    },
+                    "monto": {
+                      "type": "string",
+                      "example": "1200"
+                    },
+                    "rendido": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "metodoPago": {
+                      "type": "string",
+                      "example": "TRANSFERENCIA"
+                    },
+                    "scoutId": {
+                      "type": "string",
+                      "example": "tGStuNB-6Y"
+                    },
+                    "fechaPago": {
+                      "type": "string",
+                      "example": "2024-02-14T00:00:00.000Z"
+                    },
+                    "fechaCreacion": {
+                      "type": "string",
+                      "example": "2024-02-22T20:39:53.561Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "example": "Too many requests, please try again later."
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Too many requests, please try again later."
+                }
+              }
+            }
+          }
+        },
         "tags": []
       }
     },
     "/api/familiar": {
       "get": {
         "summary": "/api/familiar",
-        "responses": {},
+        "responses": {
+          "304": {
+            "description": ""
+          }
+        },
         "tags": []
       },
       "post": {
@@ -617,7 +1985,11 @@
             }
           }
         ],
-        "responses": {},
+        "responses": {
+          "304": {
+            "description": ""
+          }
+        },
         "tags": []
       },
       "put": {
@@ -688,7 +2060,139 @@
     "/api/entrega": {
       "get": {
         "summary": "/api/entrega",
-        "responses": {},
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "scoutId": {
+                        "type": "string"
+                      },
+                      "tipoEntrega": {
+                        "type": "string"
+                      },
+                      "fechaEntrega": {
+                        "type": "string"
+                      },
+                      "fechaCreacion": {
+                        "type": "string"
+                      },
+                      "scout": {
+                        "type": "object",
+                        "properties": {
+                          "nombre": {
+                            "type": "string"
+                          },
+                          "apellido": {
+                            "type": "string"
+                          },
+                          "dni": {
+                            "type": "string"
+                          },
+                          "funcion": {
+                            "type": "string"
+                          },
+                          "sexo": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "scoutId",
+                      "tipoEntrega",
+                      "fechaEntrega",
+                      "fechaCreacion",
+                      "scout"
+                    ]
+                  }
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "scoutId": {
+                        "type": "string"
+                      },
+                      "tipoEntrega": {
+                        "type": "string"
+                      },
+                      "fechaEntrega": {
+                        "type": "string"
+                      },
+                      "fechaCreacion": {
+                        "type": "string"
+                      },
+                      "scout": {
+                        "type": "object",
+                        "properties": {
+                          "nombre": {
+                            "type": "string"
+                          },
+                          "apellido": {
+                            "type": "string"
+                          },
+                          "dni": {
+                            "type": "string"
+                          },
+                          "funcion": {
+                            "type": "string"
+                          },
+                          "sexo": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "scoutId",
+                      "tipoEntrega",
+                      "fechaEntrega",
+                      "fechaCreacion",
+                      "scout"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": ""
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Too many requests, please try again later."
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "example": "Too many requests, please try again later."
+                }
+              }
+            }
+          }
+        },
         "tags": []
       },
       "post": {
@@ -710,7 +2214,153 @@
             }
           }
         ],
-        "responses": {},
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "Q7GTKCcphp"
+                    },
+                    "scoutId": {
+                      "type": "string",
+                      "example": "QETKpz2kXN"
+                    },
+                    "tipoEntrega": {
+                      "type": "string",
+                      "example": "ESPNATURALEZA"
+                    },
+                    "fechaEntrega": {
+                      "type": "string",
+                      "example": "2024-01-24T00:00:00.000Z"
+                    },
+                    "fechaCreacion": {
+                      "type": "string",
+                      "example": "2024-02-05T19:56:35.815Z"
+                    },
+                    "scout": {
+                      "type": "object",
+                      "properties": {
+                        "nombre": {
+                          "type": "string",
+                          "example": "Gallichan"
+                        },
+                        "apellido": {
+                          "type": "string",
+                          "example": "Louisette"
+                        },
+                        "dni": {
+                          "type": "string",
+                          "example": "97255627"
+                        },
+                        "funcion": {
+                          "type": "string",
+                          "example": "JEFE"
+                        },
+                        "fechaNacimiento": {
+                          "type": "string",
+                          "example": "2014-11-20T00:00:00.000Z"
+                        },
+                        "sexo": {
+                          "type": "string",
+                          "example": "F"
+                        },
+                        "telefono": {
+                          "type": "string",
+                          "example": "989-572-0016"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "Q7GTKCcphp"
+                    },
+                    "scoutId": {
+                      "type": "string",
+                      "example": "QETKpz2kXN"
+                    },
+                    "tipoEntrega": {
+                      "type": "string",
+                      "example": "ESPNATURALEZA"
+                    },
+                    "fechaEntrega": {
+                      "type": "string",
+                      "example": "2024-01-24T00:00:00.000Z"
+                    },
+                    "fechaCreacion": {
+                      "type": "string",
+                      "example": "2024-02-05T19:56:35.815Z"
+                    },
+                    "scout": {
+                      "type": "object",
+                      "properties": {
+                        "nombre": {
+                          "type": "string",
+                          "example": "Gallichan"
+                        },
+                        "apellido": {
+                          "type": "string",
+                          "example": "Louisette"
+                        },
+                        "dni": {
+                          "type": "string",
+                          "example": "97255627"
+                        },
+                        "funcion": {
+                          "type": "string",
+                          "example": "JEFE"
+                        },
+                        "fechaNacimiento": {
+                          "type": "string",
+                          "example": "2014-11-20T00:00:00.000Z"
+                        },
+                        "sexo": {
+                          "type": "string",
+                          "example": "F"
+                        },
+                        "telefono": {
+                          "type": "string",
+                          "example": "989-572-0016"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": ""
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Too many requests, please try again later."
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "example": "Too many requests, please try again later."
+                }
+              }
+            }
+          }
+        },
         "tags": []
       },
       "put": {

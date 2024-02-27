@@ -2,11 +2,8 @@ import { IncomingMessage, Server, ServerResponse } from "http";
 import ServerModel from "./Server";
 import { gracefulShutdownMainProcess } from "./utils";
 
-//TODO: APLICAR CLEAN ARCHITECTURE COMBINADA CON SCREAMING ACHITECTURE
-// https://www.youtube.com/watch?v=bdnpXzgj1oY
-// https://www.npmjs.com/package/eslint-plugin-hexagonal-architecture
-// https://www.youtube.com/watch?v=nfaq_UKunsE
-// https://www.youtube.com/watch?v=497L4-LhvdM
+// TODO: Agregar scripts para exportar la base de datos segun fechas
+// TODO: Agregar script para importar la base de datos segun archivos
 
 (async () => {
 	let server: Server<typeof IncomingMessage, typeof ServerResponse>;

@@ -1,6 +1,17 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
-import { DocDataXLSX, DocumentoXLSX, EntregaXLSX, FamiliarXLSX, PagoXLSX, PatrullaXLSX, ScoutXLSX, SheetIndexType, SpreadsheetDataMap, UsuarioXLSX } from '../../types';
+import {
+    DocDataXLSX,
+    DocumentoXLSX,
+    EntregaXLSX,
+    FamiliarXLSX,
+    PagoXLSX,
+    PatrullaXLSX,
+    ScoutXLSX,
+    SheetIndexType,
+    SpreadsheetDataMap,
+    UsuarioXLSX
+} from '../../types';
 
 export function getSpreadSheetData(sheetIndex: "familiares"): Promise<Partial<FamiliarXLSX>[]>;
 export function getSpreadSheetData(sheetIndex: "scouts"): Promise<Partial<ScoutXLSX>[]>;

@@ -100,3 +100,9 @@ export const VALID_ESTADOS = [
 export const MENU_COMMANDS = ["pagos", "documentos", "scouts", "familiares", "entregas", "cumpleaños"]
 
 export const SPLIT_STRING = process.env.NODE_ENV === "development" ? " " : ", "
+
+// Number or proxies to skip to limit ips requests by rate-limiter
+export const PROXIES_NUMBER = 1;
+
+// If you add origins they will be the only accepted by CORS
+export const ACCEPTED_ORIGINS: String[] = [];
