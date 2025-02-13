@@ -26,7 +26,7 @@ import { EntregaService } from "./services/entrega";
 import createEntregaRouter from "./routes/entrega";
 import { WhatsAppSbot } from "./whatsapp/WhatsappSession";
 import recordarCumpleaños from "./whatsapp/recordarCumpleaños";
-import expressOasGenerator, { SPEC_OUTPUT_FILE_BEHAVIOR } from 'express-oas-generator';
+// import expressOasGenerator, { SPEC_OUTPUT_FILE_BEHAVIOR } from 'express-oas-generator';
 import swaggerSpecJSON from "./docs/spec.json";
 // import { swaggerDefinition } from "./docs/swagger-ts/swagger";
 
@@ -46,21 +46,6 @@ export default class Server {
 			legacyHeaders: false,
 		});
 
-		expressOasGenerator.handleResponses(this.app, {
-			specOutputFileBehavior: SPEC_OUTPUT_FILE_BEHAVIOR.PRESERVE,
-			swaggerDocumentOptions: {
-				customSiteTitle: "Scout API",
-				// swaggerOptions: []
-				swaggerUrl: "http://localhost:8080/api"
-			},
-			specOutputPath: './src/docs/spec.json',
-			alwaysServeDocs: true,
-			// predefinedSpec: function(spec) {
-			// 	_.set(spec, 'paths["/students/{name}"].get.parameters[0].description', 'description of a parameter');
-			// 	return spec;
-			//   },
-		});
-
 		this.app.disable("x-powered-by");
 		// For using express rate limit with proxies (to forward ips to limit requests)
 		this.app.set("trust proxy", PROXIES_NUMBER);
@@ -68,7 +53,7 @@ export default class Server {
 		this.port = process.env.PORT;
 		this.middlewares();
 
-		expressOasGenerator.handleRequests();
+		// expressOasGenerator.handleRequests();
 	}
 
 	middlewares() {
@@ -100,9 +85,7 @@ export default class Server {
 		this.app.use(morganMiddleware);
 		this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpecJSON));
 		this.app.use("/api", this.loadRoutes());
-
 		this.app.use(errorMiddleware);
-
 	}
 
 	loadRoutes() {

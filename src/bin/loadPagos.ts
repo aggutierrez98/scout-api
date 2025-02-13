@@ -4,10 +4,13 @@ import { SPLIT_STRING, excelDateToJSDate, parseDMYtoDate } from "../utils";
 import { MetodosPagoType } from "../types";
 import { nanoid } from "nanoid";
 import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
+// import { prisma } from "../utils/lib/prisma-client";
 
 const loadPagos = async () => {
     const prisma = new PrismaClient();
     await prisma.$connect()
+
+    // prisma.
 
     try {
 
@@ -71,7 +74,7 @@ const loadPagos = async () => {
                 fechaPago: fecha,
                 concepto: (pagoData.Concepto ?? "").toLocaleUpperCase(),
                 metodoPago: pagoData["Metodo de pago"]!.toLocaleUpperCase() as MetodosPagoType,
-                monto: pagoData.Monto ?? "",
+                monto: Number(pagoData.Monto) ?? 0,
                 rendido: pagoData.Rendido === "si",
             });
 
@@ -79,10 +82,11 @@ const loadPagos = async () => {
         }
 
         console.log(`\n-> Cargando ${pagos.length} pagos a la bd...`);
-        await prisma.$queryRaw`ALTER TABLE Pago AUTO_INCREMENT = 1`;
+        // await prisma.$queryRaw`ALTER TABLE Pago AUTO_INCREMENT = 1`;
+        await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Pago'`;
         const result = await prisma.pago.createMany({
             data: pagos,
-            skipDuplicates: true,
+            // skipDuplicates: true,
         });
 
         console.log(`\n-> Se cararon exitosamente ${result.count} pagos a la bd!`);

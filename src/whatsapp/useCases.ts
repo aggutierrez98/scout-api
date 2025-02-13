@@ -80,7 +80,7 @@ interface ScoutPago {
     }
     concepto: string;
     monto: number | Decimal | string;
-    metodoPago: MetodosPagoType;
+    metodoPago: string;
     fechaPago: Date;
 }
 interface ScoutDocumento {

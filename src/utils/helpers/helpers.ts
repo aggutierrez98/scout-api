@@ -36,7 +36,7 @@ export const shouldCompress = (req: Request, res: Response) => {
 
 export const getAge = (birthDate: Date) => Math.floor((new Date().getTime() - new Date(birthDate).getTime()) / 3.15576e+10)
 
-export const getEntregaFromType = (tipoEntrega: TipoEntregaType) => {
+export const getEntregaFromType = (tipoEntrega: string) => {
 	return EntregaFromEntregaType[tipoEntrega as keyof typeof EntregaFromEntregaType]
 }
 

@@ -1,8 +1,9 @@
-import { PrismaClient, Prisma, EstadoCivil } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import ProgressBar from "progress";
 import { SPLIT_STRING, excelDateToJSDate, parseDMYtoDate } from "../utils";
 import { nanoid } from "nanoid";
 import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
+import { EstadoCivilType } from "../types";
 
 
 
@@ -52,17 +53,18 @@ const insertFamiliares = async () => {
                 direccion: familiarData.Calle!,
                 telefono: String(familiarData.Telefono),
                 mail: familiarData.Email,
-                estadoCivil: familiarData["Estado Civil"]!.toLocaleUpperCase() as EstadoCivil,
+                estadoCivil: familiarData["Estado Civil"]!.toLocaleUpperCase() as EstadoCivilType,
             });
 
             bar.tick(1);
         }
 
         console.log(`\n-> Cargando ${familiares.length} familiares a la bd...`);
-        await prisma.$queryRaw`ALTER TABLE Familiar AUTO_INCREMENT = 1`;
+        // await prisma.$queryRaw`ALTER TABLE Familiar AUTO_INCREMENT = 1`;
+        await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Familiar'`;
         const result = await prisma.familiar.createMany({
             data: familiares,
-            skipDuplicates: true,
+            // skipDuplicates: true,
         });
 
         console.log(`\n-> Se cararon exitosamente ${result.count} familiares a la bd!`);

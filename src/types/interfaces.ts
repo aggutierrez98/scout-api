@@ -15,15 +15,15 @@ export interface IScout {
 	apellido: string;
 	fechaNacimiento: Date;
 	dni: string;
-	sexo: SexoType;
+	sexo: string;
 	localidad: string;
 	direccion: string;
 	telefono: string | null;
 	mail: string | null;
 	patrullaId: string | null;
-	religion: ReligionType | null;
-	progresionActual: ProgresionType | null;
-	funcion: FuncionType | null;
+	religion: string | null;
+	progresionActual: string | null;
+	funcion: string | null;
 }
 
 export interface IScoutData extends IScout {
@@ -36,20 +36,20 @@ export interface IScoutData extends IScout {
 	}[];
 	entregasObtenidas?: {
 		id: string;
-		tipoEntrega: TipoEntregaType;
+		tipoEntrega: string;
 		fechaEntrega: Date;
 	}[];
 	familiares?: {
 		nombre: string;
 		apellido: string;
-		sexo: SexoType;
+		sexo: string;
 		dni: string;
 		fechaNacimiento: Date;
 		localidad: string;
 		direccion: string
 		mail?: string | null
 		telefono?: string | null;
-		estadoCivil?: EstadoCivilType | null
+		estadoCivil?: string | null
 	}[];
 	patrulla?: {
 		id: string;
@@ -81,8 +81,8 @@ export interface IFamiliarScout {
 export interface IInsignaObt {
 	id: string;
 	scoutId: string;
-	tipoEntrega: TipoEntregaType;
-	progresion: ProgresionType | null;
+	tipoEntrega: string;
+	progresion: string | null;
 	fechaObtencion: Date;
 }
 
@@ -109,8 +109,8 @@ export interface IDocumentoData {
 export interface IPago {
 	scoutId: string;
 	concepto: string;
-	monto: number | Decimal | string;
-	metodoPago: MetodosPagoType;
+	monto: number;
+	metodoPago: string;
 	fechaPago: Date | string;
 }
 
@@ -124,14 +124,14 @@ export interface IPagoData extends IPago {
 export interface IFamiliar {
 	nombre: string;
 	apellido: string;
-	sexo: SexoType;
+	sexo: string;
 	dni: string;
 	fechaNacimiento: Date;
 	localidad: string;
 	direccion: string
 	mail?: string | null
 	telefono?: string | null;
-	estadoCivil?: EstadoCivilType | null
+	estadoCivil?: string | null
 }
 
 export interface IFamiliarScoutData extends IFamiliar {
@@ -142,7 +142,7 @@ export interface IFamiliarScoutData extends IFamiliar {
 		apellido: string;
 		edad: number;
 		fechaNacimiento: Date;
-		sexo: SexoType;
+		sexo: string;
 	}[];
 }
 
@@ -155,13 +155,13 @@ export interface IUserData {
 	username: string,
 	token: unknown,
 	scout: IScoutData | null
-	role: RolesType
+	role: string
 }
 
 export interface IEntrega {
 	scoutId: string;
 	fechaEntrega: Date | string;
-	tipoEntrega: TipoEntregaType;
+	tipoEntrega: string;
 }
 
 export interface IEntregaData extends IEntrega {

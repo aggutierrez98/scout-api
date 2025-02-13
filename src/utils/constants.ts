@@ -59,6 +59,14 @@ export const VALID_ENTREGAS_TYPE = [
 	"SUPERACION",
 ] as const;
 
+export const VALID_RAMAS_TYPE = [
+	"CASTORES",
+	"MANADA",
+	"UNIDAD",
+	"CAMINANTES",
+	"ROVERS"
+] as const;
+
 export enum EntregaFromEntregaType {
 	UNIFORME = "Uniforme Scout",
 	GUIA = "Insignia de Guia de patrulla",

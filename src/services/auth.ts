@@ -1,5 +1,5 @@
 import { PrismaClient, Prisma } from "@prisma/client";
-import { IUser, IUserData, IScout } from '../types/interfaces';
+import { IUser, IUserData, IScout, IScoutData } from '../types/interfaces';
 import { nanoid } from "nanoid";
 import { encrypt, verified } from "../utils/lib/bcrypt.util";
 import { generateToken } from "../utils/lib/jwt.util";
@@ -159,8 +159,8 @@ export class AuthService implements IAuthService {
         return {
             id: user.id,
             username: user.username,
-            scout: user.scout,
-            role: user.role,
+            scout: user.scout as IScoutData,
+            role: user.role as RolesType,
             token,
         }
     };
@@ -185,9 +185,9 @@ export class AuthService implements IAuthService {
         const token = generateToken(user.id)
         return {
             id: user.id,
-            scout: user.scout,
+            scout: user.scout as IScoutData,
             username: user.username,
-            role: user.role,
+            role: user.role as RolesType,
             token
         }
     }

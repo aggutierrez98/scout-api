@@ -1,43 +1,43 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["fullTextSearch", "fullTextIndex"]
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
-  provider     = "mysql"
-  url          = env("DATABASE_URL")
-  relationMode = "prisma"
+  provider = "sqlite"
+  // url      = env("DATABASE_URL")
+  url      = "file:./dev.db"
 }
 
 model User {
   id       Int     @id @default(autoincrement())
-  uuid     String  @unique @db.VarChar(10)
-  username String  @unique @db.VarChar(20)
+  uuid     String  @unique
+  username String  @unique
   password String
-  role     Role    @default(EXTERNO)
+  role     String  @default("EXTERNO")
   active   Boolean @default(true)
   scout    Scout?  @relation(fields: [scoutId], references: [uuid])
-  scoutId  String? @unique @db.VarChar(10)
+  scoutId  String? @unique
 }
 
 model Scout {
   id                    Int                   @id @default(autoincrement())
-  uuid                  String                @unique @db.VarChar(10)
-  nombre                String                @db.VarChar(45)
-  apellido              String                @db.VarChar(45)
-  fechaNacimiento       DateTime              @db.Date()
-  dni                   String                @unique @db.VarChar(20)
-  sexo                  Sexo
-  localidad             String                @db.VarChar(45)
-  direccion             String                @db.VarChar(65)
-  telefono              String?               @db.VarChar(25)
-  mail                  String?               @db.VarChar(50)
-  progresionActual      Progresion?
-  religion              Religion?             @default(CATOLICA)
+  uuid                  String                @unique
+  nombre                String
+  apellido              String
+  fechaNacimiento       DateTime
+  dni                   String                @unique
+  sexo                  String
+  localidad             String
+  direccion             String
+  telefono              String?
+  mail                  String?
+  progresionActual      String?
+  religion              String?               @default("CATOLICA")
   patrulla              Patrulla?             @relation(fields: [patrullaId], references: [uuid])
-  patrullaId            String?               @db.VarChar(10)
-  funcion               Funcion?              @default(JOVEN)
-  estado                Estado?               @default(ACTIVO)
+  patrullaId            String?
+  funcion               String?               @default("JOVEN")
+  estado                String?               @default("ACTIVO")
   documentosPresentados DocumentoPresentado[]
   entregasObtenidas     EntregaRealizada[]
   familiarScout         FamiliarScout[]
@@ -51,65 +51,65 @@ model Scout {
 
 model Documento {
   id                  Int                   @id @default(autoincrement())
-  uuid                String                @unique @db.VarChar(10)
-  nombre              String                @db.VarChar(45)
-  vence               Boolean               @db.Bit(1)
+  uuid                String                @unique
+  nombre              String
+  vence               Boolean
   documentoPresentado DocumentoPresentado[]
 }
 
 model DocumentoPresentado {
   id                Int       @id @default(autoincrement())
-  uuid              String    @unique @db.VarChar(10)
+  uuid              String    @unique
   documento         Documento @relation(fields: [documentoId], references: [uuid])
-  documentoId       String    @db.VarChar(10)
+  documentoId       String
   scout             Scout     @relation(fields: [scoutId], references: [uuid])
-  scoutId           String    @db.VarChar(10)
-  fechaPresentacion DateTime  @db.Date()
+  scoutId           String
+  fechaPresentacion DateTime
 
   @@index([scoutId, documentoId])
   @@index([documentoId])
 }
 
 model Pago {
-  id            Int         @id @default(autoincrement())
-  uuid          String      @unique @db.VarChar(10)
-  concepto      String      @db.VarChar(100)
-  monto         Decimal     @db.Decimal(10, 2)
-  rendido       Boolean     @default(false)
-  metodoPago    MetodosPago
-  scout         Scout       @relation(fields: [scoutId], references: [uuid])
-  scoutId       String      @db.VarChar(10)
-  fechaPago     DateTime    @db.Date()
-  fechaCreacion DateTime    @default(now())
+  id            Int      @id @default(autoincrement())
+  uuid          String   @unique
+  concepto      String
+  monto         Float
+  rendido       Boolean  @default(false)
+  metodoPago    String
+  scout         Scout    @relation(fields: [scoutId], references: [uuid])
+  scoutId       String
+  fechaPago     DateTime
+  fechaCreacion DateTime @default(now())
 
   @@index([scoutId])
 }
 
 model Familiar {
   id                 Int             @id @default(autoincrement())
-  uuid               String          @unique @db.VarChar(10)
-  nombre             String          @db.VarChar(45)
-  apellido           String          @db.VarChar(45)
-  fechaNacimiento    DateTime        @db.Date()
-  dni                String          @db.VarChar(20)
-  sexo               Sexo
-  localidad          String          @db.VarChar(45)
-  direccion          String          @db.VarChar(65)
-  mail               String?         @db.VarChar(50)
-  telefono           String?         @db.VarChar(25)
-  estadoCivil        EstadoCivil?
+  uuid               String          @unique
+  nombre             String
+  apellido           String
+  fechaNacimiento    DateTime
+  dni                String
+  sexo               String
+  localidad          String
+  direccion          String
+  mail               String?
+  telefono           String?
+  estadoCivil        String?
   fechaCreacion      DateTime        @default(now())
   fechaActualizacion DateTime        @updatedAt
   padreScout         FamiliarScout[]
 }
 
 model FamiliarScout {
-  id         Int                   @id @default(autoincrement())
-  familiar   Familiar              @relation(fields: [familiarId], references: [uuid])
-  familiarId String                @db.VarChar(10)
-  scout      Scout                 @relation(fields: [scoutId], references: [uuid])
-  scoutId    String                @db.VarChar(10)
-  relacion   RelacionFamiliarScout
+  id         Int      @id @default(autoincrement())
+  familiar   Familiar @relation(fields: [familiarId], references: [uuid])
+  familiarId String
+  scout      Scout    @relation(fields: [scoutId], references: [uuid])
+  scoutId    String
+  relacion   String
 
   @@index([scoutId, familiarId])
   @@index([familiarId])
@@ -117,104 +117,22 @@ model FamiliarScout {
 
 model Patrulla {
   id                 Int      @id @default(autoincrement())
-  uuid               String   @unique @db.VarChar(10)
-  nombre             String   @unique @db.VarChar(45)
-  lema               String?  @db.VarChar(100)
+  uuid               String   @unique
+  nombre             String   @unique
+  lema               String?
   fechaCreacion      DateTime @default(now())
   fechaActualizacion DateTime @updatedAt
   scout              Scout[]
 }
 
 model EntregaRealizada {
-  id            Int         @id @default(autoincrement())
-  uuid          String      @unique @db.VarChar(10)
-  scout         Scout       @relation(fields: [scoutId], references: [uuid])
-  scoutId       String      @db.VarChar(10)
-  tipoEntrega   TipoEntrega
-  fechaEntrega  DateTime    @db.Date()
-  fechaCreacion DateTime    @default(now())
+  id            Int      @id @default(autoincrement())
+  uuid          String   @unique
+  scout         Scout    @relation(fields: [scoutId], references: [uuid])
+  scoutId       String
+  tipoEntrega   String
+  fechaEntrega  DateTime
+  fechaCreacion DateTime @default(now())
 
   @@index([scoutId])
-}
-
-enum RelacionFamiliarScout {
-  PADRE
-  MADRE
-  TIO
-  TIA
-  HERMANO
-  HERMANA
-  ABUELO
-  ABUELA
-  OTRO
-}
-
-enum Progresion {
-  INTERRAMA
-  PISTA
-  RUMBO
-  TRAVESIA
-}
-
-enum EstadoCivil {
-  SOLTERO
-  CASADO
-  SEPARADO
-  VIUDO
-}
-
-enum Funcion {
-  JOVEN
-  JEFE
-  SUBJEFE
-  AYUDANTE
-  COLABORADOR
-}
-
-enum TipoEntrega {
-  UNIFORME
-  GUIA
-  SUBGUIA
-  PROGPISTA
-  PROGRUMBO
-  PROGTRAVESIA
-  PROMESA
-  SUPERACION
-  ESPNATURALEZA
-  ESPARTE
-  ESPSERVICIO
-  ESPESPIRITUALIDAD
-  ESPDEPORTES
-  ESPCIENCIA
-}
-
-enum Sexo {
-  M
-  F
-}
-
-enum Religion {
-  CATOLICA
-  JUDIA
-  BUDISTA
-  EVANGELICA
-}
-
-enum MetodosPago {
-  EFECTIVO
-  TRANSFERENCIA
-  OTRO
-}
-
-enum Role {
-  ADMIN
-  JEFE
-  EDUCADOR
-  COLABORADOR
-  EXTERNO
-}
-
-enum Estado {
-  ACTIVO
-  INACTIVO
 }

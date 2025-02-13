@@ -27,6 +27,7 @@ const loadEntregas = async () => {
         const entregas: Prisma.EntregaRealizadaCreateManyInput[] = [];
         let index = 0;
         for (const entregaData of data) {
+            if (!entregaData["Tipo de entrega"] || !entregaData.Fecha || !entregaData.Scout) continue;
 
             index++
             const [apellido, nombre] = entregaData.Scout!.toString().split(SPLIT_STRING);
@@ -59,7 +60,7 @@ const loadEntregas = async () => {
             if (typeof entregaData.Fecha === "number") {
                 fecha = excelDateToJSDate(entregaData.Fecha)
             }
-            if (typeof entregaData.Fecha === "string") {
+            if (entregaData.Fecha && typeof entregaData.Fecha === "string") {
                 fecha = parseDMYtoDate(entregaData.Fecha)
             }
 
@@ -80,17 +81,18 @@ const loadEntregas = async () => {
         }
 
         console.log(`\n-> Cargando ${entregas.length} entregas a la bd...`);
-        await prisma.$queryRaw`ALTER TABLE EntregaRealizada AUTO_INCREMENT = 1`;
+        // await prisma.$queryRaw`ALTER TABLE EntregaRealizada AUTO_INCREMENT = 1`;
+        await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'EntregaRealizada'`;
         const result = await prisma.entregaRealizada.createMany({
             data: entregas,
-            skipDuplicates: true,
+            // skipDuplicates: true,
         });
 
         console.log(`\n-> Se cararon exitosamente ${result.count} entregas a la bd!`);
         console.log("\n------------ ACTUALIZACION TERMINADA -------------\n");
         console.timeEnd("Tiempo de ejecucion");
     } catch (error) {
-        console.log("Error en el script: ", (error as Error).message);
+        console.error("Error en el script: ", error);
     } finally {
         await prisma.$disconnect();
     }

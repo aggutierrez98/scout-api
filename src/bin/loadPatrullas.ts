@@ -36,10 +36,12 @@ const loadPatrullas = async () => {
         }
 
         console.log(`\n-> Cargando ${patrullas.length} patrullas a la bd...`);
-        await prisma.$queryRaw`ALTER TABLE Patrulla AUTO_INCREMENT = 1`;
+        // await prisma.$queryRaw`ALTER TABLE Patrulla AUTO_INCREMENT = 1`;
+        await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Patrulla'`;
+
         const result = await prisma.patrulla.createMany({
             data: patrullas,
-            skipDuplicates: true,
+            // skipDuplicates: true,
         });
 
         console.log(`\n-> Se cargaron exitosamente ${result.count} patrullas a la bd!`);

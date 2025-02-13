@@ -1,7 +1,7 @@
-import { PrismaClient, Prisma, Funcion, Progresion } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import ProgressBar from "progress";
 import { SPLIT_STRING, VALID_RELATIONSHIPS, excelDateToJSDate, parseDMYtoDate } from "../utils";
-import { EstadosType, RelacionFamiliarType, ReligionType, ScoutXLSX } from "../types";
+import { EstadosType, FuncionType, ProgresionType, RelacionFamiliarType, ReligionType, ScoutXLSX } from "../types";
 import { nanoid } from "nanoid";
 import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
 
@@ -29,6 +29,7 @@ const loadPagos = async () => {
 
         const scouts: Prisma.ScoutCreateManyInput[] = [];
         let index = 0
+        const familiares: Prisma.FamiliarScoutCreateManyInput[] = [];
         for (const scoutData of data) {
 
             const [apellido, nombre] = scoutData.Nombre!.split(SPLIT_STRING);
@@ -42,7 +43,7 @@ const loadPagos = async () => {
             }
 
             const sexo = scoutData.Sexo === "Masculino" ? "M" : "F";
-            const funcion: Funcion =
+            const funcion: FuncionType =
                 scoutData.Funcion === "Scout"
                     ? "JOVEN"
                     : scoutData.Funcion === "Jefe"
@@ -54,7 +55,7 @@ const loadPagos = async () => {
                                 : "COLABORADOR";
 
             const progresionActual =
-                scoutData.Progresion?.toUpperCase() as Progresion;
+                scoutData.Progresion?.toUpperCase() as ProgresionType;
             const religion = scoutData.Religion?.toUpperCase() as ReligionType;
 
             //Todo: Solucionar error en script que por defecto los pone en la pantera
@@ -91,7 +92,7 @@ const loadPagos = async () => {
                 .map((key) => ({ relacion: key as RelacionFamiliarType, name: scoutData[key as keyof ScoutXLSX] }));
 
             if (familiaresData.length) {
-                const familiares: Prisma.FamiliarScoutCreateManyInput[] = [];
+
 
                 for (const { name, relacion } of familiaresData) {
                     if (!name) continue
@@ -111,9 +112,7 @@ const loadPagos = async () => {
                     )?.uuid;
 
                     if (!familiarId) {
-
-                        console.log(scoutData)
-
+                        // console.log(scoutData)
                         console.log(`\nEl familiar con nombre: "${nombre}" con relacion ${relacion} no existe en la bd. (I-scout: ${index})`);
                         continue;
                     }
@@ -125,11 +124,6 @@ const loadPagos = async () => {
                     })
                 }
 
-                await prisma.$queryRaw`ALTER TABLE FamiliarScout AUTO_INCREMENT = 1`;
-                const result = await prisma.familiarScout.createMany({
-                    data: familiares,
-                    skipDuplicates: true,
-                });
 
                 // console.log(`-> Se cargaron exitosamente ${result.count} familiares para el scout ${scoutData.Nombre} a la bd!`);
             }
@@ -153,13 +147,23 @@ const loadPagos = async () => {
         }
 
         console.log(`\n-> Cargando ${scouts.length} scouts a la bd...`);
-        await prisma.$queryRaw`ALTER TABLE Scout AUTO_INCREMENT = 1`;
-        const result = await prisma.scout.createMany({
+        // await prisma.$queryRaw`ALTER TABLE Scout AUTO_INCREMENT = 1`;
+        await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Scout'`;
+        const scoutsResult = await prisma.scout.createMany({
             data: scouts,
-            skipDuplicates: true,
+            // skipDuplicates: true,
         });
 
-        console.log(`\n-> Se cararon exitosamente ${result.count} scouts a la bd!`);
+        // await prisma.$queryRaw`ALTER TABLE FamiliarScout AUTO_INCREMENT = 1`;
+        await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'FamiliarScout'`;
+
+        const familiaresResult = await prisma.familiarScout.createMany({
+            data: familiares,
+            // skipDuplicates: true,
+        });
+
+
+        console.log(`\n-> Se cararon exitosamente ${scoutsResult.count} scouts a la bd!`);
         console.log("\n------------ ACTUALIZACION TERMINADA -------------\n");
         console.timeEnd("Tiempo de ejecucion");
 

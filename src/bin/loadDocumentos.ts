@@ -37,10 +37,11 @@ const loadDocumentos = async () => {
         }
 
         console.log(`\n-> Cargando ${documentosData.length} tipos de documentos a la bd...`);
-        await prisma.$queryRaw`ALTER TABLE Documento AUTO_INCREMENT = 1`;
+        // await prisma.$queryRaw`ALTER TABLE Documento AUTO_INCREMENT = 1`;
+        await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Documento'`;
         const docs = await prisma.documento.createMany({
             data: documentosData,
-            skipDuplicates: true,
+            // skipDuplicates: true,
         });
         console.log(`\n-> Se cararon exitosamente ${docs.count} tipos de documento a la bd!`);
 
@@ -108,10 +109,11 @@ const loadDocumentos = async () => {
         }
 
         console.log(`\n-> Cargando ${documentos.length} documentos a la bd...`);
-        await prisma.$queryRaw`ALTER TABLE DocumentoPresentado AUTO_INCREMENT = 1`;
+        // await prisma.$queryRaw`ALTER TABLE DocumentoPresentado AUTO_INCREMENT = 1`;
+        await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'DocumentoPresentado'`;
         const result = await prisma.documentoPresentado.createMany({
             data: documentos,
-            skipDuplicates: true,
+            // skipDuplicates: true,
         });
         console.log(`\n-> Se cararon exitosamente ${result.count} documentos a la bd!`);
 

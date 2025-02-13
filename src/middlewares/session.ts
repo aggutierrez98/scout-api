@@ -4,6 +4,7 @@ import { JwtPayload } from "jsonwebtoken";
 import { AppError, HttpCode } from "../utils";
 import { AuthService } from "../services/auth";
 import { validatePermissions, HTTPMethods, isPublicRoute } from '../utils/helpers/validatePermissions';
+import { RolesType } from "../types";
 
 interface RequestExt extends Request {
 	user?: JwtPayload | { id: string };
@@ -50,7 +51,7 @@ export const checkSession = async (req: RequestExt, _: Response, next: NextFunct
 			const authService = new AuthService()
 			const user = await authService.getUser({ userId: isUser.id })!
 
-			const isAllowed = validatePermissions({ method, resource, userRole: user?.role })
+			const isAllowed = validatePermissions({ method, resource, userRole: (user?.role as RolesType) })
 
 			if (!isAllowed) {
 				throw new AppError({
