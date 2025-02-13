@@ -1,6 +1,6 @@
 import { OAS3Definition } from "swagger-jsdoc";
 import { scoutSchema } from "./schemas/scout";
-import { patrullaSchema } from "./schemas/patrulla";
+import { equipoSchema } from "./schemas/equipo";
 import { entregaSchema } from "./schemas/entrega";
 import { familiarSchema } from "./schemas/familiar";
 import { documentoSchema } from "./schemas/documento";
@@ -49,7 +49,7 @@ const swaggerDefinition: OAS3Definition = {
 		},
 		schemas: {
 			scout: scoutSchema,
-			patrulla: patrullaSchema,
+			equipo: equipoSchema,
 			documento: documentoSchema,
 			entrega: entregaSchema,
 			familiar: familiarSchema,

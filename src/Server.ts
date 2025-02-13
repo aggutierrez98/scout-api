@@ -18,15 +18,14 @@ import { PagoService } from "./services/pago";
 import createPagoRouter from "./routes/pago";
 import { FamiliarService } from "./services/familiar";
 import createFamiliarRouter from "./routes/familiar";
-import { PatrullaService } from "./services/patrulla";
-import createPatrullaRouter from "./routes/patrulla";
+import { EquipoService } from "./services/equipo";
+import createEquipoRouter from "./routes/equipo";
 import { AuthService } from "./services/auth";
 import createAuthRouter from "./routes/auth";
 import { EntregaService } from "./services/entrega";
 import createEntregaRouter from "./routes/entrega";
 import { WhatsAppSbot } from "./whatsapp/WhatsappSession";
 import recordarCumpleaños from "./whatsapp/recordarCumpleaños";
-// import expressOasGenerator, { SPEC_OUTPUT_FILE_BEHAVIOR } from 'express-oas-generator';
 import swaggerSpecJSON from "./docs/spec.json";
 // import { swaggerDefinition } from "./docs/swagger-ts/swagger";
 
@@ -94,8 +93,8 @@ export default class Server {
 		const authService = new AuthService();
 		router.use("/auth", createAuthRouter(authService));
 
-		const patrullaService = new PatrullaService();
-		router.use("/patrulla", createPatrullaRouter(patrullaService));
+		const equipoService = new EquipoService();
+		router.use("/equipo", createEquipoRouter(equipoService));
 
 		const scoutService = new ScoutService();
 		router.use("/scout", createScoutRouter(scoutService));

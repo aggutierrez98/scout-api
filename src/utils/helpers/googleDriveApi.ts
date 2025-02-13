@@ -6,7 +6,7 @@ import {
     EntregaXLSX,
     FamiliarXLSX,
     PagoXLSX,
-    PatrullaXLSX,
+    EquipoXLSX,
     ScoutXLSX,
     SheetIndexType,
     SpreadsheetDataMap,
@@ -20,7 +20,7 @@ export function getSpreadSheetData(sheetIndex: "usuarios"): Promise<Partial<Usua
 export function getSpreadSheetData(sheetIndex: "pagos"): Promise<Partial<PagoXLSX>[]>;
 export function getSpreadSheetData(sheetIndex: "documentos"): Promise<Partial<DocumentoXLSX>[]>;
 export function getSpreadSheetData(sheetIndex: "docs-data"): Promise<Partial<DocDataXLSX>[]>;
-export function getSpreadSheetData(sheetIndex: "patrullas"): Promise<Partial<PatrullaXLSX>[]>;
+export function getSpreadSheetData(sheetIndex: "equipos"): Promise<Partial<EquipoXLSX>[]>;
 export async function getSpreadSheetData(sheetIndex: SheetIndexType) {
     const serviceAccountAuth = new JWT({
         email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,

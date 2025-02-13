@@ -47,7 +47,7 @@ const prisma = new PrismaClient().$extends({
         // // 		compute: () => undefined,
         // // 	},
         // // },
-        // // patrulla: {
+        // // equipo: {
         // // 	id: {
         // // 		compute: (data) => data.uuid,
         // // 	},
@@ -127,12 +127,12 @@ export const obtenerScoutsPorCumplirAños = async (dateInterval: number) => {
     try {
         scoutsResp = await prisma.$queryRaw`
             SELECT sc.nombre,sc.apellido,sc.fechaNacimiento,
-            -- p.nombre as patrulla,
+            -- p.nombre as equipo,
             DATE(CONCAT_WS('-',YEAR(CURDATE()), MONTH(fechaNacimiento), DAY(fechaNacimiento))) as fechaCumpleanos,
             TIMESTAMPDIFF(YEAR, fechaNacimiento, DATE_ADD(CURDATE(),INTERVAL ${dateInterval} DAY)) AS edadCumple
             FROM Scout sc
-            -- LEFT JOIN Patrulla p
-            -- ON (sc.patrullaId = p.uuid)
+            -- LEFT JOIN Equipo p
+            -- ON (sc.equipoId = p.uuid)
             WHERE DATE(CONCAT_WS('-', YEAR(CURDATE()), MONTH(fechaNacimiento), DAY(fechaNacimiento)))
             BETWEEN CURDATE() AND DATE_ADD(CURDATE(),INTERVAL ${dateInterval} DAY)
             AND estado = 'ACTIVO'
@@ -272,7 +272,7 @@ export const obtenerPagosScout = async (nombreScout: string, concepto?: string) 
 }
 
 
-export const obtenerScouts = async (nombreScout?: string, nombrePatrulla?: string) => {
+export const obtenerScouts = async (nombreScout?: string, nombreEquipo?: string) => {
 
     let nombre = ""
     let apellido = ""
@@ -298,7 +298,7 @@ export const obtenerScouts = async (nombreScout?: string, nombrePatrulla?: strin
                 estado: "ACTIVO"
             },
             include: {
-                patrulla: {
+                equipo: {
                     select: {
                         nombre: true
                     }
@@ -307,7 +307,7 @@ export const obtenerScouts = async (nombreScout?: string, nombrePatrulla?: strin
         })
         if (!scout) return "No hay scout registrado con ese nombre"
 
-        const formattedScout = `${scout.apellido} ${scout.nombre}\nSexo: ${scout.sexo === "M" ? "Masculino" : "Femenino"}\nDNI: ${scout.dni}\nPatrulla: ${scout.patrulla?.nombre}\nProgresion: ${scout.progresionActual}\nEdad: ${scout.edad} años\nFecha de nacimiento: ${scout.fechaNacimiento.toLocaleDateString('es-AR', { timeZone: 'UTC' })}`
+        const formattedScout = `${scout.apellido} ${scout.nombre}\nSexo: ${scout.sexo === "M" ? "Masculino" : "Femenino"}\nDNI: ${scout.dni}\nEquipo: ${scout.equipo?.nombre}\nProgresion: ${scout.progresionActual}\nEdad: ${scout.edad} años\nFecha de nacimiento: ${scout.fechaNacimiento.toLocaleDateString('es-AR', { timeZone: 'UTC' })}`
         return `*Info de scout ${nombreScout}*:\n${formattedScout}`
 
     } else {
@@ -316,15 +316,15 @@ export const obtenerScouts = async (nombreScout?: string, nombrePatrulla?: strin
         try {
             const scouts = await prisma.scout.findMany({
                 where: {
-                    patrulla: nombrePatrulla?.length ? {
+                    equipo: nombreEquipo?.length ? {
                         nombre: {
-                            contains: nombrePatrulla
+                            contains: nombreEquipo
                         }
                     } : undefined,
-                    estado: nombrePatrulla?.length ? "ACTIVO" : undefined
+                    estado: nombreEquipo?.length ? "ACTIVO" : undefined
                 },
                 include: {
-                    patrulla: {
+                    equipo: {
                         select: {
                             nombre: true
                         }
@@ -335,24 +335,24 @@ export const obtenerScouts = async (nombreScout?: string, nombrePatrulla?: strin
                 }
             });
 
-            if (nombrePatrulla?.length) {
+            if (nombreEquipo?.length) {
                 const formattedScouts = scouts.map((scout) => `_${scout.apellido} ${scout.nombre}_ → ${scout.progresionActual} - ${scout.edad} años`).join('\n');
-                resultString = `*Patrulla ${nombrePatrulla}*:\nCantidad de scouts: ${scouts.length}\n${formattedScouts}`
+                resultString = `*Equipo ${nombreEquipo}*:\nCantidad de scouts: ${scouts.length}\n${formattedScouts}`
             } else {
                 const cantidadActivos = scouts.filter((scout) => scout.estado === "ACTIVO").length
                 const cantidadInactivos = scouts.filter((scout) => scout.estado === "INACTIVO").length
 
-                const cantidadPorPatrulla = scouts.reduce((acumulator, { patrulla }) => {
-                    const nombrePatrulla = patrulla?.nombre ?? "Sin Patrulla"
+                const cantidadPorEquipo = scouts.reduce((acumulator, { equipo }) => {
+                    const nombreEquipo = equipo?.nombre ?? "Sin Equipo"
                     return {
                         ...acumulator,
                         //@ts-ignore
-                        [nombrePatrulla]: (acumulator[nombrePatrulla] || 0) + 1
+                        [nombreEquipo]: (acumulator[nombreEquipo] || 0) + 1
                     };
                 }, {});
 
                 //@ts-ignore
-                const cantPatrString = Object.keys(cantidadPorPatrulla).map((key) => `${key}: ${cantidadPorPatrulla[key]}`).join('\n');
+                const cantPatrString = Object.keys(cantidadPorEquipo).map((key) => `${key}: ${cantidadPorEquipo[key]}`).join('\n');
                 resultString = `*Resultados de Scouts*:\nCantidad total de scouts: ${scouts.length}\nCantidad activos: ${cantidadActivos}\nCantidad inactivos: ${cantidadInactivos}\n${cantPatrString}`
             }
 
@@ -657,7 +657,7 @@ export const obtenerFamiliar = async (nombreFamiliar: string) => {
 }
 
 
-export const obtenerEntregas = async (nombreScout: string, nombrePatrulla?: string) => {
+export const obtenerEntregas = async (nombreScout: string, nombreEquipo?: string) => {
 
     let nombre = ""
     let apellido = ""
@@ -697,8 +697,8 @@ export const obtenerEntregas = async (nombreScout: string, nombrePatrulla?: stri
             },
         })
 
-        if (nombrePatrulla?.length) {
-            if (!entregas.length) return `No hay entregas para la patrulla ${nombrePatrulla}`
+        if (nombreEquipo?.length) {
+            if (!entregas.length) return `No hay entregas para la equipo ${nombreEquipo}`
             const entregasPorScout = entregas.reduce((acumulator, { scout: { nombre, apellido }, fechaEntrega, tipoEntrega }) => {
                 return {
                     ...acumulator,
@@ -715,7 +715,7 @@ export const obtenerEntregas = async (nombreScout: string, nombrePatrulla?: stri
 
             // @ts-ignore
             const formattedEntregas = Object.keys(entregasPorScout).map((key) => `\nEntregas de *${key}*:\n ${entregasPorScout[key].map((entrega) => `_${entrega.fechaEntrega.toLocaleDateString('es-AR', { timeZone: 'UTC' })}_: *${entrega.tipoEntrega}*`).join('\n')}`).join('\n');
-            entregasStr = `*Entregas de insignias/camisa/reconocimientos de la patrulla ${nombrePatrulla}*:\n${formattedEntregas}`
+            entregasStr = `*Entregas de insignias/camisa/reconocimientos de la equipo ${nombreEquipo}*:\n${formattedEntregas}`
 
         } else if (nombreScout.length) {
             if (!entregas.length) return `No hay entregas para el scout ${nombreScout}`

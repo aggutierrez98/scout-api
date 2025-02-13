@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- ENCODING: UTF-8 -*-
 
-npm run deleteDBData:dev && npm run save-users:dev && npm run load-familiares:dev && npm run load-patrullas:dev && npm run load-scouts:dev && npm run load-pagos:dev && npm run load-documentos:dev && npm run load-entregas:dev
+npm run deleteDBData:dev && npm run save-users:dev && npm run load-familiares:dev && npm run load-equipos:dev && npm run load-scouts:dev && npm run load-pagos:dev && npm run load-documentos:dev && npm run load-entregas:dev
 
 exit

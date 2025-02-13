@@ -16,7 +16,7 @@ const deleteDBData = async () => {
         await prisma.entregaRealizada.deleteMany({})
         await prisma.pago.deleteMany({})
         await prisma.scout.deleteMany({})
-        await prisma.patrulla.deleteMany({})
+        await prisma.equipo.deleteMany({})
         await prisma.documento.deleteMany({})
 
         console.timeEnd("Tiempo de ejecucion");

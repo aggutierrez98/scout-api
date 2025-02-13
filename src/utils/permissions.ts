@@ -1,7 +1,7 @@
 
 export const EXTERNO_PERM = [
     "read_scout",
-    "read_patrulla",
+    "read_equipo",
     "read_documento",
     "read_pago",
     "read_entrega",
@@ -18,13 +18,13 @@ export const COLABORADOR_PERM = [
 export const EDUCADOR_PERM = [
     ...COLABORADOR_PERM,
     "create_scout",
-    "create_patrulla",
+    "create_equipo",
     "create_familiar",
     "create_entrega",
     "modify_entrega",
-    "modify_patrulla",
+    "modify_equipo",
     "modify_familiar",
-    "delete_patrulla",
+    "delete_equipo",
     "delete_documento",
     "delete_pago",
 ]

@@ -40,7 +40,7 @@ type queryParams = {
         tiempoHasta?: Date;
         nombre?: string;
         tipoEntrega?: TipoEntregaType[]
-        patrullas?: string[];
+        equipos?: string[];
         funciones?: FuncionType[];
         progresiones?: ProgresionType[]
     };
@@ -101,7 +101,7 @@ export class EntregaService implements IEntregaService {
             tiempoDesde,
             tiempoHasta,
             funciones,
-            patrullas,
+            equipos,
             progresiones
         } = filters;
 
@@ -130,8 +130,8 @@ export class EntregaService implements IEntregaService {
                             },
                         },
                     ],
-                    patrulla: {
-                        uuid: patrullas ? { in: patrullas } : undefined,
+                    equipo: {
+                        uuid: equipos ? { in: equipos } : undefined,
                     },
                     progresionActual: {
                         in: progresiones,

@@ -39,7 +39,7 @@ type getQueryParams = {
 		vence?: string;
 		tiempoDesde?: Date;
 		tiempoHasta?: Date;
-		patrullas?: string[];
+		equipos?: string[];
 		funciones?: FuncionType[];
 		progresiones?: ProgresionType[]
 
@@ -90,7 +90,7 @@ export class DocumentoService implements IDocumentoService {
 			nombre = "",
 			funciones,
 			progresiones,
-			patrullas,
+			equipos,
 			vence,
 			tiempoDesde,
 			tiempoHasta,
@@ -116,8 +116,8 @@ export class DocumentoService implements IDocumentoService {
 			},
 			where: {
 				scout: {
-					patrulla: {
-						uuid: patrullas ? { in: patrullas } : undefined,
+					equipo: {
+						uuid: equipos ? { in: equipos } : undefined,
 					},
 					progresionActual: {
 						in: progresiones,

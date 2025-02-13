@@ -21,7 +21,7 @@ export const EntregaSchema = z.object({
 
 export const GetEntregasSchema = z.object({
     query: QuerySearchSchema.extend({
-        // patrulla: z.string().max(10).regex(numberReg).optional(),
+        // equipo: z.string().max(10).regex(numberReg).optional(),
         // nombre: z.string().max(85).regex(nameRegex).optional(),
         tiempoDesde: z.string().regex(ISODateStringReg).optional(),
         tiempoHasta: z.string().regex(ISODateStringReg).optional(),

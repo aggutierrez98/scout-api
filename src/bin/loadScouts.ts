@@ -59,9 +59,9 @@ const loadPagos = async () => {
             const religion = scoutData.Religion?.toUpperCase() as ReligionType;
 
             //Todo: Solucionar error en script que por defecto los pone en la pantera
-            const patrullaId = (
-                await prisma.patrulla.findFirst({
-                    where: { nombre: scoutData.Patrulla },
+            const equipoId = (
+                await prisma.equipo.findFirst({
+                    where: { nombre: scoutData.Equipo },
                 })
             )?.uuid;
 
@@ -73,7 +73,7 @@ const loadPagos = async () => {
                 apellido,
                 fechaNacimiento,
                 progresionActual,
-                patrullaId,
+                equipoId,
                 funcion: funcion,
                 sexo,
                 religion,

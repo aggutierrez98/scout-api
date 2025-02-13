@@ -103,11 +103,11 @@ export class WhatsAppSbot {
                                 await msg.reply(scoutsInfo);
                                 break;
 
-                            case "patrulla":
-                                const patrulla = commandSubOption[1]
-                                if (!patrulla) await msg.reply("Enviar (nombre.apellido) del scout")
+                            case "equipo":
+                                const equipo = commandSubOption[1]
+                                if (!equipo) await msg.reply("Enviar (nombre.apellido) del scout")
                                 else {
-                                    const scoutsInfo = await obtenerScouts("", patrulla)
+                                    const scoutsInfo = await obtenerScouts("", equipo)
                                     await msg.reply(scoutsInfo)
                                 }
                                 break;
@@ -216,12 +216,12 @@ export class WhatsAppSbot {
                                 }
                                 break;
 
-                            case "patrulla":
-                                const patrulla = commandSubOption[1]
-                                if (!patrulla) await msg.reply("Enviar (nombre) de la patrulla")
+                            case "equipo":
+                                const equipo = commandSubOption[1]
+                                if (!equipo) await msg.reply("Enviar (nombre) de la equipo")
                                 else {
-                                    const patrullaEntregas = await obtenerEntregas("", patrulla)
-                                    await msg.reply(patrullaEntregas)
+                                    const equipoEntregas = await obtenerEntregas("", equipo)
+                                    await msg.reply(equipoEntregas)
                                 }
                                 break;
 

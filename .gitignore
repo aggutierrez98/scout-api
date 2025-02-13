@@ -9,3 +9,4 @@ dist
 **-ssh.pem
 **.zip
 backup.sql
+**/**/dev.db

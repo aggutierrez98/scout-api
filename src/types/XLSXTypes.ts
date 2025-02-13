@@ -1,47 +1,10 @@
-import { MetodosPagoType, TipoEntregaType } from './constantTypes';
-
-export type ScoutXLSX = {
-	Documento: string;
-	Nombre: string;
-	Sexo: string;
-	"Fecha Nacimiento": string;
-	Provincia: string;
-	Localidad: string;
-	Calle: string;
-	"Codigo Postal": string;
-	Telefono: string;
-	Email: string;
-	Religion: string;
-	Funcion: string;
-	Categoria: string;
-	"Fecha Primer Afiliacion": string;
-	Patrulla: string;
-	Estado: string;
-	Progresion: string;
-	Padre: string
-	Madre: string
-	Tio: string
-	Tia: string
-	Hermano: string
-	Hermana: string
-	Abuelo: string
-	Abuela: string
-	Otro: string
-};
-
-export type FamiliarXLSX = {
-	Documento: string;
-	Nombre: string;
-	Sexo: string;
-	"Fecha Nacimiento": string;
-	Provincia: string;
-	Localidad: string;
-	Email: string;
-	Calle: string;
-	"Codigo Postal": string;
-	Telefono: string;
-	"Estado Civil": "SOLTERO" | "CASADO" | "SEPARADO";
-};
+import { DocDataXLSX, DocumentoXLSX } from "./documento";
+import { EntregaXLSX } from "./entrega";
+import { FamiliarXLSX } from "./familiar";
+import { PagoXLSX } from "./pago";
+import { ScoutXLSX } from "./scout";
+import { UsuarioXLSX } from "./user";
+import { EquipoXLSX } from './equipo';
 
 export enum RelacionFamiliarScoutEnum {
 	PADRE = "Padre",
@@ -70,8 +33,8 @@ export enum FuncionEnum {
 
 export enum TipoInsigniaEnum {
 	UNIFORME = "Unfirome Scout",
-	GUIA = "Guia de patrulla",
-	SUBGUIA = "Subguia de patrulla",
+	GUIA = "Guia de equipo",
+	SUBGUIA = "Subguia de equipo",
 	PROGRESION = "Progresion",
 	PROMESA = "Promesa Scout",
 	ESPNATURALEZA = "Especialidad - Vida en la naturaleza",
@@ -83,44 +46,7 @@ export enum TipoInsigniaEnum {
 	SUPERACION = "Maxima superacion personal",
 }
 
-
-export type PagoXLSX = {
-	Concepto: string
-	Fecha: string
-	Monto: string
-	"Metodo de pago": MetodosPagoType
-	Rendido: string,
-	Scout: string
-}
-
-export type DocumentoXLSX = {
-	Fecha: string
-	Scout: string
-	Documento: string
-}
-
-export type EntregaXLSX = {
-	Fecha: string
-	"Tipo de entrega": TipoEntregaType
-	Scout: string
-}
-
-export type UsuarioXLSX = {
-	DNI: string
-	UserId: string
-}
-
-export type PatrullaXLSX = {
-	Nombre: string
-	Lema: string
-}
-
-export type DocDataXLSX = {
-	Nombre: string
-	Vence: "Si" | "No"
-}
-
-export type SheetIndexType = "familiares" | "scouts" | "entregas" | "usuarios" | "pagos" | "documentos" | "docs-data" | "patrullas"
+export type SheetIndexType = "familiares" | "scouts" | "entregas" | "usuarios" | "pagos" | "documentos" | "docs-data" | "equipos"
 export type SpreadsheetDataMap = {
 	familiares: FamiliarXLSX[];
 	scouts: ScoutXLSX[];
@@ -129,5 +55,5 @@ export type SpreadsheetDataMap = {
 	pagos: PagoXLSX[];
 	documentos: DocumentoXLSX[];
 	'docs-data': DocDataXLSX[];
-	patrullas: PatrullaXLSX[];
+	equipos: EquipoXLSX[];
 };

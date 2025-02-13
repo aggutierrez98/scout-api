@@ -29,7 +29,7 @@ export const ScoutSchema = z.object({
 	telefono: z.string().max(15).regex(numberReg).nullable(),
 	mail: z.string().min(1).email().nullable(),
 	religion: z.enum(VALID_RELIGIONS),
-	patrullaId: IdSchema.max(10).nullable(),
+	equipoId: IdSchema.max(10).nullable(),
 	funcion: z.enum(VALID_FUNCTIONS),
 	progresionActual: z.enum(VALID_PROGRESSIONS).nullable(),
 }) satisfies z.Schema<IScout>;

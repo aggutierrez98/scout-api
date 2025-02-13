@@ -1,6 +1,6 @@
 import { OAS3Options } from "swagger-jsdoc";
 
-export const patrullaSchema: OAS3Options = {
+export const equipoSchema: OAS3Options = {
 	type: "object",
 	properties: {
 		id: {

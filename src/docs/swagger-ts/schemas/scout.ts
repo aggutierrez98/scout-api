@@ -53,13 +53,13 @@ export const scoutSchema: OAS3Options = {
 			type: "string",
 			enum: VALID_FUNCTIONS,
 		},
-		patrullaId: {
+		equipoId: {
 			type: "string",
 			writeOnly: true,
 		},
-		patrulla: {
+		equipo: {
 			readOnly: true,
-			$ref: "#/components/schemas/patrulla",
+			$ref: "#/components/schemas/equipo",
 		},
 		documentosPresentados: {
 			type: "array",

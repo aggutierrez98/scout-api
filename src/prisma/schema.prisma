@@ -34,8 +34,9 @@ model Scout {
   mail                  String?
   progresionActual      String?
   religion              String?               @default("CATOLICA")
-  patrulla              Patrulla?             @relation(fields: [patrullaId], references: [uuid])
-  patrullaId            String?
+  rama                  String?               @default("CASTORES")
+  equipo                Equipo?               @relation(fields: [equipoId], references: [uuid])
+  equipoId              String?
   funcion               String?               @default("JOVEN")
   estado                String?               @default("ACTIVO")
   documentosPresentados DocumentoPresentado[]
@@ -46,7 +47,7 @@ model Scout {
   fechaActualizacion    DateTime              @updatedAt
   user                  User?
 
-  @@index([patrullaId])
+  @@index([equipoId])
 }
 
 model Documento {
@@ -115,11 +116,12 @@ model FamiliarScout {
   @@index([familiarId])
 }
 
-model Patrulla {
+model Equipo {
   id                 Int      @id @default(autoincrement())
   uuid               String   @unique
   nombre             String   @unique
   lema               String?
+  rama               String?  @default("CASTORES")
   fechaCreacion      DateTime @default(now())
   fechaActualizacion DateTime @updatedAt
   scout              Scout[]

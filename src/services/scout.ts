@@ -42,7 +42,7 @@ const prisma = new PrismaClient().$extends({
 				compute: () => undefined,
 			},
 		},
-		patrulla: {
+		equipo: {
 			id: {
 				compute: (data) => data.uuid,
 			},
@@ -70,7 +70,7 @@ type queryParams = {
 	filters?: {
 		nombre?: string;
 		sexo?: SexoType;
-		patrullas?: string[];
+		equipos?: string[];
 		progresiones?: ProgresionType[];
 		funciones?: FuncionType[];
 	};
@@ -118,7 +118,7 @@ export class ScoutService implements IScoutService {
 			funciones,
 			progresiones,
 			nombre = "",
-			patrullas,
+			equipos,
 			sexo,
 		} = filters;
 
@@ -128,8 +128,8 @@ export class ScoutService implements IScoutService {
 			orderBy: { [orderBy]: "asc" },
 			where: {
 				sexo: sexo || undefined,
-				patrulla: {
-					uuid: patrullas ? { in: patrullas } : undefined,
+				equipo: {
+					uuid: equipos ? { in: equipos } : undefined,
 				},
 				progresionActual: {
 					in: progresiones,
@@ -234,7 +234,7 @@ export class ScoutService implements IScoutService {
 							relacion: "asc",
 						},
 					},
-					patrulla: {
+					equipo: {
 						select: {
 							id: true,
 							nombre: true,
@@ -267,11 +267,11 @@ export class ScoutService implements IScoutService {
 		}
 	};
 	updateScout = async (id: string, dataUpdated: IScout) => {
-		const { direccion, localidad, funcion, mail, telefono, patrullaId, religion, progresionActual } = dataUpdated
+		const { direccion, localidad, funcion, mail, telefono, equipoId, religion, progresionActual } = dataUpdated
 
 		const responseItem = await ScoutModel.update({
 			where: { uuid: id },
-			data: { direccion, localidad, funcion, mail, telefono, patrullaId, religion, progresionActual },
+			data: { direccion, localidad, funcion, mail, telefono, equipoId, religion, progresionActual },
 		});
 		return responseItem;
 	};

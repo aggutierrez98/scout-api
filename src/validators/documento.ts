@@ -2,7 +2,7 @@ import { z } from "zod";
 import { PrismaClient } from "@prisma/client";
 import { IDocumento } from "../types";
 import { validScoutID } from "./scout";
-import { VALID_FUNCTIONS, VALID_PROGRESSIONS, VALID_SEX } from "../utils";
+// import { VALID_FUNCTIONS, VALID_PROGRESSIONS, VALID_SEX } from "../utils";
 import { ISODateStringReg, nameRegex, numberReg } from "../utils/regex";
 import { IdSchema, QuerySearchSchema } from "./generics";
 
@@ -21,7 +21,7 @@ export const DocumentoSchema = z.object({
 
 export const GetDocumentosSchema = z.object({
 	query: QuerySearchSchema.extend({
-		// patrulla: IdSchema.max(10).regex(numberReg).optional(),
+		// equipo: IdSchema.max(10).regex(numberReg).optional(),
 		// nombre: z.string().max(85).regex(nameRegex).optional(),
 		// funcion: z.enum(VALID_FUNCTIONS).optional(),
 		// sexo: z.enum(VALID_SEX).optional(),

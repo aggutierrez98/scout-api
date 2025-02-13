@@ -35,7 +35,7 @@ type queryParams = {
 		rendido?: string;
 		metodoPago?: MetodosPagoType
 		funcion?: FuncionType[];
-		patrullas?: string[];
+		equipos?: string[];
 		funciones?: FuncionType[];
 		progresiones?: ProgresionType[]
 	};
@@ -66,7 +66,7 @@ export class PagoService implements IPagoService {
 		const {
 			nombre = "",
 			concepto = "",
-			patrullas,
+			equipos,
 			metodoPago,
 			rendido,
 			tiempoDesde,
@@ -82,8 +82,8 @@ export class PagoService implements IPagoService {
 			where: {
 				metodoPago: metodoPago || undefined,
 				scout: {
-					patrulla: {
-						uuid: patrullas ? { in: patrullas } : undefined,
+					equipo: {
+						uuid: equipos ? { in: equipos } : undefined,
 					},
 					progresionActual: {
 						in: progresiones,
