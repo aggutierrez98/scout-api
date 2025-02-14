@@ -1,10 +1,10 @@
 import { nanoid } from "nanoid";
 import { FuncionType, IEntrega, IEntregaData, ProgresionType, TipoEntregaType } from "../types";
-import { PrismaClient } from "@prisma/client";
 import { getAge } from "../utils";
 import { ScoutModel } from "./scout";
+import { prismaClient } from "../utils/lib/prisma-client";
 
-const prisma = new PrismaClient().$extends({
+const prisma = prismaClient.$extends({
     result: {
         entregaRealizada: {
             id: {

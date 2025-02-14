@@ -5,12 +5,12 @@ import {
 	ProgresionType,
 	SexoType,
 } from "../types";
-import { PrismaClient } from "@prisma/client";
 import { OrderToGetScouts } from "../types";
 import { nanoid } from "nanoid";
 import { getAge } from "../utils";
+import { prismaClient } from "../utils/lib/prisma-client";
 
-const prisma = new PrismaClient().$extends({
+const prisma = prismaClient.$extends({
 	result: {
 		scout: {
 			id: {

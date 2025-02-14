@@ -1,10 +1,9 @@
-import { PrismaClient } from "@prisma/client";
-import { MetodosPagoType } from "../types";
 import { Decimal } from "@prisma/client/runtime/library";
 import { getAge, getEntregaFromType } from "../utils";
+import { prismaClient } from "../utils/lib/prisma-client";
 const INTERVALO_DIAS_CUMPLEAÑOS = 30
 
-const prisma = new PrismaClient().$extends({
+const prisma = prismaClient.$extends({
     result: {
         scout: {
             edad: {

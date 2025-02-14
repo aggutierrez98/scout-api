@@ -1,13 +1,12 @@
 import { z } from "zod";
-import { PrismaClient } from "@prisma/client";
 import { IEntrega } from "../types";
 import { validScoutID } from "./scout";
 import { VALID_ENTREGAS_TYPE } from "../utils";
 import { ISODateStringReg } from "../utils/regex";
 import { IdSchema, QuerySearchSchema } from "./generics";
+import { prismaClient } from "../utils/lib/prisma-client";
 const validEntregaId = async (id: string) => {
-    const prisma = new PrismaClient();
-    const EntregaModel = prisma.entregaRealizada;
+    const EntregaModel = prismaClient.entregaRealizada;
     console.log({ id })
     const respItem = await EntregaModel.findUnique({ where: { uuid: id } });
     return !!respItem;
@@ -39,8 +38,7 @@ export const GetEntregaSchema = z.object({
 export const PostEntregaSchema = z.object({
     body: EntregaSchema,
 }).refine(async ({ body }) => {
-    const prisma = new PrismaClient();
-    const EntregaRealizaModel = prisma.entregaRealizada;
+    const EntregaRealizaModel = prismaClient.entregaRealizada;
     const respItem = await EntregaRealizaModel.findFirst({
         where: { scoutId: body.scoutId, tipoEntrega: body.tipoEntrega },
     });
@@ -54,8 +52,7 @@ export const PutEntregaSchema = z.object({
     }),
     body: EntregaSchema.deepPartial(),
 }).refine(async ({ body }) => {
-    const prisma = new PrismaClient();
-    const EntregaRealizaModel = prisma.entregaRealizada;
+    const EntregaRealizaModel = prismaClient.entregaRealizada;
     const respItem = await EntregaRealizaModel.findFirst({
         where: { scoutId: body.scoutId, tipoEntrega: body.tipoEntrega },
     });

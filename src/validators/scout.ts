@@ -7,14 +7,13 @@ import {
 	VALID_GET_SCOUTS_FILTERS,
 	VALID_RAMAS,
 } from "../utils";
-import { PrismaClient } from "@prisma/client";
 import { IScout } from "../types";
 import { directionReg, lettersReg, numberReg } from "../utils/regex";
 import { IdSchema, QuerySearchSchema } from "./generics";
+import { prismaClient } from "../utils/lib/prisma-client";
 
 export const validScoutID = async (id: string) => {
-	const prisma = new PrismaClient();
-	const ScoutModel = prisma.scout;
+	const ScoutModel = prismaClient.scout;
 	const respItem = await ScoutModel.findUnique({ where: { uuid: id } });
 	return !!respItem;
 };

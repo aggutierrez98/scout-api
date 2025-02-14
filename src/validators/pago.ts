@@ -1,14 +1,12 @@
 import { z } from "zod";
-import { PrismaClient } from "@prisma/client";
 import { IPago } from "../types";
 import { validScoutID } from "./scout";
-import { VALID_FUNCTIONS, VALID_METODOS_PAGO } from "../utils";
-import { ISODateStringReg, nameRegex, numberReg } from "../utils/regex";
+import { VALID_METODOS_PAGO } from "../utils";
+import { ISODateStringReg, } from "../utils/regex";
 import { IdSchema, QuerySearchSchema } from "./generics";
+import { prismaClient } from "../utils/lib/prisma-client";
 const validPagoId = async (id: string) => {
-	const prisma = new PrismaClient();
-	const PagoModel = prisma.pago;
-	console.log({ id })
+	const PagoModel = prismaClient.pago;
 	const respItem = await PagoModel.findUnique({ where: { uuid: id } });
 	return !!respItem;
 };

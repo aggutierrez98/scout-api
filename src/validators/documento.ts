@@ -1,14 +1,13 @@
 import { z } from "zod";
-import { PrismaClient } from "@prisma/client";
 import { IDocumento } from "../types";
 import { validScoutID } from "./scout";
 // import { VALID_FUNCTIONS, VALID_PROGRESSIONS, VALID_SEX } from "../utils";
 import { ISODateStringReg, nameRegex, numberReg } from "../utils/regex";
 import { IdSchema, QuerySearchSchema } from "./generics";
+import { prismaClient } from "../utils/lib/prisma-client";
 
 export const validDocumentoId = async (id: string) => {
-	const prisma = new PrismaClient();
-	const ParullaModel = prisma.documentoPresentado;
+	const ParullaModel = prismaClient.documentoPresentado;
 	const respItem = await ParullaModel.findUnique({ where: { uuid: id } });
 	return !!respItem;
 };

@@ -1,13 +1,12 @@
 import { z } from "zod";
-import { PrismaClient } from "@prisma/client";
 import { IEquipo } from "../types";
 import { ScoutSchema } from "./scout";
 import { IdSchema } from "./generics";
 import { VALID_RAMAS } from "../utils";
+import { prismaClient } from "../utils/lib/prisma-client";
 
 const validEquipoId = async (id: string) => {
-	const prisma = new PrismaClient();
-	const ParullaModel = prisma.equipo;
+	const ParullaModel = prismaClient.equipo;
 	const respItem = await ParullaModel.findUnique({ where: { uuid: id } });
 	return !!respItem;
 };

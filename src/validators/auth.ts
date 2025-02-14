@@ -1,16 +1,14 @@
 import { z } from "zod";
-import { PrismaClient } from "@prisma/client";
 import { IUser } from "../types";
 import { lettersReg } from "../utils/regex";
-import { validScoutID } from "./scout";
 import { IdSchema, QuerySearchSchema } from "./generics";
 import { VALID_ROLES } from "../utils";
+import { prismaClient } from "../utils/lib/prisma-client";
 
 const passRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9]).{8,12}$/
 
 export const alreadyExistsUser = async (username: string) => {
-    const prisma = new PrismaClient();
-    const UserModel = prisma.user;
+    const UserModel = prismaClient.user;
     const respItem = await UserModel.findUnique({
         where: { username },
     });
@@ -18,8 +16,7 @@ export const alreadyExistsUser = async (username: string) => {
 };
 
 export const validUserID = async (id: string) => {
-    const prisma = new PrismaClient();
-    const UserModel = prisma.user;
+    const UserModel = prismaClient.user;
     const respItem = await UserModel.findUnique({
         where: { uuid: id },
     });

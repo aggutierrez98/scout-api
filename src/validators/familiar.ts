@@ -1,14 +1,13 @@
 import { z } from "zod";
 import { VALID_ESTADO_CIVIL, VALID_RELATIONSHIPS, VALID_SEX } from "../utils";
-import { PrismaClient } from "@prisma/client";
 import { IFamiliar } from "../types";
 import { directionReg, lettersReg, nameRegex, numberReg } from "../utils/regex";
 import { validScoutID } from ".";
 import { IdSchema, QuerySearchSchema } from "./generics";
+import { prismaClient } from "../utils/lib/prisma-client";
 
 export const validFamiliarID = async (id: string) => {
-	const prisma = new PrismaClient();
-	const FamiliarModel = prisma.familiar;
+	const FamiliarModel = prismaClient.familiar;
 	const respItem = await FamiliarModel.findUnique({
 		where: { uuid: id },
 	});
@@ -16,8 +15,7 @@ export const validFamiliarID = async (id: string) => {
 };
 
 // export const idIsNotFamily = async (id: string) => {
-// 	const prisma = new PrismaClient();
-// 	const FamiliarScoutModel = prisma.familiarScout;
+// 	const FamiliarScoutModel = prismaClient.familiarScout;
 // 	const respItem = await FamiliarScoutModel.findUnique({
 // 		where: { scoutId: id,  },
 // 	});
@@ -55,8 +53,7 @@ export const RelateFamiliarParams = z.object({
 		id: IdSchema.refine(validFamiliarID),
 	})
 }).refine(async ({ body, params }) => {
-	const prisma = new PrismaClient();
-	const FamiliarScoutModel = prisma.familiarScout;
+	const FamiliarScoutModel = prismaClient.familiarScout;
 	const respItem = await FamiliarScoutModel.findFirst({
 		where: { scoutId: body.scoutId, familiarId: params.id },
 	});

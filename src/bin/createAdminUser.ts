@@ -1,13 +1,12 @@
-import { PrismaClient } from "@prisma/client";
 import prp from "prompt-sync"
 const prompt = prp();
 import { nanoid } from "nanoid";
 import { encrypt } from "../utils/lib/bcrypt.util";
 import { RegisterSchema } from "../validators/auth";
+import { prismaClient } from "../utils/lib/prisma-client";
 
 const createAdmin = async () => {
-    const prisma = new PrismaClient();
-    await prisma.$connect()
+
 
     try {
         console.log(
@@ -32,7 +31,7 @@ const createAdmin = async () => {
 
         const passHash = await encrypt(password)
 
-        const res = await prisma.user.create({
+        const res = await prismaClient.user.create({
             data: { password: passHash, uuid, username, role },
         })
 
@@ -45,7 +44,7 @@ const createAdmin = async () => {
         console.log(
             "\n------------ SCRIPT FINALIZADO -------------\n",
         );
-        await prisma.$disconnect();
+        await prismaClient.$disconnect();
     }
 };
 

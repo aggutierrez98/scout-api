@@ -1,8 +1,8 @@
 import { nanoid } from "nanoid";
 import { IEquipo, IEquipoData } from "../types";
-import { PrismaClient } from "@prisma/client";
+import { prismaClient } from "../utils/lib/prisma-client";
 
-const prisma = new PrismaClient().$extends({
+const prisma = prismaClient.$extends({
 	result: {
 		equipo: {
 			id: {

@@ -1,9 +1,9 @@
 import { nanoid } from "nanoid";
 import { IFamiliar, IFamiliarScoutData, RelacionFamiliarType } from "../types";
-import { PrismaClient } from "@prisma/client";
 import { getAge } from "../utils";
+import { prismaClient } from "../utils/lib/prisma-client";
 
-const prisma = new PrismaClient().$extends({
+const prisma = prismaClient.$extends({
 	result: {
 		familiar: {
 			id: {

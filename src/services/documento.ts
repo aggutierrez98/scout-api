@@ -1,14 +1,13 @@
-import { PrismaClient } from "@prisma/client";
 import {
 	FuncionType,
 	IDocumento,
 	IDocumentoData,
 	ProgresionType,
-	SexoType,
 } from "../types";
 import { nanoid } from "nanoid";
+import { prismaClient } from "../utils/lib/prisma-client";
 
-const prisma = new PrismaClient().$extends({
+const prisma = prismaClient.$extends({
 	result: {
 		documentoPresentado: {
 			id: {

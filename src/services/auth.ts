@@ -1,13 +1,12 @@
-import { PrismaClient } from "@prisma/client";
 import { IUser, IUserData, IScout, IScoutData } from '../types';
 import { nanoid } from "nanoid";
 import { encrypt, verified } from "../utils/lib/bcrypt.util";
 import { generateToken } from "../utils/lib/jwt.util";
 import { RolesType } from "../types";
 import { getAge } from "../utils";
+import { prismaClient } from "../utils/lib/prisma-client";
 
-
-const prisma = new PrismaClient().$extends({
+const prisma = prismaClient.$extends({
     result: {
         user: {
             id: {
