@@ -2,6 +2,8 @@ import { NextFunction, Request, Response } from "express";
 import { CacheManager } from "../utils/classes/CacheManager";
 import { AppError, HttpCode } from "../utils/classes/AppError";
 
+const cacheManager = new CacheManager();
+
 const cleanCacheMiddleware = async (
 	req: Request,
 	res: Response,
@@ -9,7 +11,6 @@ const cleanCacheMiddleware = async (
 ) => {
 	const cacheKey = `${req.originalUrl.split("api/")[1]}`;
 	try {
-		const cacheManager = new CacheManager();
 		const oldJSON = res.json;
 		res.json = (body) => {
 			cacheManager.clearData(cacheKey);
@@ -36,7 +37,6 @@ const cacheMiddleware = async (
 	const cacheKey = `${req.originalUrl.split("api/")[1]}`;
 
 	try {
-		const cacheManager = new CacheManager();
 		const cachedData = await cacheManager.get(cacheKey);
 		if (cachedData) {
 			res.json(cachedData);

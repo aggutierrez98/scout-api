@@ -1,15 +1,12 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import ProgressBar from "progress";
 import { SPLIT_STRING, excelDateToJSDate, parseDMYtoDate } from "../utils";
 import { nanoid } from "nanoid";
 import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
 import { EstadoCivilType } from "../types";
-
-
+import { prismaClient } from "../utils/lib/prisma-client";
 
 const insertFamiliares = async () => {
-    const prisma = new PrismaClient();
-    await prisma.$connect()
 
     try {
         console.time("Tiempo de ejecucion");
@@ -60,9 +57,9 @@ const insertFamiliares = async () => {
         }
 
         console.log(`\n-> Cargando ${familiares.length} familiares a la bd...`);
-        // await prisma.$queryRaw`ALTER TABLE Familiar AUTO_INCREMENT = 1`;
-        await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Familiar'`;
-        const result = await prisma.familiar.createMany({
+        // await prismaClient.$queryRaw`ALTER TABLE Familiar AUTO_INCREMENT = 1`;
+        await prismaClient.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Familiar'`;
+        const result = await prismaClient.familiar.createMany({
             data: familiares,
             // skipDuplicates: true,
         });
@@ -73,7 +70,7 @@ const insertFamiliares = async () => {
     } catch (error) {
         console.log("Error en el script: ", (error as Error).message);
     } finally {
-        await prisma.$disconnect();
+        await prismaClient.$disconnect();
     }
 };
 

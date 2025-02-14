@@ -1,23 +1,37 @@
 import { createClient } from "redis";
 type CacheValue = any | null;
 
+const MAX_REDIS_CONNECTION_RETRIES = 20
+const MAX_REDIS_CONNECTION_TIMEOUT_MS = 10000
+const REDIS_RETRY_TIME_MS = 500
+
 export class CacheManager {
 	private readonly client;
 
 	constructor() {
 		this.client = createClient({
-			url: "redis://127.0.0.1:6379",
+			url: process.env.REDIS_CONNECTION_URI,
+			socket: {
+				reconnectStrategy: function (retries) {
+					if (retries > MAX_REDIS_CONNECTION_RETRIES) {
+						console.error("Too many attempts to reconnect. Redis connection was terminated");
+						return new Error("Too many retries.");
+					} else {
+						return retries * REDIS_RETRY_TIME_MS;
+					}
+				},
+				connectTimeout: MAX_REDIS_CONNECTION_TIMEOUT_MS
+			}
 		});
 		this.client.on("error", (error) => {
 			console.error("Redis client error", error);
 		});
+		this.client.connect();
 	}
 
 	async connectIfNecessary(): Promise<void> {
-		if (this.client.isReady) {
-			return;
-		}
-
+		if (this.client.isOpen) return
+		if (this.client.isReady) return
 		await this.client.connect();
 	}
 

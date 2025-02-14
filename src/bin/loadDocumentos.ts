@@ -1,12 +1,11 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import ProgressBar from "progress";
 import { SPLIT_STRING, excelDateToJSDate, parseDMYtoDate } from "../utils";
 import { nanoid } from "nanoid";
 import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
+import { prismaClient } from "../utils/lib/prisma-client";
 
 const loadDocumentos = async () => {
-    const prisma = new PrismaClient();
-    await prisma.$connect()
 
     try {
         console.time("Tiempo de ejecucion");
@@ -38,8 +37,8 @@ const loadDocumentos = async () => {
 
         console.log(`\n-> Cargando ${documentosData.length} tipos de documentos a la bd...`);
         // await prisma.$queryRaw`ALTER TABLE Documento AUTO_INCREMENT = 1`;
-        await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Documento'`;
-        const docs = await prisma.documento.createMany({
+        await prismaClient.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Documento'`;
+        const docs = await prismaClient.documento.createMany({
             data: documentosData,
             // skipDuplicates: true,
         });
@@ -52,7 +51,7 @@ const loadDocumentos = async () => {
 
 
             const scout = (
-                await prisma.scout.findFirst({
+                await prismaClient.scout.findFirst({
                     where: {
                         OR: [
                             {
@@ -71,7 +70,7 @@ const loadDocumentos = async () => {
             );
 
             const documento = (
-                await prisma.documento.findFirst({
+                await prismaClient.documento.findFirst({
                     where: {
                         nombre: {
                             contains: documentoData.Documento
@@ -109,9 +108,9 @@ const loadDocumentos = async () => {
         }
 
         console.log(`\n-> Cargando ${documentos.length} documentos a la bd...`);
-        // await prisma.$queryRaw`ALTER TABLE DocumentoPresentado AUTO_INCREMENT = 1`;
-        await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'DocumentoPresentado'`;
-        const result = await prisma.documentoPresentado.createMany({
+        // await prismaClient.$queryRaw`ALTER TABLE DocumentoPresentado AUTO_INCREMENT = 1`;
+        await prismaClient.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'DocumentoPresentado'`;
+        const result = await prismaClient.documentoPresentado.createMany({
             data: documentos,
             // skipDuplicates: true,
         });
@@ -122,7 +121,7 @@ const loadDocumentos = async () => {
     } catch (error) {
         console.log("Error en el script: ", (error as Error).message);
     } finally {
-        await prisma.$disconnect();
+        await prismaClient.$disconnect();
     }
 };
 

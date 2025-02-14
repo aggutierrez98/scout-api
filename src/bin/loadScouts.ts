@@ -1,20 +1,16 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import ProgressBar from "progress";
 import { SPLIT_STRING, VALID_RELATIONSHIPS, excelDateToJSDate, parseDMYtoDate } from "../utils";
 import { EstadosType, FuncionType, ProgresionType, RelacionFamiliarType, ReligionType, ScoutXLSX } from "../types";
 import { nanoid } from "nanoid";
 import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
+import { prismaClient } from "../utils/lib/prisma-client";
 
 const loadPagos = async () => {
-    const prisma = new PrismaClient();
-    await prisma.$connect()
 
     try {
-
         console.time("Tiempo de ejecucion");
-        console.log(
-            "------------ INICIANDO SCRIPT DE ACTUALIZACION SCOUTS -------------\n",
-        );
+        console.log("------------ INICIANDO SCRIPT DE ACTUALIZACION SCOUTS -------------\n");
 
         const data = await getSpreadSheetData("scouts")
         const dataUsers = await getSpreadSheetData("usuarios")
@@ -60,7 +56,7 @@ const loadPagos = async () => {
 
             //Todo: Solucionar error en script que por defecto los pone en la pantera
             const equipoId = (
-                await prisma.equipo.findFirst({
+                await prismaClient.equipo.findFirst({
                     where: { nombre: scoutData.Equipo },
                 })
             )?.uuid;
@@ -77,6 +73,7 @@ const loadPagos = async () => {
                 funcion: funcion,
                 sexo,
                 religion,
+                rama: scoutData.Rama,
                 estado: scoutData.Estado?.toLocaleUpperCase() as EstadosType,
                 dni: scoutData.Documento ?? "",
                 localidad: scoutData.Localidad ?? "",
@@ -99,7 +96,7 @@ const loadPagos = async () => {
                     const [apellido, nombre] = name.split(SPLIT_STRING);
 
                     const familiarId = (
-                        await prisma.familiar.findFirst({
+                        await prismaClient.familiar.findFirst({
                             where: {
                                 nombre: {
                                     contains: nombre
@@ -132,7 +129,7 @@ const loadPagos = async () => {
             const scoutUser = dataUsers.find((user) => user.DNI === scoutData.Documento)
 
             if (scoutUser) {
-                await prisma.user.update({
+                await prismaClient.user.update({
                     where: {
                         uuid: scoutUser.UserId
                     },
@@ -147,17 +144,17 @@ const loadPagos = async () => {
         }
 
         console.log(`\n-> Cargando ${scouts.length} scouts a la bd...`);
-        // await prisma.$queryRaw`ALTER TABLE Scout AUTO_INCREMENT = 1`;
-        await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Scout'`;
-        const scoutsResult = await prisma.scout.createMany({
+        // await prismaClient.$queryRaw`ALTER TABLE Scout AUTO_INCREMENT = 1`;
+        await prismaClient.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Scout'`;
+        const scoutsResult = await prismaClient.scout.createMany({
             data: scouts,
             // skipDuplicates: true,
         });
 
-        // await prisma.$queryRaw`ALTER TABLE FamiliarScout AUTO_INCREMENT = 1`;
-        await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'FamiliarScout'`;
+        // await prismaClient.$queryRaw`ALTER TABLE FamiliarScout AUTO_INCREMENT = 1`;
+        await prismaClient.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'FamiliarScout'`;
 
-        const familiaresResult = await prisma.familiarScout.createMany({
+        const familiaresResult = await prismaClient.familiarScout.createMany({
             data: familiares,
             // skipDuplicates: true,
         });
@@ -170,7 +167,7 @@ const loadPagos = async () => {
     } catch (error) {
         console.log("Error en el script: ", (error as Error).message);
     } finally {
-        await prisma.$disconnect();
+        await prismaClient.$disconnect();
     }
 };
 

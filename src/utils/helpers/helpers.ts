@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import compression from "compression";
 import { Server, IncomingMessage, ServerResponse } from 'http';
 import { EntregaFromEntregaType } from "../constants";
-import { TipoEntregaType } from "../../types";
 const NO_COMPRESS_HEADERS = ["x-no-compression"];
 
 export const parseDMYtoDate = (string: string) => {
@@ -40,7 +39,7 @@ export const getEntregaFromType = (tipoEntrega: string) => {
 	return EntregaFromEntregaType[tipoEntrega as keyof typeof EntregaFromEntregaType]
 }
 
-export const gracefulShutdownMainProcess = (signal: string, server: Server<typeof IncomingMessage, typeof ServerResponse>) => {
+export const gracefulShutdownMainProcess = (signal: NodeJS.Signals, server: Server<typeof IncomingMessage, typeof ServerResponse>) => {
 	console.log(`\nSe recibió una señal ${signal}, se cierran conexiones antes de terminar el proceso`)
 	server.close(() => {
 		console.log("Servidor HTTP desconectado")

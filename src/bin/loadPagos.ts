@@ -1,16 +1,12 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import ProgressBar from "progress";
 import { SPLIT_STRING, excelDateToJSDate, parseDMYtoDate } from "../utils";
 import { MetodosPagoType } from "../types";
 import { nanoid } from "nanoid";
 import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
-// import { prisma } from "../utils/lib/prisma-client";
+import { prismaClient } from "../utils/lib/prisma-client";
 
 const loadPagos = async () => {
-    const prisma = new PrismaClient();
-    await prisma.$connect()
-
-    // prisma.
 
     try {
 
@@ -37,7 +33,7 @@ const loadPagos = async () => {
             const [apellido, nombre] = pagoData.Scout!.toString().split(SPLIT_STRING);
 
             const scout = (
-                await prisma.scout.findFirst({
+                await prismaClient.scout.findFirst({
                     where: {
                         OR: [
                             {
@@ -83,8 +79,8 @@ const loadPagos = async () => {
 
         console.log(`\n-> Cargando ${pagos.length} pagos a la bd...`);
         // await prisma.$queryRaw`ALTER TABLE Pago AUTO_INCREMENT = 1`;
-        await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Pago'`;
-        const result = await prisma.pago.createMany({
+        await prismaClient.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Pago'`;
+        const result = await prismaClient.pago.createMany({
             data: pagos,
             // skipDuplicates: true,
         });
@@ -95,7 +91,7 @@ const loadPagos = async () => {
     } catch (error) {
         console.log("Error en el script: ", (error as Error).message);
     } finally {
-        await prisma.$disconnect();
+        await prismaClient.$disconnect();
     }
 };
 

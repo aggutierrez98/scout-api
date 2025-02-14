@@ -5,6 +5,7 @@ import {
 	VALID_RELIGIONS,
 	VALID_FUNCTIONS,
 	VALID_GET_SCOUTS_FILTERS,
+	VALID_RAMAS,
 } from "../utils";
 import { PrismaClient } from "@prisma/client";
 import { IScout } from "../types";
@@ -31,6 +32,7 @@ export const ScoutSchema = z.object({
 	religion: z.enum(VALID_RELIGIONS),
 	equipoId: IdSchema.max(10).nullable(),
 	funcion: z.enum(VALID_FUNCTIONS),
+	rama: z.enum(VALID_RAMAS),
 	progresionActual: z.enum(VALID_PROGRESSIONS).nullable(),
 }) satisfies z.Schema<IScout>;
 

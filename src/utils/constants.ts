@@ -59,7 +59,7 @@ export const VALID_ENTREGAS_TYPE = [
 	"SUPERACION",
 ] as const;
 
-export const VALID_RAMAS_TYPE = [
+export const VALID_RAMAS = [
 	"CASTORES",
 	"MANADA",
 	"UNIDAD",

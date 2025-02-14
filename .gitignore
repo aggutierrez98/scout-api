@@ -9,4 +9,5 @@ dist
 **-ssh.pem
 **.zip
 backup.sql
-**/**/dev.db
+**/prisma/**.db
+**/prisma/migrations/**

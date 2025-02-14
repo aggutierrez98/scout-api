@@ -103,6 +103,7 @@ export class ScoutService implements IScoutService {
 				localidad: scout.localidad.toLocaleUpperCase(),
 				telefono: scout.telefono?.toLocaleUpperCase(),
 				mail: scout.mail?.toLocaleUpperCase(),
+				rama: scout.rama?.toLocaleUpperCase(),
 			},
 		});
 

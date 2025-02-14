@@ -27,7 +27,6 @@ import createEntregaRouter from "./routes/entrega";
 import { WhatsAppSbot } from "./whatsapp/WhatsappSession";
 import recordarCumpleaños from "./whatsapp/recordarCumpleaños";
 import swaggerSpecJSON from "./docs/spec.json";
-// import { swaggerDefinition } from "./docs/swagger-ts/swagger";
 
 export default class Server {
 	public app;
@@ -51,8 +50,6 @@ export default class Server {
 
 		this.port = process.env.PORT;
 		this.middlewares();
-
-		// expressOasGenerator.handleRequests();
 	}
 
 	middlewares() {
@@ -115,7 +112,7 @@ export default class Server {
 	}
 
 	async connectWhatsapp() {
-		WhatsAppSbot.getInstance()
+		// WhatsAppSbot.getInstance()
 	}
 
 	loadCrons() {

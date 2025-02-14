@@ -3,10 +3,9 @@ import ProgressBar from "progress";
 import { SPLIT_STRING, VALID_ENTREGAS_TYPE, excelDateToJSDate, parseDMYtoDate } from "../utils";
 import { nanoid } from "nanoid";
 import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
+import { prismaClient } from "../utils/lib/prisma-client";
 
 const loadEntregas = async () => {
-    const prisma = new PrismaClient();
-    await prisma.$connect()
 
     try {
         console.time("Tiempo de ejecucion");
@@ -33,7 +32,7 @@ const loadEntregas = async () => {
             const [apellido, nombre] = entregaData.Scout!.toString().split(SPLIT_STRING);
 
             const scout = (
-                await prisma.scout.findFirst({
+                await prismaClient.scout.findFirst({
                     where: {
                         OR: [
                             {
@@ -81,9 +80,9 @@ const loadEntregas = async () => {
         }
 
         console.log(`\n-> Cargando ${entregas.length} entregas a la bd...`);
-        // await prisma.$queryRaw`ALTER TABLE EntregaRealizada AUTO_INCREMENT = 1`;
-        await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'EntregaRealizada'`;
-        const result = await prisma.entregaRealizada.createMany({
+        // await prismaClient.$queryRaw`ALTER TABLE EntregaRealizada AUTO_INCREMENT = 1`;
+        await prismaClient.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'EntregaRealizada'`;
+        const result = await prismaClient.entregaRealizada.createMany({
             data: entregas,
             // skipDuplicates: true,
         });
@@ -94,7 +93,7 @@ const loadEntregas = async () => {
     } catch (error) {
         console.error("Error en el script: ", error);
     } finally {
-        await prisma.$disconnect();
+        await prismaClient.$disconnect();
     }
 };
 

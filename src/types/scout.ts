@@ -9,6 +9,7 @@ export interface IScout {
     telefono: string | null;
     mail: string | null;
     equipoId: string | null;
+    rama: string | null;
     religion: string | null;
     progresionActual: string | null;
     funcion: string | null;
@@ -62,6 +63,7 @@ export type ScoutXLSX = {
     Religion: string;
     Funcion: string;
     Categoria: string;
+    Rama: string;
     "Fecha Primer Afiliacion": string;
     Equipo: string;
     Estado: string;

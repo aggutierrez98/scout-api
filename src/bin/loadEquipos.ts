@@ -1,11 +1,10 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import ProgressBar from "progress";
 import { nanoid } from "nanoid";
 import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
+import { prismaClient } from "../utils/lib/prisma-client";
 
 const loadEquipos = async () => {
-    const prisma = new PrismaClient();
-    await prisma.$connect()
 
     try {
         console.time("Tiempo de ejecucion");
@@ -29,17 +28,18 @@ const loadEquipos = async () => {
             equipos.push({
                 uuid: nanoid(10),
                 nombre: equipoData.Nombre!,
-                lema: equipoData.Lema
+                lema: equipoData.Lema,
+                rama: equipoData.Rama
             });
 
             bar.tick(1);
         }
 
         console.log(`\n-> Cargando ${equipos.length} equipos a la bd...`);
-        // await prisma.$queryRaw`ALTER TABLE Equipo AUTO_INCREMENT = 1`;
-        await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Equipo'`;
+        // await prismaClient.$queryRaw`ALTER TABLE Equipo AUTO_INCREMENT = 1`;
+        await prismaClient.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Equipo'`;
 
-        const result = await prisma.equipo.createMany({
+        const result = await prismaClient.equipo.createMany({
             data: equipos,
             // skipDuplicates: true,
         });
@@ -50,7 +50,7 @@ const loadEquipos = async () => {
     } catch (error) {
         console.log("Error en el script: ", (error as Error).message);
     } finally {
-        await prisma.$disconnect();
+        await prismaClient.$disconnect();
     }
 };
 

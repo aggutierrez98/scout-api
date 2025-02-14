@@ -1,5 +1,5 @@
-import { PrismaClient, Prisma } from "@prisma/client";
-import { IUser, IUserData, IScout, IScoutData } from '../types/interfaces';
+import { PrismaClient } from "@prisma/client";
+import { IUser, IUserData, IScout, IScoutData } from '../types';
 import { nanoid } from "nanoid";
 import { encrypt, verified } from "../utils/lib/bcrypt.util";
 import { generateToken } from "../utils/lib/jwt.util";
