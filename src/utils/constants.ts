@@ -62,7 +62,7 @@ export const VALID_ENTREGAS_TYPE = [
 export const VALID_RAMAS = [
 	"CASTORES",
 	"MANADA",
-	"UNIDAD",
+	"SCOUTS",
 	"CAMINANTES",
 	"ROVERS"
 ] as const;

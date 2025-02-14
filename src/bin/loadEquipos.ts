@@ -29,7 +29,7 @@ const loadEquipos = async () => {
                 uuid: nanoid(10),
                 nombre: equipoData.Nombre!,
                 lema: equipoData.Lema,
-                rama: equipoData.Rama
+                rama: equipoData.Rama?.toLocaleUpperCase()
             });
 
             bar.tick(1);

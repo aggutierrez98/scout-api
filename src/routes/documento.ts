@@ -15,31 +15,25 @@ export default function createDocumentoRouter(documentoService: DocumentoService
 	const documentoController = new DocumentoController({ documentoService });
 
 	router.get("/",
-		checkSession,
 		validate(GetDocumentosSchema),
 		documentoController.getItems
 	);
 	router.get("/data",
-		checkSession,
-		// validate(GetDocumentosSchema),
 		documentoController.getData
 	);
 	router.get(
 		"/:id",
-		checkSession,
 		validate(GetDocumentoSchema),
 		cacheMiddleware,
 		documentoController.getItem,
 	);
 	router.post(
 		"/",
-		checkSession,
 		validate(PostDocumentoSchema),
 		documentoController.insertItem,
 	);
 	router.delete(
 		"/:id",
-		checkSession,
 		validate(DeleteDocumentoSchema),
 		cleanCacheMiddleware,
 		documentoController.deleteItem,

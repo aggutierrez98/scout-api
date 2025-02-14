@@ -21,7 +21,6 @@ export default function createEquipoRouter(equipoService: EquipoService) {
 	const equipoController = new EquipoController({ equipoService });
 
 	router.get("/",
-		checkSession,
 		validate(GetEquiposSchema),
 		equipoController.getItems
 	);
@@ -32,20 +31,17 @@ export default function createEquipoRouter(equipoService: EquipoService) {
 		equipoController.getItem,
 	);
 	router.post("/",
-		checkSession,
 		validate(PostEquipoSchema),
 		equipoController.insertItem
 	);
 	router.put(
 		"/:id",
-		checkSession,
 		validate(PutEquipoSchema),
 		cleanCacheMiddleware,
 		equipoController.updateItem,
 	);
 	router.delete(
 		"/:id",
-		checkSession,
 		validate(DeleteEquipoSchema),
 		cleanCacheMiddleware,
 		equipoController.deleteItem,

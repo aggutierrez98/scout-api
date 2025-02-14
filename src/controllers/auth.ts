@@ -3,6 +3,12 @@ import { AppError, HttpCode } from "../utils/classes/AppError";
 import { AuthService } from "../services/auth";
 import { generateToken, verifyToken } from "../utils/lib/jwt.util";
 
+declare module "express-session" {
+    interface Session {
+        user: { id: string; username: string };
+    }
+}
+
 export class AuthController {
     public authService;
 
@@ -10,9 +16,10 @@ export class AuthController {
         this.authService = authService;
     }
 
-    login = async ({ body }: Request, res: Response, next: NextFunction) => {
+    login = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const response = await this.authService.loginUser(body);
+            const data = req.body
+            const response = await this.authService.loginUser(data);
 
             if (!response) {
                 throw new AppError({
@@ -21,7 +28,7 @@ export class AuthController {
                     description: "Credenciales incorrectas"
                 });
             }
-
+            // req.session.user = { id: data.id, username: data.username };
             res.send(response);
         } catch (e) {
             next(e);
@@ -85,6 +92,29 @@ export class AuthController {
                     username: user.username
                 })
             }
+        } catch (e) {
+            next(e)
+        }
+    }
+
+    getMe = async (_: Request, res: Response, next: NextFunction) => {
+        try {
+            const user = res.locals.currentUser
+
+            if (!user) {
+                throw new AppError({
+                    name: "NOT_VALID_USER",
+                    httpCode: HttpCode.UNAUTHORIZED,
+                    description: "Usuario inexistente"
+                });
+            }
+
+            res.json({
+                id: user.id,
+                username: user.username,
+                role: user.role,
+                scout: user.scout
+            })
         } catch (e) {
             next(e)
         }

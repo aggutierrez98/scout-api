@@ -16,32 +16,27 @@ export default function createPagoRouter(pagoService: PagoService) {
 	const pagoController = new PagoController({ pagoService });
 
 	router.get("/",
-		checkSession,
 		validate(GetPagosSchema),
 		pagoController.getItems
 	);
 	router.get(
 		"/:id",
-		checkSession,
 		validate(GetPagoSchema),
 		cacheMiddleware,
 		pagoController.getItem,
 	);
 	router.post("/",
-		checkSession,
 		validate(PostPagoSchema),
 		pagoController.insertItem
 	);
 	router.put(
 		"/:id",
-		checkSession,
 		validate(PutPagoSchema),
 		cleanCacheMiddleware,
 		pagoController.updateItem,
 	);
 	router.delete(
 		"/:id",
-		checkSession,
 		validate(DeletePagoSchema),
 		cleanCacheMiddleware,
 		pagoController.deleteItem,

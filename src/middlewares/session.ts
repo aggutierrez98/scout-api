@@ -3,14 +3,14 @@ import { verifyToken } from "../utils/lib/jwt.util";
 import { JwtPayload } from "jsonwebtoken";
 import { AppError, HttpCode } from "../utils";
 import { AuthService } from "../services/auth";
-import { validatePermissions, HTTPMethods, isPublicRoute } from '../utils/helpers/validatePermissions';
+import { validatePermissions, HTTPMethods } from '../utils/helpers/validatePermissions';
 import { RolesType } from "../types";
 
 interface RequestExt extends Request {
 	user?: JwtPayload | { id: string };
 }
 
-export const checkSession = async (req: RequestExt, _: Response, next: NextFunction) => {
+export const checkSession = async (req: RequestExt, res: Response, next: NextFunction) => {
 	try {
 		const jwtByUser = req.headers.authorization?.split("Bearer ")[1];
 
@@ -45,12 +45,8 @@ export const checkSession = async (req: RequestExt, _: Response, next: NextFunct
 		} else {
 			const resource = req.baseUrl.split("api/")[1];
 			const method = req.method as HTTPMethods
-
-			if (isPublicRoute({ resource, method })) return next()
-
 			const authService = new AuthService()
 			const user = await authService.getUser({ userId: isUser.id })!
-
 			const isAllowed = validatePermissions({ method, resource, userRole: (user?.role as RolesType) })
 
 			if (!isAllowed) {
@@ -61,6 +57,7 @@ export const checkSession = async (req: RequestExt, _: Response, next: NextFunct
 				});
 			}
 
+			res.locals.currentUser = user
 			next();
 		}
 

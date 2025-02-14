@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { FuncionType, IEntrega, IEntregaData, ProgresionType, TipoEntregaType } from "../types";
+import { FuncionType, IEntrega, IEntregaData, ProgresionType, RamasType, TipoEntregaType } from "../types";
 import { getAge } from "../utils";
 import { ScoutModel } from "./scout";
 import { prismaClient } from "../utils/lib/prisma-client";
@@ -42,6 +42,7 @@ type queryParams = {
         tipoEntrega?: TipoEntregaType[]
         equipos?: string[];
         funciones?: FuncionType[];
+        ramas?: RamasType[];
         progresiones?: ProgresionType[]
     };
 };
@@ -102,7 +103,8 @@ export class EntregaService implements IEntregaService {
             tiempoHasta,
             funciones,
             equipos,
-            progresiones
+            progresiones,
+            ramas
         } = filters;
 
         const responseItem = await EntregaModel.findMany({
@@ -138,6 +140,9 @@ export class EntregaService implements IEntregaService {
                     },
                     funcion: {
                         in: funciones,
+                    },
+                    rama: {
+                        in: ramas,
                     },
                 },
             },

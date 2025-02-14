@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { FuncionType, IPago, IPagoData, MetodosPagoType, ProgresionType } from "../types";
+import { FuncionType, IPago, IPagoData, MetodosPagoType, ProgresionType, RamasType } from "../types";
 import { prismaClient } from "../utils/lib/prisma-client";
 
 const prisma = prismaClient.$extends({
@@ -35,6 +35,7 @@ type queryParams = {
 		rendido?: string;
 		metodoPago?: MetodosPagoType
 		funcion?: FuncionType[];
+		ramas?: RamasType[];
 		equipos?: string[];
 		funciones?: FuncionType[];
 		progresiones?: ProgresionType[]
@@ -72,7 +73,8 @@ export class PagoService implements IPagoService {
 			tiempoDesde,
 			tiempoHasta,
 			funciones,
-			progresiones
+			progresiones,
+			ramas
 		} = filters;
 
 		const responseItem = await PagoModel.findMany({
@@ -90,6 +92,9 @@ export class PagoService implements IPagoService {
 					},
 					funcion: {
 						in: funciones,
+					},
+					rama: {
+						in: ramas,
 					},
 				},
 				rendido: rendido ? rendido === "true" ? true : false : undefined,

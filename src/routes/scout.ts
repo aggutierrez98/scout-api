@@ -17,30 +17,32 @@ export default function createScoutRouter(scoutService: ScoutService) {
 	const scoutController = new ScoutController({ scoutService });
 
 	router.get("/",
-		checkSession,
 		validate(GetScoutsSchema),
 		scoutController.getItems
 	);
-	router.get("/allScouts", checkSession, scoutController.getAllItems);
-	router.get("/allEducadores", checkSession, scoutController.getAllItems);
+	router.get(
+		"/allScouts",
+		scoutController.getAllItems
+	);
+	router.get(
+		"/allEducadores",
+		scoutController.getAllItems
+	);
 	router.get(
 		"/:id",
-		checkSession,
 		validate(GetScoutSchema),
 		cacheMiddleware,
 		scoutController.getItem,
 	);
-	router.post("/", checkSession, validate(PostScoutSchema), scoutController.insertItem);
+	router.post("/", validate(PostScoutSchema), scoutController.insertItem);
 	router.put(
 		"/:id",
-		checkSession,
 		validate(PutScoutSchema),
 		cleanCacheMiddleware,
 		scoutController.updateItem,
 	);
 	router.delete(
 		"/:id",
-		checkSession,
 		validate(DeleteScoutSchema),
 		cleanCacheMiddleware,
 		scoutController.deleteItem,

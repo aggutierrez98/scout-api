@@ -16,7 +16,7 @@ const loadPagos = async () => {
         const dataUsers = await getSpreadSheetData("usuarios")
 
         const bar = new ProgressBar(
-            "-> Leyendo scouts desde xlsx: [:bar] :percent - Tiempo restante: :etas",
+            "-> Cargando scouts desde xlsx hacia BD: [:bar] :percent - Tiempo restante: :etas",
             {
                 total: data.length,
                 width: 30,
@@ -73,7 +73,7 @@ const loadPagos = async () => {
                 funcion: funcion,
                 sexo,
                 religion,
-                rama: scoutData.Rama,
+                rama: scoutData.Rama?.toLocaleUpperCase(),
                 estado: scoutData.Estado?.toLocaleUpperCase() as EstadosType,
                 dni: scoutData.Documento ?? "",
                 localidad: scoutData.Localidad ?? "",
@@ -120,9 +120,6 @@ const loadPagos = async () => {
                         scoutId: id
                     })
                 }
-
-
-                // console.log(`-> Se cargaron exitosamente ${result.count} familiares para el scout ${scoutData.Nombre} a la bd!`);
             }
 
             // Actualizamos data dentro del usuario
@@ -153,14 +150,13 @@ const loadPagos = async () => {
 
         // await prismaClient.$queryRaw`ALTER TABLE FamiliarScout AUTO_INCREMENT = 1`;
         await prismaClient.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'FamiliarScout'`;
-
         const familiaresResult = await prismaClient.familiarScout.createMany({
             data: familiares,
             // skipDuplicates: true,
         });
 
-
         console.log(`\n-> Se cararon exitosamente ${scoutsResult.count} scouts a la bd!`);
+        console.log(`\n-> Se cargaron exitosamente ${familiaresResult.count} familiares a la bd!`);
         console.log("\n------------ ACTUALIZACION TERMINADA -------------\n");
         console.timeEnd("Tiempo de ejecucion");
 

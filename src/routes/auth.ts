@@ -13,6 +13,7 @@ export default function createAuthRouter(authService: AuthService) {
     const router = Router();
     const authController = new AuthController({ authService });
     router.get("/renew", checkSession, authController.renew);
+    router.get("/me", checkSession, authController.getMe);
     router.get("/users", checkSession, validate(GetUsersSchema), authController.getItems);
     router.get("/users/:id", checkSession, validate(GetUserSchema), authController.getItem);
     router.post("/", validate(LoginSchema), authController.login);

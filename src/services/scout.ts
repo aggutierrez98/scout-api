@@ -3,6 +3,7 @@ import {
 	IScout,
 	IScoutData,
 	ProgresionType,
+	RamasType,
 	SexoType,
 } from "../types";
 import { OrderToGetScouts } from "../types";
@@ -73,6 +74,7 @@ type queryParams = {
 		equipos?: string[];
 		progresiones?: ProgresionType[];
 		funciones?: FuncionType[];
+		ramas?: RamasType[]
 	};
 };
 
@@ -121,6 +123,7 @@ export class ScoutService implements IScoutService {
 			nombre = "",
 			equipos,
 			sexo,
+			ramas,
 		} = filters;
 
 		const responseItem = await ScoutModel.findMany({
@@ -137,6 +140,9 @@ export class ScoutService implements IScoutService {
 				},
 				funcion: {
 					in: funciones,
+				},
+				rama: {
+					in: ramas,
 				},
 				OR: [
 					{
@@ -268,11 +274,11 @@ export class ScoutService implements IScoutService {
 		}
 	};
 	updateScout = async (id: string, dataUpdated: IScout) => {
-		const { direccion, localidad, funcion, mail, telefono, equipoId, religion, progresionActual } = dataUpdated
+		const { direccion, localidad, funcion, mail, telefono, equipoId, religion, progresionActual, rama } = dataUpdated
 
 		const responseItem = await ScoutModel.update({
 			where: { uuid: id },
-			data: { direccion, localidad, funcion, mail, telefono, equipoId, religion, progresionActual },
+			data: { direccion, localidad, funcion, mail, telefono, equipoId, religion, progresionActual, rama },
 		});
 		return responseItem;
 	};

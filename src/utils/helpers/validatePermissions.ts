@@ -37,11 +37,3 @@ export const validatePermissions = ({ method, resource, userRole }: Params) => {
     const isAllowed = validators.grants[userRole].includes(permission)
     return isAllowed
 }
-
-
-export const isPublicRoute = ({ method, resource }: Params) => {
-    const action = actionsFromMethods[method]
-    const permission = `${action}_${resource}`
-    const isPublic = validators.grants["COLABORADOR"].includes(permission)
-    return isPublic
-}

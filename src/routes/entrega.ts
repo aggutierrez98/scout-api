@@ -16,32 +16,27 @@ export default function createEntregaRouter(entregaService: EntregaService) {
     const entregaController = new EntregaController({ entregaService });
 
     router.get("/",
-        checkSession,
         validate(GetEntregasSchema),
         entregaController.getItems
     );
     router.get(
         "/:id",
-        checkSession,
         validate(GetEntregaSchema),
         cacheMiddleware,
         entregaController.getItem,
     );
     router.post("/",
-        checkSession,
         validate(PostEntregaSchema),
         entregaController.insertItem
     );
     router.put(
         "/:id",
-        checkSession,
         validate(PutEntregaSchema),
         cleanCacheMiddleware,
         entregaController.updateItem,
     );
     router.delete(
         "/:id",
-        checkSession,
         validate(DeleteEntregaSchema),
         cleanCacheMiddleware,
         entregaController.deleteItem,

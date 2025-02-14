@@ -7,7 +7,7 @@ import swaggerUi from "swagger-ui-express";
 import { config } from "dotenv";
 import cors from "cors";
 config();
-import { errorMiddleware, morganMiddleware } from "./middlewares";
+import { checkSession, errorMiddleware, morganMiddleware } from "./middlewares";
 import { tooBusy } from "./middlewares/tooBusy";
 import { ACCEPTED_ORIGINS, PROXIES_NUMBER, shouldCompress } from "./utils";
 import createScoutRouter from "./routes/scout";
@@ -24,9 +24,10 @@ import { AuthService } from "./services/auth";
 import createAuthRouter from "./routes/auth";
 import { EntregaService } from "./services/entrega";
 import createEntregaRouter from "./routes/entrega";
-import { WhatsAppSbot } from "./whatsapp/WhatsappSession";
 import recordarCumpleaños from "./whatsapp/recordarCumpleaños";
 import swaggerSpecJSON from "./docs/spec.json";
+import { WhatsAppSbot } from "./whatsapp/WhatsappSession";
+// // import expressSession from 'express-session';
 
 export default class Server {
 	public app;
@@ -74,6 +75,16 @@ export default class Server {
 		this.app.use(bodyParser.json({ limit: "50kb" }));
 		this.app.use(bodyParser.urlencoded({ extended: true }));
 		this.app.use(express.static("public"));
+		// // this.app.use(expressSession({
+		// // 	secret: process.env.COOKIE_SECRET!,
+		// // 	resave: false,
+		// // 	saveUninitialized: true,
+		// // 	cookie: {
+		// // 		secure: true,
+		// // 		httpOnly: true,
+		// // 		maxAge: 1000 * 60 * 60 * 24, // 1 day
+		// // 	}
+		// // }));
 		this.app.use(helmet());
 		this.app.use(compression({ filter: shouldCompress }));
 		this.app.use(this.limiter);
@@ -91,22 +102,22 @@ export default class Server {
 		router.use("/auth", createAuthRouter(authService));
 
 		const equipoService = new EquipoService();
-		router.use("/equipo", createEquipoRouter(equipoService));
+		router.use("/equipo", checkSession, createEquipoRouter(equipoService));
 
 		const scoutService = new ScoutService();
-		router.use("/scout", createScoutRouter(scoutService));
+		router.use("/scout", checkSession, createScoutRouter(scoutService));
 
 		const documentoService = new DocumentoService();
-		router.use("/documento", createDocumentoRouter(documentoService));
+		router.use("/documento", checkSession, createDocumentoRouter(documentoService));
 
 		const pagoService = new PagoService();
-		router.use("/pago", createPagoRouter(pagoService));
+		router.use("/pago", checkSession, createPagoRouter(pagoService));
 
 		const familiarService = new FamiliarService();
-		router.use("/familiar", createFamiliarRouter(familiarService));
+		router.use("/familiar", checkSession, createFamiliarRouter(familiarService));
 
 		const entregaService = new EntregaService();
-		router.use("/entrega", createEntregaRouter(entregaService));
+		router.use("/entrega", checkSession, createEntregaRouter(entregaService));
 
 		return router;
 	}

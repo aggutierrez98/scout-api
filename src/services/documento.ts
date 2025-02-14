@@ -3,6 +3,7 @@ import {
 	IDocumento,
 	IDocumentoData,
 	ProgresionType,
+	RamasType,
 } from "../types";
 import { nanoid } from "nanoid";
 import { prismaClient } from "../utils/lib/prisma-client";
@@ -40,6 +41,7 @@ type getQueryParams = {
 		tiempoHasta?: Date;
 		equipos?: string[];
 		funciones?: FuncionType[];
+		ramas?: RamasType[];
 		progresiones?: ProgresionType[]
 
 	};
@@ -90,6 +92,7 @@ export class DocumentoService implements IDocumentoService {
 			funciones,
 			progresiones,
 			equipos,
+			ramas,
 			vence,
 			tiempoDesde,
 			tiempoHasta,
@@ -124,6 +127,9 @@ export class DocumentoService implements IDocumentoService {
 					funcion: {
 						in: funciones,
 					},
+					rama: {
+						in: ramas
+					}
 				},
 				documento: {
 					vence: vence ? vence === "true" ? true : false : undefined,

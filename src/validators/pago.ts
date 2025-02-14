@@ -13,7 +13,6 @@ const validPagoId = async (id: string) => {
 
 export const PagoSchema = z.object({
 	concepto: z.string().max(50),
-	// monto: z.string().regex(numberReg).max(99999999),
 	monto: z.number(),
 	metodoPago: z.enum(VALID_METODOS_PAGO),
 	scoutId: IdSchema.refine(validScoutID),
