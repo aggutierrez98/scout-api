@@ -27,6 +27,7 @@ import createEntregaRouter from "./routes/entrega";
 import recordarCumpleaños from "./whatsapp/recordarCumpleaños";
 import swaggerSpecJSON from "./docs/spec.json";
 import { WhatsAppSbot } from "./whatsapp/WhatsappSession";
+import logger from "./utils/classes/Logger";
 // // import expressSession from 'express-session';
 
 export default class Server {
@@ -133,8 +134,8 @@ export default class Server {
 	listen() {
 		// Iniciamos el servidor de express en el puerto especificado
 		const server = this.app.listen(this.port, () => {
-			console.log(`⚡️[server]: Server running on port ${this.port}`);
-			console.log("-------------------------------------------------- ");
+			logger.info(`⚡️[server]: Server running on port ${this.port}`)
+			logger.info("-------------------------------------------------- ");
 		});
 		return server;
 	}

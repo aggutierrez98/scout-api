@@ -30,6 +30,8 @@ model Scout {
   localidad             String
   direccion             String
   telefono              String?
+  nacionalidad          String?
+  provincia             String?
   mail                  String?
   progresionActual      String?
   religion              String?               @default("CATOLICA")
@@ -54,6 +56,7 @@ model Documento {
   uuid                String                @unique
   nombre              String
   vence               Boolean
+  completable         Boolean
   documentoPresentado DocumentoPresentado[]
 }
 
@@ -97,6 +100,8 @@ model Familiar {
   direccion          String
   mail               String?
   telefono           String?
+  nacionalidad       String?
+  provincia          String?
   estadoCivil        String?
   fechaCreacion      DateTime        @default(now())
   fechaActualizacion DateTime        @updatedAt

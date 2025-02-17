@@ -88,8 +88,6 @@ export class FamiliarController {
 				scoutId,
 			);
 
-			// console.log(response)
-
 			if (!response) {
 				throw new AppError({
 					name: "NOT_FOUND",

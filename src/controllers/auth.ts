@@ -3,12 +3,6 @@ import { AppError, HttpCode } from "../utils/classes/AppError";
 import { AuthService } from "../services/auth";
 import { generateToken, verifyToken } from "../utils/lib/jwt.util";
 
-declare module "express-session" {
-    interface Session {
-        user: { id: string; username: string };
-    }
-}
-
 export class AuthController {
     public authService;
 

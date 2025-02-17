@@ -18,12 +18,14 @@ export const VALID_ESTADO_CIVIL = [
 ] as const;
 export const VALID_FUNCTIONS = [
 	"JOVEN",
-	"JEFE",
-	"SUBJEFE",
-	"AYUDANTE",
-	"COLABORADOR",
+	"ACOMPAÑANTE",
+	"AYUDANTE_RAMA",
+	"SUBJEFE_RAMA",
+	"JEFE_RAMA",
+	"SUBJEFE_GRUPO",
+	"JEFE_GRUPO",
+	"PADRE_REPRESENTANTE",
 ] as const;
-
 export const VALID_GET_SCOUTS_FILTERS = [
 	"apellido",
 	"dni",
@@ -69,20 +71,19 @@ export const VALID_RAMAS = [
 
 export enum EntregaFromEntregaType {
 	UNIFORME = "Uniforme Scout",
-	GUIA = "Insignia de Guia de patrulla",
-	SUBGUIA = "Insignia de Subguia de patrulla",
-	PROGPISTA = "Insignia de progresion PISTA",
-	PROGRUMBO = "Insignia de progresion RUMBO",
-	PROGTRAVESIA = "Insignia de progresion TRAVESIA",
+	INSG_GUIA = "Insignia de Guia de patrulla",
+	INSG_SUBGUIA = "Insignia de Subguia de patrulla",
+	PROG_PISTA = "Insignia de progresion PISTA",
+	PROG_RUMBO = "Insignia de progresion RUMBO",
+	PROG_TRAVESIA = "Insignia de progresion TRAVESIA",
 	PROMESA = "Insignia de Promesa",
-	ESPNATURALEZA = "Especialidad de Vida en la naturaleza",
-	ESPARTE = "Especialidad de Arte, Expresión y Cultura",
-	ESPSERVICIO = "Especialidad de Servicio a los demás",
-	ESPESPIRITUALIDAD = "Especialidad de Espiritualidad",
-	ESPDEPORTES = "Especialidad de Deportes",
-	ESPCIENCIA = "Especialidad de Ciencia y Tecnología",
-	SUPERACION = "Insignia de Maxima Superacion",
-
+	ESP_NATURALEZA = "Especialidad de Vida en la naturaleza",
+	ESP_ARTE = "Especialidad de Arte, Expresión y Cultura",
+	ESP_SERVICIO = "Especialidad de Servicio a los demás",
+	ESP_ESPIRITUALIDAD = "Especialidad de Espiritualidad",
+	ESP_DEPORTES = "Especialidad de Deportes",
+	ESP_CIENCIA = "Especialidad de Ciencia y Tecnología",
+	MAX_SUPERACION = "Insignia de Maxima Superacion",
 }
 
 export const VALID_SEX = ["M", "F"] as const;
@@ -94,12 +95,31 @@ export const VALID_METODOS_PAGO = [
 ] as const;
 
 export const VALID_ROLES = [
-	"ADMIN",
-	"JEFE",
-	"EDUCADOR",
+	"JOVEN",
 	"COLABORADOR",
-	"EXTERNO",
+	"ACOMPAÑANTE",
+	"AYUDANTE_RAMA",
+	"SUBJEFE_RAMA",
+	"JEFE_RAMA",
+	"SUBJEFE_GRUPO",
+	"JEFE_GRUPO",
+	"PADRE_REPRESENTANTE",
+	"ADMINISTRADOR",
 ] as const
+
+export enum ROLES {
+	JOVEN = "JOVEN",
+	COLABORADOR = "COLABORADOR",
+	ACOMPAÑANTE = "ACOMPAÑANTE",
+	AYUDANTE_RAMA = "AYUDANTE_RAMA",
+	SUBJEFE_RAMA = "SUBJEFE_RAMA",
+	JEFE_RAMA = "JEFE_RAMA",
+	SUBJEFE_GRUPO = "SUBJEFE_GRUPO",
+	JEFE_GRUPO = "JEFE_GRUPO",
+	PADRE_REPRESENTANTE = "PADRE_REPRESENTANTE",
+	ADMINISTRADOR = "ADMINISTRADOR",
+}
+
 export const VALID_ESTADOS = [
 	"ACTIVO",
 	"INACTIVO",
@@ -114,3 +134,37 @@ export const PROXIES_NUMBER = 1;
 
 // If you add origins they will be the only accepted by CORS
 export const ACCEPTED_ORIGINS: String[] = [];
+
+export const FUNCIONES_MAP = {
+	"Asist. Zonal Actividades Seguras": "ACOMPAÑANTE",
+	"Asist. Zonal Comunicaciones Institucionales": "ACOMPAÑANTE",
+	"Acompañante": "ACOMPAÑANTE",
+	"Sub-Jefe de Grupo": "SUBJEFE_GRUPO",
+	"Jefe de Grupo": "JEFE_GRUPO",
+	"Ayudante de Castores": "AYUDANTE_RAMA",
+	"Ayudante de Manada": "AYUDANTE_RAMA",
+	"Ayudante de Unidad Scout": "AYUDANTE_RAMA",
+	"Ayudante de Comunidad Caminante": "AYUDANTE_RAMA",
+	"Ayudante de Comunidad Rover": "AYUDANTE_RAMA",
+	"Sub-Jefe de Castores": "SUBJEFE_RAMA",
+	"Sub-Jefe de Manada": "SUBJEFE_RAMA",
+	"Sub-Jefe de Unidad Scout": "SUBJEFE_RAMA",
+	"Sub-Jefe de Comunidad Caminante": "SUBJEFE_RAMA",
+	"Sub-Jefe de Comunidad Rover": "SUBJEFE_RAMA",
+	"Jefe de Castores": "JEFE_RAMA",
+	"Jefe de Manada": "JEFE_RAMA",
+	"Jefe de Unidad Scout": "JEFE_RAMA",
+	"Jefe de Comunidad Caminante": "JEFE_RAMA",
+	"Jefe de Comunidad Rover": "JEFE_RAMA",
+	"Padre representante Castores": "PADRE_REPRESENTANTE",
+	"Padre representante Manada": "PADRE_REPRESENTANTE",
+	"Padre representante Unidad Scout": "PADRE_REPRESENTANTE",
+	"Padre representante Comunidad Caminante": "PADRE_REPRESENTANTE",
+	"Padre representante Comunidad Rover": "PADRE_REPRESENTANTE",
+	"Castor": "JOVEN",
+	"Lobato / Lobezna": "JOVEN",
+	"Scout": "JOVEN",
+	"Caminante": "JOVEN",
+	"Rover": "JOVEN",
+	"Representante Juvenil al Consejo de Grupo": "JOVEN",
+}

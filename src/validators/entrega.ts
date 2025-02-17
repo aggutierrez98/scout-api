@@ -7,7 +7,6 @@ import { IdSchema, QuerySearchSchema } from "./generics";
 import { prismaClient } from "../utils/lib/prisma-client";
 const validEntregaId = async (id: string) => {
     const EntregaModel = prismaClient.entregaRealizada;
-    console.log({ id })
     const respItem = await EntregaModel.findUnique({ where: { uuid: id } });
     return !!respItem;
 };

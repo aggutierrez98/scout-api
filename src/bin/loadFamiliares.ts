@@ -51,6 +51,8 @@ const insertFamiliares = async () => {
                 telefono: String(familiarData.Telefono),
                 mail: familiarData.Email,
                 estadoCivil: familiarData["Estado Civil"]!.toLocaleUpperCase() as EstadoCivilType,
+                nacionalidad: familiarData.Nacionalidad ?? "",
+                provincia: familiarData.Provincia ?? "",
             });
 
             bar.tick(1);

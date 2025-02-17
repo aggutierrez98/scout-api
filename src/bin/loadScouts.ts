@@ -39,17 +39,7 @@ const loadPagos = async () => {
             }
 
             const sexo = scoutData.Sexo === "Masculino" ? "M" : "F";
-            const funcion: FuncionType =
-                scoutData.Funcion === "Scout"
-                    ? "JOVEN"
-                    : scoutData.Funcion === "Jefe"
-                        ? "JEFE"
-                        : scoutData.Funcion === "Sub-Jefe"
-                            ? "SUBJEFE"
-                            : scoutData.Funcion === "Ayudante"
-                                ? "AYUDANTE"
-                                : "COLABORADOR";
-
+            const funcion = (scoutData.Funcion?.toLocaleUpperCase() as FuncionType) || "COLABORADOR"
             const progresionActual =
                 scoutData.Progresion?.toUpperCase() as ProgresionType;
             const religion = scoutData.Religion?.toUpperCase() as ReligionType;
@@ -77,6 +67,8 @@ const loadPagos = async () => {
                 estado: scoutData.Estado?.toLocaleUpperCase() as EstadosType,
                 dni: scoutData.Documento ?? "",
                 localidad: scoutData.Localidad ?? "",
+                nacionalidad: scoutData.Nacionalidad ?? "",
+                provincia: scoutData.Provincia ?? "",
                 direccion: scoutData.Calle ?? "",
                 telefono: scoutData.Telefono,
                 mail: scoutData.Email,

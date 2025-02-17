@@ -17,6 +17,7 @@ import { MENU_COMMANDS } from "../utils";
 import { MongoStore } from "wwebjs-mongo";
 import mongoose from 'mongoose';
 import getConfig from "./clientConfig";
+import logger from "../utils/classes/Logger";
 
 export class WhatsAppSbot {
     private static instance: WhatsAppSbot;
@@ -40,15 +41,15 @@ export class WhatsAppSbot {
         });
 
         this.client!.on('auth_failure', (msg) => {
-            console.error('Error de autenticacion:', msg);
+            logger.error(`Error de autenticacion: ${msg}`)
         });
 
         this.client!.on('ready', () => {
-            console.log("Cliente de Whatsapp SB listo");
+            logger.info("Cliente de Whatsapp SB listo")
         });
 
         this.client!.on('remote_session_saved', () => {
-            console.log("Session guardada en mongo");
+            logger.info("Session guardada en mongo")
         });
 
         this.client!.on('message', async (msg) => {

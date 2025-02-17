@@ -10,6 +10,8 @@ export interface IScout {
     mail: string | null;
     equipoId: string | null;
     rama: string | null;
+    nacionalidad: string | null;
+    provincia: string | null;
     religion: string | null;
     progresionActual: string | null;
     funcion: string | null;
@@ -55,6 +57,7 @@ export type ScoutXLSX = {
     Sexo: string;
     "Fecha Nacimiento": string;
     Provincia: string;
+    Nacionalidad: string;
     Localidad: string;
     Calle: string;
     "Codigo Postal": string;

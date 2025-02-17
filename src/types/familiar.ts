@@ -6,7 +6,6 @@ export interface IFamiliarScout {
     scouts: IScout[];
 }
 
-
 export interface IFamiliar {
     nombre: string;
     apellido: string;
@@ -15,6 +14,8 @@ export interface IFamiliar {
     fechaNacimiento: Date;
     localidad: string;
     direccion: string
+    nacionalidad: string | null;
+    provincia: string | null;
     mail?: string | null
     telefono?: string | null;
     estadoCivil?: string | null
@@ -32,7 +33,6 @@ export interface IFamiliarScoutData extends IFamiliar {
     }[];
 }
 
-
 export type FamiliarXLSX = {
     Documento: string;
     Nombre: string;
@@ -40,6 +40,7 @@ export type FamiliarXLSX = {
     "Fecha Nacimiento": string;
     Provincia: string;
     Localidad: string;
+    Nacionalidad: string;
     Email: string;
     Calle: string;
     "Codigo Postal": string;

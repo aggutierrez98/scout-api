@@ -1,6 +1,7 @@
 import { Decimal } from "@prisma/client/runtime/library";
 import { getAge, getEntregaFromType } from "../utils";
 import { prismaClient } from "../utils/lib/prisma-client";
+import logger from "../utils/classes/Logger";
 const INTERVALO_DIAS_CUMPLEAÑOS = 30
 
 const prisma = prismaClient.$extends({
@@ -109,7 +110,7 @@ export const obtenerCumpleañosPrevios = async (dateInterval: number) => {
             ORDER BY fechaCumpleanos DESC;
         `
     } catch (error) {
-        console.log("Error en consulta: ", error)
+        logger.error(`Error en consulta: ${error}`)
     }
 
     if (!scoutsResp.length) return `No hubo cumpleaños que hayan pasado durante los ultimos ${dateInterval} dias`
@@ -138,7 +139,7 @@ export const obtenerScoutsPorCumplirAños = async (dateInterval: number) => {
             ORDER BY fechaCumpleanos ASC;
         `
     } catch (error) {
-        console.log("Error en consulta: ", error)
+        logger.error(`Error en consulta: ${error}`)
     }
 
     if (!scoutsResp.length) return `No hay cumpleaños durante los proximos ${dateInterval} dias`
@@ -163,7 +164,7 @@ export const obtenerCumpleañosHoy = async () => {
         `
 
     } catch (error) {
-        console.log("Error en consulta: ", error)
+        logger.error(`Error en consulta: ${error}`)
     }
 
     if (!scoutsResp.length) return null
@@ -201,7 +202,7 @@ export const obtenerPagosSemana = async () => {
         });
 
     } catch (error) {
-        console.log("Error en consulta: ", error)
+        logger.error(`Error en consulta: ${error}`)
     }
 
     if (!paymentsLastWeek.length) return "No hay pagos de la ultima semana"
@@ -261,7 +262,7 @@ export const obtenerPagosScout = async (nombreScout: string, concepto?: string) 
         });
 
     } catch (error) {
-        console.log("Error en consulta: ", error)
+        logger.error(`Error en consulta: ${error}`)
     }
 
     if (!pagos.length) return "No hay cuotas de grupo pagadas"
@@ -357,7 +358,7 @@ export const obtenerScouts = async (nombreScout?: string, nombreEquipo?: string)
 
 
         } catch (error) {
-            console.log("Error en consulta: ", error)
+            logger.error(`Error en consulta: ${error}`)
         }
 
         return resultString
@@ -424,7 +425,7 @@ export const obtenerDocumentosScout = async (nombreScout: string) => {
         });
 
     } catch (error) {
-        console.log("Error en consulta: ", error)
+        logger.error(`Error en consulta: ${error}`)
     }
 
     if (!documentos.length) return "No hay documentos entregados"
@@ -534,7 +535,7 @@ export const obtenerDocumentosFaltantes = async (nombreScout: string) => {
         resultStr = `*Documentos faltantes para ${nombreScout}*:\n${strVencidos}\n${strFaltantes}`
 
     } catch (error) {
-        console.log("Error en consulta: ", error)
+        logger.error(`Error en consulta: ${error}`)
     }
 
     return resultStr
@@ -597,7 +598,7 @@ export const obtenerFamiliaresScout = async (nombreScout: string) => {
         familiaresStr = `*Familiares de ${nombreScout}*:\n${formattedBD}`
 
     } catch (error) {
-        console.log("Error en consulta: ", error)
+        logger.error(`Error en consulta: ${error}`)
     }
 
     return familiaresStr
@@ -649,7 +650,7 @@ export const obtenerFamiliar = async (nombreFamiliar: string) => {
         familiarStr = `*Info de familiar ${nombreFamiliar}*:\n${formattedBD}\n${familia}`
 
     } catch (error) {
-        console.log("Error en consulta: ", error)
+        logger.error(`Error en consulta: ${error}`)
     }
 
     return familiarStr
@@ -724,7 +725,7 @@ export const obtenerEntregas = async (nombreScout: string, nombreEquipo?: string
         }
 
     } catch (error) {
-        console.log("Error en consulta: ", error)
+        logger.error(`Error en consulta: ${error}`)
     }
 
     return entregasStr

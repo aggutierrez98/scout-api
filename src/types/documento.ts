@@ -27,4 +27,5 @@ export type DocumentoXLSX = {
 export type DocDataXLSX = {
     Nombre: string
     Vence: "Si" | "No"
+    Completable: "Si" | "No"
 }

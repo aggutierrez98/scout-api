@@ -32,6 +32,7 @@ const loadDocumentos = async () => {
                 uuid: nanoid(10),
                 nombre: docData.Nombre!,
                 vence: docData.Vence === "Si",
+                completable: docData.Completable === "Si",
             });
         }
 

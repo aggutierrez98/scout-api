@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 import { encrypt } from "../utils/lib/bcrypt.util";
 import { RegisterSchema } from "../validators/auth";
 import { prismaClient } from "../utils/lib/prisma-client";
+import { ROLES } from "../utils";
 
 const createAdmin = async () => {
 
@@ -17,7 +18,7 @@ const createAdmin = async () => {
 
         const username = prompt("Ingresar nombre de usuario: ")
         const password = prompt.hide("Ingresar contraseña: ");
-        const role = "ADMIN"
+        const role = ROLES.ADMINISTRADOR
 
         const parseReturn = await RegisterSchema.safeParseAsync({ body: { username, password, role } })
 

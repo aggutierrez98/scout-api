@@ -26,6 +26,8 @@ export const ScoutSchema = z.object({
 	sexo: z.enum(VALID_SEX),
 	localidad: z.string().max(100).regex(lettersReg),
 	direccion: z.string().max(100).regex(directionReg),
+	provincia: z.string().max(100).regex(lettersReg),
+	nacionalidad: z.string().max(100).regex(lettersReg),
 	telefono: z.string().max(15).regex(numberReg).nullable(),
 	mail: z.string().min(1).email().nullable(),
 	religion: z.enum(VALID_RELIGIONS),

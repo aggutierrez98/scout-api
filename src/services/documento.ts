@@ -7,6 +7,13 @@ import {
 } from "../types";
 import { nanoid } from "nanoid";
 import { prismaClient } from "../utils/lib/prisma-client";
+import { join } from "path";
+import { AppError, HttpCode } from "../utils";
+import { AutorizacionSalidasCercanas } from "../utils/classes/documentos/AutorizacionSalidasCercanas";
+import { CaratulaLegajo } from "../utils/classes/documentos/CaratulaLegajo";
+import { AutorizacionIngresoMenores } from "../utils/classes/documentos/AutorizacionIngresoMenores";
+import { AutorizacionRetiro } from "../utils/classes/documentos/AutorizacionRetiro";
+import { AutorizacionUsoImagen } from "../utils/classes/documentos/AutorizacionUsoImagen";
 
 const prisma = prismaClient.$extends({
 	result: {
@@ -218,4 +225,99 @@ export class DocumentoService implements IDocumentoService {
 
 		return responseItem;
 	};
+
+
+	fillDocumento = async (id: string, data: {
+		scoutId: string,
+		familiarId?: string,
+		cicloActividades?: string,
+		rangoDistanciaPermiso?: string
+	}
+	) => {
+
+		try {
+			const {
+				scoutId,
+				familiarId,
+				cicloActividades = "2025",
+				rangoDistanciaPermiso = "5 Kilometros"
+			} = data
+
+			const docData = (await DocumentosDataModel.findUnique({
+				where: {
+					uuid: id
+				}
+			}))!
+
+			let pdfModel;
+			switch (docData.nombre) {
+				case "Caratula legajo":
+					pdfModel = new CaratulaLegajo({
+						documentName: docData.nombre,
+						scoutId
+					})
+					break;
+				case "Autorizacion de uso de imagen":
+					if (!familiarId) throw new AppError({
+						name: "NOT_FOUND",
+						httpCode: HttpCode.BAD_REQUEST,
+						description: "No se enviaron datos del familiar"
+					});
+					pdfModel = new AutorizacionUsoImagen({
+						documentName: docData.nombre,
+						scoutId,
+						familiarId
+					})
+					break;
+				case "Autorizacion para retiro de jovenes":
+					if (!familiarId) throw new AppError({
+						name: "NOT_FOUND",
+						httpCode: HttpCode.BAD_REQUEST,
+						description: "No se enviaron datos del familiar"
+					});
+					pdfModel = new AutorizacionRetiro({
+						documentName: docData.nombre,
+						scoutId,
+						familiarId
+					})
+					break;
+				case "Autorizacion ingreso de menores de edad":
+					if (!familiarId) throw new AppError({
+						name: "NOT_FOUND",
+						httpCode: HttpCode.BAD_REQUEST,
+						description: "No se enviaron datos del familiar"
+					});
+					pdfModel = new AutorizacionIngresoMenores({
+						documentName: docData.nombre,
+						scoutId,
+						familiarId
+					})
+					break;
+				case "Autorizacion de salidas cercanas":
+					if (!familiarId) throw new AppError({
+						name: "NOT_FOUND",
+						httpCode: HttpCode.BAD_REQUEST,
+						description: "No se enviaron datos del familiar"
+					});
+					pdfModel = new AutorizacionSalidasCercanas({
+						documentName: docData.nombre,
+						scoutId,
+						familiarId,
+						cicloActividades,
+						rangoDistanciaPermiso
+					})
+					break;
+
+				default:
+					break;
+			}
+
+			await pdfModel!.getData()
+			pdfModel!.mapData()
+			return await pdfModel!.fill()
+
+		} catch (error) {
+			return null;
+		}
+	}
 }

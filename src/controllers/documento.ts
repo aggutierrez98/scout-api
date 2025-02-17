@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 
 import { AppError, HttpCode } from "../utils/classes/AppError";
 import { DocumentoService } from "../services/documento";
+import { unlink } from "fs/promises";
 
 export class DocumentoController {
 	public documentoService;
@@ -56,6 +57,28 @@ export class DocumentoController {
 				body,
 			);
 			res.send(responseDocumento);
+		} catch (e) {
+			next(e);
+		}
+	};
+
+	fillDocument = async ({ body, params }: Request, res: Response, next: NextFunction) => {
+		try {
+			const { id } = params;
+			const responseDocumento = await this.documentoService.fillDocumento(id, body);
+			if (!responseDocumento) {
+				throw new AppError({
+					name: "CREATION_ERROR",
+					httpCode: HttpCode.BAD_REQUEST,
+					description: "Fallo al crear archivo"
+				});
+			}
+
+			res.download(responseDocumento, () => {
+				unlink(responseDocumento)
+			})
+
+
 		} catch (e) {
 			next(e);
 		}

@@ -7,6 +7,7 @@ import {
 	GetDocumentoSchema,
 	GetDocumentosSchema,
 	PostDocumentoSchema,
+	FillDocumentSchema,
 } from "../validators/documento";
 import { DocumentoService } from "../services/documento";
 
@@ -31,6 +32,11 @@ export default function createDocumentoRouter(documentoService: DocumentoService
 		"/",
 		validate(PostDocumentoSchema),
 		documentoController.insertItem,
+	);
+	router.post(
+		"/fill/:id",
+		validate(FillDocumentSchema),
+		documentoController.fillDocument,
 	);
 	router.delete(
 		"/:id",
