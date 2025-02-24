@@ -1,5 +1,5 @@
 export * from "./error";
-export * from "./log";
+export * from "./httpLog";
 export * from "./session";
 export * from "./cache";
 export * from "./tooBusy";
