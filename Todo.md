@@ -7,7 +7,7 @@
 * [ ] Ver de optimizar mapeo roles a funciones (y viceversa)
 * [ ] Mejorar script para que saque todo lo posible en funcion de la nomina (dato funcion implica mas datos adentro)
 * [X] Cargar PDFS a traves de node
-* [ ] Generar script sh para automatizar migraciones de prisma de la base de datos
+* [ ] Generar script sh para automatizar migraciones de prisma de la base de datos(<https://www.prisma.io/docs/orm/overview/databases/turso#how-to-manage-schema-changes>)
 * [ ] Pasar pdfs template a google drive
 * [ ] Crear exportacion de nominas para actividades
 * [ ] Crear todo para llenar Autorizacion de salidas/campamentos.

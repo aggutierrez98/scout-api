@@ -352,13 +352,6 @@ export class DocumentoService implements IDocumentoService {
 			if (!uploadId || !scoutId) return false
 			const fileName = `${scoutId}/${nombre.split(" ").join("_")}_${uploadId}.pdf`
 			const fileInS3 = await getFileInS3(fileName)
-			// // const fileData = await fileInS3?.Body?.transformToString()
-			// // if (!fileData) return false
-
-			// // const dir = join(UPLOADS_PATH, fileName.split("/").slice(0, -1).join("/"))
-			// // await mkdir(dir, { recursive: true })
-			// // const filePath = `${UPLOADS_PATH}/${fileName}`
-			// // await writeFile(filePath, fileData)
 			return {
 				fileUrl: fileInS3
 			}
