@@ -25,8 +25,8 @@ export default function createDocumentoRouter(documentoService: DocumentoService
 	router.get(
 		"/:id",
 		validate(GetDocumentoSchema),
-		cacheMiddleware,
 		documentoController.getItem,
+		cacheMiddleware,
 	);
 	router.post(
 		"/",

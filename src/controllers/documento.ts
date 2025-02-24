@@ -1,8 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-
 import { AppError, HttpCode } from "../utils/classes/AppError";
 import { DocumentoService } from "../services/documento";
-import { unlink } from "fs/promises";
 
 export class DocumentoController {
 	public documentoService;
@@ -11,10 +9,15 @@ export class DocumentoController {
 		this.documentoService = documentoService;
 	}
 
-	getItem = async ({ params }: Request, res: Response, next: NextFunction) => {
+	getItem = async (req: Request, res: Response, next: NextFunction) => {
 		try {
-			const { id } = params;
-			const response = await this.documentoService.getDocumento(id);
+			const { id } = req.params;
+			let response
+			if (req.query.download === "true") {
+				response = await this.documentoService.getFilledDocumento(id);
+			} else {
+				response = await this.documentoService.getDocumento(id);
+			}
 
 			if (!response) {
 				throw new AppError({
@@ -22,8 +25,8 @@ export class DocumentoController {
 					httpCode: HttpCode.NOT_FOUND,
 				});
 			}
-
 			res.send(response);
+
 		} catch (e) {
 			next(e);
 		}
@@ -74,15 +77,41 @@ export class DocumentoController {
 				});
 			}
 
-			res.download(responseDocumento, () => {
-				unlink(responseDocumento)
-			})
+			// res.download(responseDocumento, () => {
+			// 	unlink(responseDocumento)
+			// })
 
+			return res.json({
+				msg: "Creado exitosamente",
+				data: responseDocumento
+			})
 
 		} catch (e) {
 			next(e);
 		}
 	};
+
+	// downloadFilledDocument = async ({ params }: Request, res: Response, next: NextFunction) => {
+	// 	try {
+	// 		const { id } = params;
+	// 		const responseDocumento = await this.documentoService.getFilledDocumento(id);
+	// 		if (!responseDocumento) {
+	// 			throw new AppError({
+	// 				name: "DOCUMENT_ERROR",
+	// 				httpCode: HttpCode.BAD_REQUEST,
+	// 				description: "No se pudo descargar el archivo"
+	// 			});
+	// 		}
+
+	// 		return res.json({
+	// 			msg: "Descargado exitosamente",
+	// 			data: responseDocumento
+	// 		})
+
+	// 	} catch (e) {
+	// 		next(e);
+	// 	}
+	// };
 
 	deleteItem = async (
 		{ params }: Request,

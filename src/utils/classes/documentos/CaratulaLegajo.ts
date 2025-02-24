@@ -50,6 +50,7 @@ export class CaratulaLegajo extends PdfDocument {
         });
 
         this.data = {
+            ...this.data,
             scout
         }
     }
@@ -74,6 +75,10 @@ export class CaratulaLegajo extends PdfDocument {
             "Nombre_madre": familiaresData.MADRE.nombre || "",
             "Estado_civil_padres": familiaresData.PADRE.estadoCivil
         }
+    }
+
+    get uploadFolder() {
+        return `${this.data.scoutId}/`
     }
 
 }

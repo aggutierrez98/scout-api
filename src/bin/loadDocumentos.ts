@@ -47,6 +47,8 @@ const loadDocumentos = async () => {
 
         let index = 0;
         for (const documentoData of data) {
+            if (!documentoData.Documento || !documentoData.Fecha || !documentoData.Scout) continue;
+
             index++
             const [apellido, nombre] = documentoData.Scout!.toString().split(SPLIT_STRING)
 
@@ -120,7 +122,7 @@ const loadDocumentos = async () => {
         console.log("\n------------ ACTUALIZACION TERMINADA -------------\n");
         console.timeEnd("Tiempo de ejecucion");
     } catch (error) {
-        console.log("Error en el script: ", (error as Error).message);
+        console.log("Error en el script: ", (error as Error));
     } finally {
         await prismaClient.$disconnect();
     }

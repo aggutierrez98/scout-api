@@ -1,7 +1,8 @@
 export interface IDocumento {
-    scoutId: string;
+    scoutId?: string | null;
     documentoId: string;
-    fechaPresentacion: Date;
+    fechaPresentacion?: Date;
+    uploadId?: string
 }
 
 export interface IDocumentoData {
@@ -9,13 +10,14 @@ export interface IDocumentoData {
     scout: {
         nombre: string;
         apellido: string;
-    };
+    } | null;
     documento: {
         nombre: string;
         vence: boolean;
     };
-    scoutId: string;
     fechaPresentacion: Date;
+    scoutId: string | null;
+    uploadId: string | null
 }
 
 export type DocumentoXLSX = {

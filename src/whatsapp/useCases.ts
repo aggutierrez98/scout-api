@@ -87,7 +87,7 @@ interface ScoutDocumento {
     scout: {
         nombre: string
         apellido: string
-    }
+    } | null
     documento: {
         nombre: string
     }
@@ -430,7 +430,7 @@ export const obtenerDocumentosScout = async (nombreScout: string) => {
 
     if (!documentos.length) return "No hay documentos entregados"
 
-    const formattedBD = documentos.map((documento) => `_${documento.fechaPresentacion.toLocaleDateString('es-AR', { timeZone: 'UTC' })}_ → *${documento.scout.nombre} ${documento.scout.apellido}*: ${documento.documento.nombre}`).join('\n');
+    const formattedBD = documentos.map((documento) => `_${documento.fechaPresentacion.toLocaleDateString('es-AR', { timeZone: 'UTC' })}_ → *${documento.scout?.nombre} ${documento.scout?.apellido}*: ${documento.documento.nombre}`).join('\n');
     return `*Documentos entregados por ${nombreScout}*:\n${formattedBD}`
 }
 

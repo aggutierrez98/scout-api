@@ -4,6 +4,8 @@
     "url": "https://github.com/aggutierrez98/scout-api/issues"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.750.0",
+    "@aws-sdk/s3-request-presigner": "^3.750.0",
     "@libsql/client": "^0.8.0",
     "@logtail/node": "^0.4.12",
     "@logtail/winston": "^0.4.12",

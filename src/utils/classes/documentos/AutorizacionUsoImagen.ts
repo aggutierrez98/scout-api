@@ -54,6 +54,7 @@ export class AutorizacionUsoImagen extends PdfDocument {
         });
 
         this.data = {
+            ...this.data,
             familiar,
             scout: familiar.padreScout[0].scout
         }
@@ -71,6 +72,10 @@ export class AutorizacionUsoImagen extends PdfDocument {
             "DNI": dni,
             "Firma_aclaracion": `${apellido} ${nombre}`,
         }
+    }
+
+    get uploadFolder() {
+        return `${this.data?.scoutId}/`
     }
 
 }

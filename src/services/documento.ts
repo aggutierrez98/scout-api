@@ -7,13 +7,71 @@ import {
 } from "../types";
 import { nanoid } from "nanoid";
 import { prismaClient } from "../utils/lib/prisma-client";
-import { join } from "path";
 import { AppError, HttpCode } from "../utils";
 import { AutorizacionSalidasCercanas } from "../utils/classes/documentos/AutorizacionSalidasCercanas";
 import { CaratulaLegajo } from "../utils/classes/documentos/CaratulaLegajo";
 import { AutorizacionIngresoMenores } from "../utils/classes/documentos/AutorizacionIngresoMenores";
 import { AutorizacionRetiro } from "../utils/classes/documentos/AutorizacionRetiro";
 import { AutorizacionUsoImagen } from "../utils/classes/documentos/AutorizacionUsoImagen";
+import { Documento } from "@prisma/client";
+import { getFileInS3, uploadToS3 } from "../utils/lib/s3.util";
+import { PdfDocument } from '../utils/classes/documentos/PdfDocument';
+import { mkdir, writeFile } from "fs/promises";
+import { join, resolve } from "path";
+import logger from "../utils/classes/Logger";
+
+const UPLOADS_PATH = resolve("src/public/docs")
+
+type FillDocumentoData = {
+	scoutId: string,
+	familiarId: string,
+	cicloActividades: string,
+	rangoDistanciaPermiso: string,
+	docData: Documento
+}
+
+type PdfModelFuncKeys = "Caratula legajo" | "Autorizacion de uso de imagen" | "Autorizacion para retiro de jovenes" | "Autorizacion ingreso de menores de edad" | "Autorizacion de salidas cercanas";
+
+const pdfModelsFuncs: Record<PdfModelFuncKeys, Function> = {
+	"Caratula legajo": ({ docData, scoutId }: FillDocumentoData) => {
+		return new CaratulaLegajo({
+			documentName: docData.nombre,
+			scoutId
+		})
+	},
+	"Autorizacion de uso de imagen": ({ docData, scoutId, familiarId }: FillDocumentoData) => {
+		return new AutorizacionUsoImagen({
+			documentName: docData.nombre,
+			scoutId,
+			familiarId
+		})
+	},
+	"Autorizacion para retiro de jovenes": ({ docData, scoutId, familiarId }: FillDocumentoData) => {
+		return new AutorizacionRetiro({
+			documentName: docData.nombre,
+			scoutId,
+			familiarId
+		})
+	},
+	"Autorizacion ingreso de menores de edad": ({ docData, scoutId, familiarId }: FillDocumentoData) => {
+		return new AutorizacionIngresoMenores({
+			documentName: docData.nombre,
+			scoutId,
+			familiarId
+		})
+	},
+	"Autorizacion de salidas cercanas": ({ docData, scoutId, familiarId, cicloActividades, rangoDistanciaPermiso }: FillDocumentoData) => {
+		return new AutorizacionSalidasCercanas({
+			documentName: docData.nombre,
+			scoutId,
+			familiarId,
+			cicloActividades,
+			rangoDistanciaPermiso
+		})
+	}
+}
+
+
 
 const prisma = prismaClient.$extends({
 	result: {
@@ -64,7 +122,6 @@ interface IDocumentoService {
 export class DocumentoService implements IDocumentoService {
 	insertDocumento = async (documento: IDocumento) => {
 		const uuid = nanoid(10);
-
 		const responseInsert = await DocumentoModel.create({
 			data: {
 				...documento,
@@ -226,7 +283,6 @@ export class DocumentoService implements IDocumentoService {
 		return responseItem;
 	};
 
-
 	fillDocumento = async (id: string, data: {
 		scoutId: string,
 		familiarId?: string,
@@ -234,7 +290,6 @@ export class DocumentoService implements IDocumentoService {
 		rangoDistanciaPermiso?: string
 	}
 	) => {
-
 		try {
 			const {
 				scoutId,
@@ -249,74 +304,66 @@ export class DocumentoService implements IDocumentoService {
 				}
 			}))!
 
-			let pdfModel;
-			switch (docData.nombre) {
-				case "Caratula legajo":
-					pdfModel = new CaratulaLegajo({
-						documentName: docData.nombre,
-						scoutId
-					})
-					break;
-				case "Autorizacion de uso de imagen":
-					if (!familiarId) throw new AppError({
-						name: "NOT_FOUND",
-						httpCode: HttpCode.BAD_REQUEST,
-						description: "No se enviaron datos del familiar"
-					});
-					pdfModel = new AutorizacionUsoImagen({
-						documentName: docData.nombre,
-						scoutId,
-						familiarId
-					})
-					break;
-				case "Autorizacion para retiro de jovenes":
-					if (!familiarId) throw new AppError({
-						name: "NOT_FOUND",
-						httpCode: HttpCode.BAD_REQUEST,
-						description: "No se enviaron datos del familiar"
-					});
-					pdfModel = new AutorizacionRetiro({
-						documentName: docData.nombre,
-						scoutId,
-						familiarId
-					})
-					break;
-				case "Autorizacion ingreso de menores de edad":
-					if (!familiarId) throw new AppError({
-						name: "NOT_FOUND",
-						httpCode: HttpCode.BAD_REQUEST,
-						description: "No se enviaron datos del familiar"
-					});
-					pdfModel = new AutorizacionIngresoMenores({
-						documentName: docData.nombre,
-						scoutId,
-						familiarId
-					})
-					break;
-				case "Autorizacion de salidas cercanas":
-					if (!familiarId) throw new AppError({
-						name: "NOT_FOUND",
-						httpCode: HttpCode.BAD_REQUEST,
-						description: "No se enviaron datos del familiar"
-					});
-					pdfModel = new AutorizacionSalidasCercanas({
-						documentName: docData.nombre,
-						scoutId,
-						familiarId,
-						cicloActividades,
-						rangoDistanciaPermiso
-					})
-					break;
+			if (!familiarId) throw new AppError({
+				name: "NOT_FOUND",
+				httpCode: HttpCode.BAD_REQUEST,
+				description: "No se enviaron datos del familiar"
 
-				default:
-					break;
-			}
+			})
+			const pdfModel: (PdfDocument) = pdfModelsFuncs[docData.nombre as PdfModelFuncKeys]({ docData, scoutId, familiarId, cicloActividades, rangoDistanciaPermiso })
 
-			await pdfModel!.getData()
-			pdfModel!.mapData()
-			return await pdfModel!.fill()
+			await pdfModel.getData()
+			pdfModel.mapData()
+			const pdfData = await pdfModel.fill()
+			const uploadFileName = pdfModel.uploadPath
+			const uploadId = pdfModel.uploadId
+			const eTag = await uploadToS3(pdfData, uploadFileName)
+			return { eTag, uploadId }
 
 		} catch (error) {
+			return null;
+		}
+	}
+
+	getFilledDocumento = async (id: string) => {
+		try {
+			const responseItem = await DocumentoModel.findUnique({
+				where: { uuid: id },
+				include: {
+					documento: {
+						select: {
+							nombre: true,
+							vence: true,
+						},
+					},
+					scout: {
+						select: {
+							nombre: true,
+							apellido: true,
+						},
+					},
+				},
+			});
+
+			if (!responseItem) return false
+
+			const { uploadId, documento: { nombre }, scoutId } = responseItem
+
+			if (!uploadId || !scoutId) return false
+			const fileName = `${scoutId}/${nombre.split(" ").join("_")}_${uploadId}.pdf`
+			const fileInS3 = await getFileInS3(fileName)
+			// // const fileData = await fileInS3?.Body?.transformToString()
+			// // if (!fileData) return false
+
+			// // const dir = join(UPLOADS_PATH, fileName.split("/").slice(0, -1).join("/"))
+			// // await mkdir(dir, { recursive: true })
+			// // const filePath = `${UPLOADS_PATH}/${fileName}`
+			// // await writeFile(filePath, fileData)
+			return {
+				fileUrl: fileInS3
+			}
+		} catch (error) {
+			logger.error(error as string);
 			return null;
 		}
 	}

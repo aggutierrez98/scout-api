@@ -1,22 +1,23 @@
 import { resolve } from "path";
 import { FillingOptions, fillPdfForm } from "../../lib/pdf-lib";
 import { nanoid } from "nanoid";
-import { writeFile } from "fs/promises";
-
-
+import { unlink, writeFile } from "fs/promises";
 
 interface PdfData { [key: string]: string }
 
 export interface BaseConstructorProps {
     documentName: string,
     fillingOptions?: FillingOptions,
+    data?: any
 }
 
 export abstract class PdfDocument {
     protected documentName: string
+    protected _uploadId: string
     protected dirPath: string
     protected options: FillingOptions
     protected abstract data: any
+    protected abstract uploadFolder: string
 
     constructor({ documentName, fillingOptions }: BaseConstructorProps) {
         this.dirPath = resolve("src/public/docs")
@@ -25,30 +26,50 @@ export abstract class PdfDocument {
             fontColor: "#000",
             fontSize: 15,
         }
+        this._uploadId = nanoid()
     }
 
-    //TODO: Agregar para modificar (tachar texto en caso de ser necesario)
+    //TODO: Agregar seleccionar unica opcion en forms (tachar texto en caso de ser necesario)
 
-    abstract getData(params: any): Promise<void>;
+    abstract getData(): Promise<void>;
 
     abstract mapData(): PdfData;
 
-    async fill(): Promise<string> {
+    async fill(): Promise<Buffer> {
         const mappedData = this.mapData();
 
         const { fontColor, fontFamily, fontSize } = this.options
-        const idCompletition = nanoid()
-        const fileNameBase = `${this.dirPath}/${this.documentName}`
 
         const pdfBytes = await fillPdfForm(
             {
-                inputFile: `${fileNameBase}.pdf`,
+                inputFile: `${this.dirPath}/${this.documentName}.pdf`,
                 dataObject: mappedData,
                 options: { fontColor, fontFamily, fontSize }
             });
 
-        const outputFile = `${fileNameBase}_${idCompletition}.pdf`
-        await writeFile(outputFile, pdfBytes)
-        return outputFile
+        return Buffer.from(pdfBytes)
     }
+
+    async save(bytes: string): Promise<string> {
+        const savePath = `${this.dirPath}${this.uploadFolder}/${this.fileName}.pdf`
+        await writeFile(savePath, bytes)
+        return savePath
+    }
+
+    async delete() {
+        await unlink(`${this.dirPath}${this.uploadFolder}/${this.fileName}.pdf`)
+    }
+
+    get fileName() {
+        return `${this.documentName}_${this.uploadId}.pdf`
+    }
+
+    get uploadId() {
+        return this._uploadId
+    }
+
+    get uploadPath() {
+        return `${this.uploadFolder}${this.fileName}`
+    }
+
 }

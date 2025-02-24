@@ -65,9 +65,11 @@ model DocumentoPresentado {
   uuid              String    @unique
   documento         Documento @relation(fields: [documentoId], references: [uuid])
   documentoId       String
-  scout             Scout     @relation(fields: [scoutId], references: [uuid])
-  scoutId           String
-  fechaPresentacion DateTime
+  scout             Scout?    @relation(fields: [scoutId], references: [uuid])
+  scoutId           String?
+  uploadId          String?
+  fechaPresentacion DateTime  @default(now())
+  fechaCreacion     DateTime  @default(now())
 
   @@index([scoutId, documentoId])
   @@index([documentoId])
@@ -137,7 +139,7 @@ model EntregaRealizada {
   scout         Scout    @relation(fields: [scoutId], references: [uuid])
   scoutId       String
   tipoEntrega   String
-  fechaEntrega  DateTime
+  fechaEntrega  DateTime @default(now())
   fechaCreacion DateTime @default(now())
 
   @@index([scoutId])

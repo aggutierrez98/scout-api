@@ -66,6 +66,7 @@ export class AutorizacionRetiro extends PdfDocument {
         });
 
         this.data = {
+            ...this.data,
             familiar,
             scout: familiar.padreScout[0].scout,
             relacion: familiar.padreScout[0].relacion as RelacionFamiliarType
@@ -104,6 +105,10 @@ export class AutorizacionRetiro extends PdfDocument {
             'Firma_DNI': dni,
             'Firma_Parentesco': relacion?.toString() || "",
         }
+    }
+
+    get uploadFolder() {
+        return `${this.data?.scoutId}/`
     }
 
 }

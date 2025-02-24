@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { IDocumento } from "../types";
 import { validScoutID } from "./scout";
-import { ISODateStringReg, numberReg } from "../utils/regex";
+import { ISODateStringReg, nanoIdRegex, numberReg } from "../utils/regex";
 import { IdSchema, QuerySearchSchema } from "./generics";
 import { prismaClient } from "../utils/lib/prisma-client";
 import { validFamiliarID } from ".";
@@ -20,8 +20,9 @@ export const validDocumentoCompletableId = async (id: string) => {
 
 export const DocumentoSchema = z.object({
 	scoutId: z.string().refine(validScoutID),
-	documentoId: z.string().refine(validDocumentoId),
-	fechaPresentacion: z.date(),
+	documentoId: z.string().refine(validDocumentoCompletableId),
+	fechaPresentacion: z.date().optional(),
+	uploadId: z.string().regex(nanoIdRegex).optional(),
 }) satisfies z.Schema<IDocumento>;
 
 export const FillDataSchema = z.object({

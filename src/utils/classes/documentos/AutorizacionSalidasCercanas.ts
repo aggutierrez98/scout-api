@@ -28,7 +28,7 @@ export class AutorizacionSalidasCercanas extends PdfDocument {
     data: Data = {}
 
     constructor({ scoutId, familiarId, cicloActividades, rangoDistanciaPermiso, ...props }: ConstructorProps) {
-        super(props)
+        super({ ...props, data: { scoutId, familiarId } })
         this.data = { scoutId, familiarId, cicloActividades, rangoDistanciaPermiso }
         this.options = {
             fontColor: "#000",
@@ -63,6 +63,7 @@ export class AutorizacionSalidasCercanas extends PdfDocument {
         });
 
         this.data = {
+            ...this.data,
             familiar,
             scout: familiar.padreScout[0].scout,
             relacion: familiar.padreScout[0].relacion as RelacionFamiliarType
@@ -111,6 +112,10 @@ export class AutorizacionSalidasCercanas extends PdfDocument {
             'Fecha_a#C3#B1o_actividades': cicloActividades || "",
             'Permiso_rango': rangoDistanciaPermiso || ""
         }
+    }
+
+    get uploadFolder() {
+        return `${this.data.scoutId}/`
     }
 
 }

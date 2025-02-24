@@ -59,6 +59,7 @@ export class AutorizacionIngresoMenores extends PdfDocument {
         });
 
         this.data = {
+            ...this.data,
             familiar,
             scout: familiar.padreScout[0].scout,
             relacion: familiar.padreScout[0].relacion as RelacionFamiliarType
@@ -104,6 +105,10 @@ export class AutorizacionIngresoMenores extends PdfDocument {
             'Fecha_actual_mes': mesFechaActual,
             'Fecha_actual_a#C3#B1o': anoFechaActual
         }
+    }
+
+    get uploadFolder() {
+        return `${this.data?.scoutId}/`
     }
 
 }
