@@ -57,6 +57,7 @@ model Documento {
   nombre              String
   vence               Boolean
   completable         Boolean
+  fileUploadId        String?
   documentoPresentado DocumentoPresentado[]
 }
 

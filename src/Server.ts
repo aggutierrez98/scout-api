@@ -26,8 +26,10 @@ import { EntregaService } from "./services/entrega";
 import createEntregaRouter from "./routes/entrega";
 import recordarCumpleaños from "./whatsapp/recordarCumpleaños";
 import swaggerSpecJSON from "./docs/spec.json";
-import { WhatsAppSbot } from "./whatsapp/WhatsappSession";
+// import { WhatsAppSbot } from "./whatsapp/WhatsappSession";
 import logger from "./utils/classes/Logger";
+import fileUpload from 'express-fileupload';
+
 // // import expressSession from 'express-session';
 
 export default class Server {
@@ -74,7 +76,7 @@ export default class Server {
 
 		this.app.use(express.json());
 		this.app.use(bodyParser.json({ limit: "50kb" }));
-		this.app.use(bodyParser.urlencoded({ extended: true }));
+		this.app.use(fileUpload())
 		this.app.use(express.static("public"));
 		// // this.app.use(expressSession({
 		// // 	secret: process.env.COOKIE_SECRET!,
@@ -88,8 +90,10 @@ export default class Server {
 		// // }));
 		this.app.use(helmet());
 		this.app.use(compression({ filter: shouldCompress }));
-		this.app.use(this.limiter);
-		this.app.use(tooBusy);
+		if (process.env.NODE_ENV === "production") {
+			this.app.use(this.limiter);
+			this.app.use(tooBusy);
+		}
 		this.app.use(morganMiddleware);
 		this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpecJSON));
 		this.app.use("/api", this.loadRoutes());

@@ -33,6 +33,7 @@ const loadDocumentos = async () => {
                 nombre: docData.Nombre!,
                 vence: docData.Vence === "Si",
                 completable: docData.Completable === "Si",
+                fileUploadId: docData["Id carga de archivo"]
             });
         }
 

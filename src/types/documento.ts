@@ -5,19 +5,23 @@ export interface IDocumento {
     uploadId?: string
 }
 
-export interface IDocumentoData {
+export interface IDocumentoEntregado {
     id: string;
     scout: {
         nombre: string;
         apellido: string;
     } | null;
-    documento: {
-        nombre: string;
-        vence: boolean;
-    };
+    documento: Omit<IDocumentoData, "id">;
     fechaPresentacion: Date;
     scoutId: string | null;
-    uploadId: string | null
+}
+
+export interface IDocumentoData {
+    id: string;
+    nombre: string;
+    vence: boolean;
+    completable: boolean;
+    fileUploadId: string | null
 }
 
 export type DocumentoXLSX = {
@@ -30,4 +34,5 @@ export type DocDataXLSX = {
     Nombre: string
     Vence: "Si" | "No"
     Completable: "Si" | "No"
+    "Id carga de archivo"?: string
 }

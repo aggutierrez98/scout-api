@@ -61,14 +61,16 @@ export class DocumentoController {
 			);
 			res.send(responseDocumento);
 		} catch (e) {
+			console.log(e)
 			next(e);
 		}
 	};
 
-	fillDocument = async ({ body, params }: Request, res: Response, next: NextFunction) => {
+	fillDocument = async (req: Request, res: Response, next: NextFunction) => {
 		try {
-			const { id } = params;
-			const responseDocumento = await this.documentoService.fillDocumento(id, body);
+			const signature = req.files?.signature
+
+			const responseDocumento = await this.documentoService.fillDocumento({ ...req.body, signature });
 			if (!responseDocumento) {
 				throw new AppError({
 					name: "CREATION_ERROR",
@@ -76,10 +78,6 @@ export class DocumentoController {
 					description: "Fallo al crear archivo"
 				});
 			}
-
-			// res.download(responseDocumento, () => {
-			// 	unlink(responseDocumento)
-			// })
 
 			return res.json({
 				msg: "Creado exitosamente",

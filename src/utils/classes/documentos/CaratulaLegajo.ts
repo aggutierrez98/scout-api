@@ -1,19 +1,35 @@
 // import { Scout } from "@prisma/client";
+import { Familiar, Scout as PrismaScout, Scout } from "@prisma/client";
 import { VALID_RELATIONSHIPS } from "../../constants";
 import { prismaClient } from "../../lib/prisma-client";
 import { AppError, HttpCode } from "../AppError";
 import { BaseConstructorProps, PdfDocument } from "./PdfDocument";
+import { RelacionFamiliarType } from "../../../types";
+import fileUpload from "express-fileupload";
 
 interface ConstructorProps extends BaseConstructorProps {
     scoutId: string
 }
 
-export class CaratulaLegajo extends PdfDocument {
-    data: any = {}
+type ScoutWithFamiliaresType = PrismaScout & { familiarScout: { relacion: string, familiar: Familiar }[] }
 
-    constructor({ scoutId, ...props }: ConstructorProps) {
+interface Data {
+    scoutId: string,
+    familiarId: string
+    familiar: Familiar
+    scout: ScoutWithFamiliaresType
+    relacion: RelacionFamiliarType,
+    signature: fileUpload.UploadedFile
+    theme: "light" | "dark"
+}
+
+
+export class CaratulaLegajo extends PdfDocument {
+    data: Data
+
+    constructor({ scoutId, data, ...props }: ConstructorProps) {
         super(props)
-        this.data = { scoutId }
+        this.data = { scoutId, ...data }
     }
 
     async getData() {
@@ -51,7 +67,7 @@ export class CaratulaLegajo extends PdfDocument {
 
         this.data = {
             ...this.data,
-            scout
+            scout: scout as ScoutWithFamiliaresType
         }
     }
     mapData() {
@@ -79,6 +95,11 @@ export class CaratulaLegajo extends PdfDocument {
 
     get uploadFolder() {
         return `${this.data.scoutId}/`
+    }
+
+
+    async sign() {
+
     }
 
 }

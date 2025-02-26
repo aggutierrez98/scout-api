@@ -1,5 +1,5 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet';
-import { JWT } from 'google-auth-library';
+import { auth, JWT } from 'google-auth-library';
 import {
     DocDataXLSX,
     DocumentoXLSX,
@@ -12,6 +12,18 @@ import {
     SpreadsheetDataMap,
     UsuarioXLSX
 } from '../../types';
+import { google } from 'googleapis';
+import { createWriteStream } from 'fs';
+import { Stream } from 'stream';
+
+const serviceAccountAuth = new JWT({
+    email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+    key: process.env.GOOGLE_PRIVATE_KEY,
+    scopes: [
+        'https://www.googleapis.com/auth/spreadsheets',
+        "https://www.googleapis.com/auth/drive.readonly"
+    ],
+});
 
 export function getSpreadSheetData(sheetIndex: "familiares"): Promise<Partial<FamiliarXLSX>[]>;
 export function getSpreadSheetData(sheetIndex: "scouts"): Promise<Partial<ScoutXLSX>[]>;
@@ -22,14 +34,6 @@ export function getSpreadSheetData(sheetIndex: "documentos"): Promise<Partial<Do
 export function getSpreadSheetData(sheetIndex: "docs-data"): Promise<Partial<DocDataXLSX>[]>;
 export function getSpreadSheetData(sheetIndex: "equipos"): Promise<Partial<EquipoXLSX>[]>;
 export async function getSpreadSheetData(sheetIndex: SheetIndexType) {
-    const serviceAccountAuth = new JWT({
-        email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        key: process.env.GOOGLE_PRIVATE_KEY,
-        scopes: [
-            'https://www.googleapis.com/auth/spreadsheets',
-        ],
-    });
-
     const doc = new GoogleSpreadsheet(process.env.GOOGLE_SPREADSHEET_DATA_KEY!, serviceAccountAuth);
     await doc.loadInfo();
     const rows = await doc.sheetsByTitle[sheetIndex].getRows()
@@ -38,19 +42,59 @@ export async function getSpreadSheetData(sheetIndex: SheetIndexType) {
 }
 
 export async function writeSpreadSheet<T extends SheetIndexType>(sheetIndex: T, data: SpreadsheetDataMap[T]) {
-
-    const serviceAccountAuth = new JWT({
-        email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        key: process.env.GOOGLE_PRIVATE_KEY,
-        scopes: [
-            'https://www.googleapis.com/auth/spreadsheets',
-        ],
-    });
-
     const doc = new GoogleSpreadsheet(process.env.GOOGLE_SPREADSHEET_DATA_KEY!, serviceAccountAuth);
     await doc.loadInfo();
     const sheet = doc.sheetsByTitle[sheetIndex]
     await sheet.clearRows()
     const result = await sheet.addRows(data);
     return result
+}
+
+
+const transformStreamToBuffer = async (stream: Stream): Promise<Buffer> => {
+    return new Promise((resolve, reject) => {
+        let dataBuffer: Buffer[] = [];
+        stream.on("data", (chunk) => dataBuffer.push(chunk));
+        stream.on('error', function (error) {
+            reject(error);
+        })
+        stream.on("end", async () => {
+            resolve(Buffer.concat(dataBuffer));
+        });
+    })
+}
+
+export async function getPDFFile(fileId: string, destination?: string): Promise<Buffer | undefined> {
+
+    try {
+        const drive = google.drive({ version: "v3", auth: serviceAccountAuth });
+        const response = await drive.files.get(
+            {
+                fileId,
+                alt: "media"
+            },
+            { responseType: "stream" }
+        );
+
+        const bufferData = await transformStreamToBuffer(response.data)
+
+        return bufferData
+    } catch (error) {
+        console.error(error);
+    }
+
+    // Guardar en el destino
+    // const dest = createWriteStream(destination);
+    // response.data.pipe(dest);
+
+    // return new Promise((resolve, reject) => {
+    //     dest.on("finish", () => resolve(`✅ Archivo guardado en: ${destination}`));
+    //     dest.on("error", reject);
+    // });
+
+    // // 📝 Reemplaza con el ID del archivo en Google Drive
+    // const fileId = "TU_FILE_ID_AQUI";
+    // const destination = "archivo_descargado.pdf";
+
+
 }

@@ -6,6 +6,16 @@ import { IdSchema, QuerySearchSchema } from "./generics";
 import { prismaClient } from "../utils/lib/prisma-client";
 import { validFamiliarID } from ".";
 
+export const fileSchema = z.object({
+	signature: z.object({
+		fieldname: z.string(),
+		originalname: z.string(),
+		mimetype: z.string().regex(/^image\/(png)$/), // Permitimos solo imágenes PNG
+		size: z.number().max(5 * 1024 * 200), // Max 200KB de tamaño
+		buffer: z.instanceof(Buffer),
+	})
+});
+
 export const validDocumentoId = async (id: string) => {
 	const DocumentoModel = prismaClient.documentoPresentado;
 	const respItem = await DocumentoModel.findUnique({ where: { uuid: id } });
@@ -27,16 +37,16 @@ export const DocumentoSchema = z.object({
 
 export const FillDataSchema = z.object({
 	scoutId: z.string().refine(validScoutID),
+	documentoId: z.string().refine(validDocumentoCompletableId),
+	theme: z.enum(["light", "dark"]).optional(),
 	familiarId: z.string().refine(validFamiliarID).optional(),
 	cicloActividades: z.string().regex(numberReg).optional(),
-	rangoDistanciaPermiso: z.string().optional()
+	rangoDistanciaPermiso: z.string().optional(),
 })
 
 export const FillDocumentSchema = z.object({
-	params: z.object({
-		id: IdSchema.refine(validDocumentoCompletableId),
-	}),
 	body: FillDataSchema,
+	files: fileSchema.optional()
 })
 
 export const GetDocumentosSchema = z.object({

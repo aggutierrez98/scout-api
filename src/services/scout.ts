@@ -163,7 +163,6 @@ export class ScoutService implements IScoutService {
 	};
 
 	getAllScouts = async () => {
-
 		const response = await ScoutModel.findMany({
 			orderBy: { apellido: "asc" },
 			select: {
@@ -173,7 +172,7 @@ export class ScoutService implements IScoutService {
 				nombre: true,
 			},
 			where: {
-				funcion: "JOVEN",
+				// funcion: "JOVEN",
 				user: {
 					is: null
 				}

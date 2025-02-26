@@ -4,6 +4,7 @@ import { AppError, HttpCode } from "../AppError";
 import { BaseConstructorProps, PdfDocument } from "./PdfDocument";
 import { RelacionFamiliarType } from "../../../types";
 import { separarCalleYNumero } from "../../helpers/getDireccionData";
+import fileUpload from "express-fileupload";
 
 interface ConstructorProps extends BaseConstructorProps {
     scoutId: string
@@ -11,12 +12,12 @@ interface ConstructorProps extends BaseConstructorProps {
 }
 
 interface Data {
-    scoutId?: string,
-    familiarId?: string
-    familiar?: Familiar
-    scout?: Scout
-    relacion?: RelacionFamiliarType,
-    retiroData?: {
+    scoutId: string,
+    familiarId: string
+    familiar: Familiar
+    scout: Scout
+    relacion: RelacionFamiliarType,
+    retiroData: {
         solo: boolean,
         personas?: {
             nombre: string,
@@ -25,14 +26,16 @@ interface Data {
             parentesco: string
         }[]
     }
+    signature: fileUpload.UploadedFile
+    theme: "light" | "dark"
 }
 
 export class AutorizacionRetiro extends PdfDocument {
-    data: Data = {}
+    data: Data
 
-    constructor({ scoutId, familiarId, ...props }: ConstructorProps) {
+    constructor({ scoutId, familiarId, data, ...props }: ConstructorProps) {
         super(props)
-        this.data = { scoutId, familiarId }
+        this.data = { scoutId, familiarId, ...data }
         this.options = {
             fontColor: "#000",
             fontSize: 10,
@@ -111,4 +114,7 @@ export class AutorizacionRetiro extends PdfDocument {
         return `${this.data?.scoutId}/`
     }
 
+    async sign() {
+
+    }
 }

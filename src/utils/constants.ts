@@ -168,3 +168,37 @@ export const FUNCIONES_MAP = {
 	"Rover": "JOVEN",
 	"Representante Juvenil al Consejo de Grupo": "JOVEN",
 }
+
+export type DOCUMENTOS_NAMES = "Caratula legajo" | "Autorizacion de uso de imagen" | "Autorizacion para retiro de jovenes" | "Autorizacion ingreso de menores de edad" | "Autorizacion de salidas cercanas";
+
+export const DOCUMENTOS_POSITIONS: Record<DOCUMENTOS_NAMES, { x: number, y: number }> = {
+	"Caratula legajo": {
+		x: 0,
+		y: 0
+	},
+	"Autorizacion de uso de imagen": {
+		x: 0,
+		y: 0
+	},
+	"Autorizacion para retiro de jovenes": {
+		x: 0,
+		y: 0
+	},
+	"Autorizacion ingreso de menores de edad": {
+		x: 0,
+		y: 0
+	},
+	"Autorizacion de salidas cercanas": {
+		x: 275,
+		y: 330
+	},
+}
+
+
+export enum PDFDocumentsEnum {
+	CaratulaLegajo = "Caratula legajo",
+	AutorizacionUsoImagen = "Autorizacion de uso de imagen",
+	AutorizacionRetiro = "Autorizacion para retiro de jovenes",
+	AutorizacionIngresoMenores = "Autorizacion ingreso de menores de edad",
+	AutorizacionSalidasCercanas = "Autorizacion de salidas cercanas",
+}

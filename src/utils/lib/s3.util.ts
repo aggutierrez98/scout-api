@@ -42,7 +42,6 @@ export const getFileInS3 = async (fileName: string) => {
             Bucket: awsConfiguration.bucketName,
             Key: fileName,
         });
-
         const signedUrl = await getSignedUrl(client, getCommand, { expiresIn: 3600 });
         return signedUrl;
     } catch (error) {

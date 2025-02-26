@@ -3,6 +3,8 @@ import { prismaClient } from "../../lib/prisma-client";
 import { AppError, HttpCode } from "../AppError";
 import { BaseConstructorProps, PdfDocument } from "./PdfDocument";
 import { RelacionFamiliarType } from "../../../types";
+import { signPdf } from "../../lib/pdf-lib";
+import fileUpload from "express-fileupload";
 
 const datosGrupo = JSON.parse(process.env.DATOS_GRUPO || "")
 const PARTIDO_DOMICILIO = "Tres de febrero"
@@ -15,21 +17,23 @@ interface ConstructorProps extends BaseConstructorProps {
 }
 
 interface Data {
-    scoutId?: string,
-    familiarId?: string
-    familiar?: Familiar
-    scout?: Scout
-    relacion?: RelacionFamiliarType,
-    cicloActividades?: string
-    rangoDistanciaPermiso?: string
+    scoutId: string,
+    familiarId: string
+    signature: fileUpload.UploadedFile
+    theme: "light" | "dark"
+    familiar: Familiar
+    scout: Scout
+    relacion: RelacionFamiliarType,
+    cicloActividades: string
+    rangoDistanciaPermiso: string
 }
 
 export class AutorizacionSalidasCercanas extends PdfDocument {
-    data: Data = {}
+    data: Data
 
-    constructor({ scoutId, familiarId, cicloActividades, rangoDistanciaPermiso, ...props }: ConstructorProps) {
-        super({ ...props, data: { scoutId, familiarId } })
-        this.data = { scoutId, familiarId, cicloActividades, rangoDistanciaPermiso }
+    constructor({ scoutId, familiarId, cicloActividades, rangoDistanciaPermiso, data, ...props }: ConstructorProps) {
+        super(props)
+        this.data = { scoutId, familiarId, cicloActividades, rangoDistanciaPermiso, ...data }
         this.options = {
             fontColor: "#000",
             fontSize: 9,
@@ -116,6 +120,25 @@ export class AutorizacionSalidasCercanas extends PdfDocument {
 
     get uploadFolder() {
         return `${this.data.scoutId}/`
+    }
+
+    async sign() {
+        const pdfBytes = await signPdf(
+            {
+                signature: this.data.signature,
+                inputFile: this.buffer,
+                options: {
+                    position: {
+                        x: 275,
+                        y: 330,
+                    },
+                    rotate: 90,
+                    negate: this.data.theme === "dark"
+                }
+            }
+        )
+
+        this.buffer = Buffer.from(pdfBytes)
     }
 
 }

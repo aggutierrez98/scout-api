@@ -34,7 +34,7 @@ export default function createDocumentoRouter(documentoService: DocumentoService
 		documentoController.insertItem,
 	);
 	router.post(
-		"/fill/:id",
+		"/fill",
 		validate(FillDocumentSchema),
 		documentoController.fillDocument,
 	);
