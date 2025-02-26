@@ -4,7 +4,7 @@ import { errorHandler } from "../utils/classes/ErrorHandler";
 
 const errorMiddleware = (
 	error: AppError,
-	req: Request,
+	_: Request,
 	res: Response,
 	next: NextFunction,
 ): void => {

@@ -1,4 +1,5 @@
 import { createClient } from "redis";
+import logger from "./Logger";
 type CacheValue = any | null;
 
 const MAX_REDIS_CONNECTION_RETRIES = 20
@@ -14,7 +15,7 @@ export class CacheManager {
 			socket: {
 				reconnectStrategy: function (retries) {
 					if (retries > MAX_REDIS_CONNECTION_RETRIES) {
-						console.error("Too many attempts to reconnect. Redis connection was terminated");
+						logger.error("Too many attempts to reconnect. Redis connection was terminated");
 						return new Error("Too many retries.");
 					} else {
 						return retries * REDIS_RETRY_TIME_MS;
@@ -23,8 +24,11 @@ export class CacheManager {
 				connectTimeout: MAX_REDIS_CONNECTION_TIMEOUT_MS
 			}
 		});
+		this.client.on("connect", () => {
+			logger.info("Redis client connected");
+		});
 		this.client.on("error", (error) => {
-			console.error("Redis client error", error);
+			logger.error(`Redis client error: ${error}`);
 		});
 		this.client.connect();
 	}

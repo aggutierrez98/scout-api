@@ -1,7 +1,5 @@
-import winstonLogger from "../lib/winston.util";
-
-// type logLevels = keyof typeof logLevelsEnum;
-type logLevels = "error" | "warn" | "info" | "http";
+import winstonLogger, { LOG_LEVELS } from "../lib/winston.util";
+type logLevels = keyof typeof LOG_LEVELS;
 
 export type logLevelsInterface = {
 	[key in logLevels]: (message: string) => void;
@@ -19,6 +17,9 @@ class Logger implements logLevelsInterface {
 	};
 	http = (message: string) => {
 		winstonLogger.http(message);
+	};
+	debug = (message: string) => {
+		winstonLogger.debug(message);
 	};
 }
 

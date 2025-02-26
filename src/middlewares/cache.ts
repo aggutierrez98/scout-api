@@ -35,7 +35,6 @@ const cacheMiddleware = async (
 	next: NextFunction,
 ) => {
 	const cacheKey = `${req.originalUrl.split("api/")[1]}`;
-
 	try {
 		const cachedData = await cacheManager.get(cacheKey);
 		if (cachedData) {

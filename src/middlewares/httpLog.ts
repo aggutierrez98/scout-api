@@ -1,29 +1,28 @@
-// import { NextFunction, Request, Response } from "express";
 import morgan from "morgan";
 import logger from "../utils/classes/Logger";
-
-// const logMiddleware = (req: Request, res: Response, next: NextFunction) => {
-// 	const header = req.headers;
-// 	const userAgent = header["user-agent"];
-// 	console.log("user-agent", userAgent);
-// 	next();
-// };
 
 const stream = {
 	write: (message: string) => logger.http(message),
 };
 
+
 const skip = () => {
 	const env = process.env.NODE_ENV || "development";
-	return env !== "development";
+	return env === "test";
 };
 
+// // morgan.token("legajo", (req, _) => {
+// // 	const { authUser } = req
+// // 	return authUser?.length ? req.authUser[0].legajo : ""
+// // })
+// // morgan.token("hostname", () => hostname())
+const logFormat = process.env.NODE_ENV !== 'production' ? "dev" : ":remote-addr :method :url :status :res[content-length] :user-agent - :response-time ms"
+
 const morganMiddleware = morgan(
-	":remote-addr :method :url :status :res[content-length] - :response-time ms",
+	logFormat,
 	{ stream, skip },
 );
 
 export {
-	// logMiddleware,
 	morganMiddleware,
 };

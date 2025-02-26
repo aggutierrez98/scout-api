@@ -19,7 +19,7 @@ class ErrorHandler {
 	}
 
 	private handleTrustedError(error: AppError, response: Response) {
-		logger.error(error.message);
+		logger.debug(error.message);
 		return response
 			.status(error.httpCode)
 			.json({ name: error.name, message: error.message });
