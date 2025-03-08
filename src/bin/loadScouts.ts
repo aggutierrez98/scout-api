@@ -23,8 +23,8 @@ const loadPagos = async () => {
             },
         );
 
-        const scouts: Prisma.ScoutCreateManyInput[] = [];
         let index = 0
+        const scouts: Prisma.ScoutCreateManyInput[] = [];
         const familiares: Prisma.FamiliarScoutCreateManyInput[] = [];
         for (const scoutData of data) {
 
@@ -101,7 +101,6 @@ const loadPagos = async () => {
                     )?.uuid;
 
                     if (!familiarId) {
-                        // console.log(scoutData)
                         console.log(`\nEl familiar con nombre: "${nombre}" con relacion ${relacion} no existe en la bd. (I-scout: ${index})`);
                         continue;
                     }
@@ -153,7 +152,7 @@ const loadPagos = async () => {
         console.timeEnd("Tiempo de ejecucion");
 
     } catch (error) {
-        console.log("Error en el script: ", (error as Error).message);
+        console.error("Error en el script: ", (error as Error).message);
     } finally {
         await prismaClient.$disconnect();
     }

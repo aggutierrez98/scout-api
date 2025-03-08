@@ -5,27 +5,32 @@ import { BaseConstructorProps, PdfDocument } from "./PdfDocument";
 import { RelacionFamiliarType } from "../../../types";
 import { separarCalleYNumero } from "../../helpers/getDireccionData";
 import fileUpload from "express-fileupload";
+import { signPdf } from "../../lib/pdf-lib";
 
 interface ConstructorProps extends BaseConstructorProps {
     scoutId: string
     familiarId: string
+    retiroData: RetiroData
 }
 
+type Persona = {
+    nombre: string,
+    apellido: string,
+    dni: string,
+    parentesco: string
+}
+
+export interface RetiroData {
+    solo: boolean,
+    personas?: Persona[] | string[]
+}
 interface Data {
     scoutId: string,
     familiarId: string
     familiar: Familiar
     scout: Scout
     relacion: RelacionFamiliarType,
-    retiroData: {
-        solo: boolean,
-        personas?: {
-            nombre: string,
-            apellido: string,
-            dni: string,
-            parentesco: string
-        }[]
-    }
+    retiroData: RetiroData
     signature: fileUpload.UploadedFile
     theme: "light" | "dark"
 }
@@ -33,12 +38,12 @@ interface Data {
 export class AutorizacionRetiro extends PdfDocument {
     data: Data
 
-    constructor({ scoutId, familiarId, data, ...props }: ConstructorProps) {
+    constructor({ scoutId, familiarId, retiroData, data, ...props }: ConstructorProps) {
         super(props)
-        this.data = { scoutId, familiarId, ...data }
+        this.data = { scoutId, familiarId, retiroData, ...data }
         this.options = {
             fontColor: "#000",
-            fontSize: 10,
+            fontSize: 9,
         }
     }
 
@@ -62,6 +67,31 @@ export class AutorizacionRetiro extends PdfDocument {
             },
         })
 
+        const retiroPersonas = await prismaClient.familiar.findMany({
+            where: {
+                uuid: {
+                    in: this.data.retiroData.personas as string[]
+                }
+            },
+            select: {
+                nombre: true,
+                apellido: true,
+                dni: true,
+                padreScout: {
+                    select: {
+                        relacion: true,
+                    },
+                    where: {
+                        scoutId: {
+                            equals: this.data.scoutId
+                        }
+                    }
+                }
+            },
+        })
+
+        this.data.retiroData.personas = retiroPersonas.map(persona => ({ ...persona, parentesco: persona.padreScout[0].relacion }))
+
         if (!familiar || !familiar?.padreScout[0].scout) throw new AppError({
             name: "NOT_FOUND",
             httpCode: HttpCode.BAD_REQUEST,
@@ -75,6 +105,7 @@ export class AutorizacionRetiro extends PdfDocument {
             relacion: familiar.padreScout[0].relacion as RelacionFamiliarType
         }
     }
+
     mapData() {
         const { scout, familiar, relacion, retiroData } = this.data
         const { nombre, apellido, dni, direccion, localidad } = familiar!
@@ -84,7 +115,7 @@ export class AutorizacionRetiro extends PdfDocument {
         const [diaNacimiento, mesNacimiento, anoNacimiento] = fechaNacimiento.toLocaleDateString().split("/")
         const { calle, numero } = separarCalleYNumero(direccion)
 
-        const personasData = retiroData?.personas?.reduce((acc, persona, index) => ({
+        const personasData = (retiroData?.personas as Persona[]).reduce((acc, persona, index) => ({
             ...acc,
             [`Nombre_apellido_persona_${index + 1}`]: `${persona.apellido} ${persona.nombre}`,
             [`Parentesco_persona_${index + 1}`]: persona.parentesco,
@@ -103,7 +134,7 @@ export class AutorizacionRetiro extends PdfDocument {
             'Fecha_nacimiento_scout_a#C3#B1o': anoNacimiento,
             'Check_retiro_personas': retiroData?.personas?.length ? "" : "X",
             'Check_retiro_solo': retiroData?.solo ? "X" : "",
-            'Nombre_apellido_scout_2': nombreApellidoScout,
+            'Nombre_apellido_scout_2': retiroData?.solo ? nombreApellidoScout : "",
             'Firma_aclaracion': nombreApellidoFamiliar,
             'Firma_DNI': dni,
             'Firma_Parentesco': relacion?.toString() || "",
@@ -115,6 +146,22 @@ export class AutorizacionRetiro extends PdfDocument {
     }
 
     async sign() {
+        const pdfBytes = await signPdf(
+            {
+                signature: this.data.signature,
+                inputFile: this.buffer,
+                options: {
+                    position: {
+                        x: 280,
+                        y: 190,
+                    },
+                    rotate: 90,
+                    scale: 0.05,
+                    negate: this.data.theme === "dark"
+                }
+            }
+        )
 
+        this.buffer = Buffer.from(pdfBytes)
     }
 }

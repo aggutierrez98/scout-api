@@ -1,11 +1,12 @@
 import { resolve } from "path";
-import { FillingOptions, fillPdfForm } from "../../lib/pdf-lib";
+import { FillingOptions, fillPdfForm, StraighThroughLine } from "../../lib/pdf-lib";
 import { nanoid } from "nanoid";
-import { unlink, writeFile } from "fs/promises";
 import { getPDFFile } from "../../helpers/googleDriveApi";
 import { uploadToS3 } from "../../lib/s3.util";
 
-interface PdfData { [key: string]: string }
+
+
+interface PdfData { [key: string]: string | StraighThroughLine[] | boolean }
 
 export interface BaseConstructorProps {
     documentName: string,
@@ -35,8 +36,6 @@ export abstract class PdfDocument {
         this._uploadId = nanoid()
     }
 
-    //TODO: Agregar seleccionar unica opcion en forms (tachar texto en caso de ser necesario)
-
     abstract getData(): Promise<void>;
 
     abstract mapData(): PdfData;
@@ -58,16 +57,13 @@ export abstract class PdfDocument {
                 options: { fontColor, fontFamily, fontSize }
             });
 
+
         this.buffer = Buffer.from(pdfBytes)
     }
 
 
     async upload(): Promise<void> {
         await uploadToS3(this.dataBuffer, this.uploadPath)
-    }
-
-    async delete() {
-        // await unlink(`${this.dirPath}${this.uploadFolder}/${this.fileName}.pdf`)
     }
 
     get fileName() {

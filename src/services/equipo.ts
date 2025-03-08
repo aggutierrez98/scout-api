@@ -36,7 +36,7 @@ export class EquipoService implements IEquipoService {
 				...equipo,
 				uuid,
 				nombre: equipo.nombre.toLocaleUpperCase(),
-				rama: equipo.rama?.toLocaleUpperCase(),
+				rama: equipo.rama.toLocaleUpperCase(),
 				lema: equipo.lema?.toLocaleUpperCase(),
 			},
 		});

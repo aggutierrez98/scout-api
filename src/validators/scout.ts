@@ -12,6 +12,14 @@ import { directionReg, lettersReg, numberReg } from "../utils/regex";
 import { IdSchema, QuerySearchSchema } from "./generics";
 import { prismaClient } from "../utils/lib/prisma-client";
 
+export const excelFileSchema = z.object({
+	nomina: z.object({
+		mimetype: z.literal('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', { description: "El archivo debe ser formato xlsx" }),
+		size: z.number().max(2 * 1024 * 1024, "El archivo no debe superar los 2MB"), // Máximo 2MB
+		data: z.instanceof(Buffer, { message: "No se envio el archivo correctamente" }), //Debe tener un buffer de datos adentro
+	})
+}, { message: "Debe enviar un archivo de nomina" });
+
 export const validScoutID = async (id: string) => {
 	const ScoutModel = prismaClient.scout;
 	const respItem = await ScoutModel.findUnique({ where: { uuid: id } });
@@ -41,6 +49,7 @@ export const GetScoutsSchema = z.object({
 	query: QuerySearchSchema.extend({
 		orderBy: z.enum(VALID_GET_SCOUTS_FILTERS).optional(),
 	}),
+	// TODO: Agregar validacion de filtros
 });
 
 export const GetScoutSchema = z.object({
@@ -65,3 +74,7 @@ export const DeleteScoutSchema = z.object({
 		id: IdSchema.refine(validScoutID),
 	}),
 });
+
+export const ImportScoutsSchema = z.object({
+	files: excelFileSchema
+})

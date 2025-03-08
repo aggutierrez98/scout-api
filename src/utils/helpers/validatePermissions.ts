@@ -1,4 +1,5 @@
 import { RolesType } from "../../types";
+import logger from "../classes/Logger";
 import { VALID_ROLES } from "../constants";
 import { ADMIN_PERM, COLABORADOR_PERM, EDUCADOR_PERM, EXTERNO_PERM, JEFE_PERM } from '../permissions';
 
@@ -20,6 +21,7 @@ interface Params {
 const validators = {
     roles: VALID_ROLES,
     grants: {
+        EXTERNO: EXTERNO_PERM,
         JOVEN: EXTERNO_PERM,
         COLABORADOR: COLABORADOR_PERM,
         ACOMPAÑANTE: COLABORADOR_PERM,
@@ -38,6 +40,11 @@ export const validatePermissions = ({ method, resource, userRole }: Params) => {
 
     const action = actionsFromMethods[method]
     const permission = `${action}_${resource}`
+
+    if (!validators.grants[userRole]) {
+        logger.error(`No existe el rol buscado como: ${userRole}`)
+        return false
+    }
 
     const isAllowed = validators.grants[userRole].includes(permission)
     return isAllowed

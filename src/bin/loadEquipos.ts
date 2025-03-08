@@ -28,8 +28,8 @@ const loadEquipos = async () => {
             equipos.push({
                 uuid: nanoid(10),
                 nombre: equipoData.Nombre!,
+                rama: equipoData.Rama!.toLocaleUpperCase(),
                 lema: equipoData.Lema,
-                rama: equipoData.Rama?.toLocaleUpperCase()
             });
 
             bar.tick(1);
@@ -48,7 +48,7 @@ const loadEquipos = async () => {
         console.log("\n------------ ACTUALIZACION TERMINADA -------------\n");
         console.timeEnd("Tiempo de ejecucion");
     } catch (error) {
-        console.log("Error en el script: ", (error as Error).message);
+        console.error("Error en el script: ", (error as Error).message);
     } finally {
         await prismaClient.$disconnect();
     }

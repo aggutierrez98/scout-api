@@ -2,7 +2,7 @@ import { IScout } from "./scout";
 
 export interface IEquipo {
     nombre: string;
-    rama: string | null;
+    rama: string;
     lema?: string | null;
     scouts?: IScout[];
 }
@@ -10,7 +10,7 @@ export interface IEquipo {
 export interface IEquipoData extends IEquipo {
     id: string;
     fechaCreacion: Date;
-    rama: string | null;
+    rama: string;
     fechaActualizacion: Date;
 }
 

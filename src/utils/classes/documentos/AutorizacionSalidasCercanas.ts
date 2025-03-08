@@ -113,7 +113,7 @@ export class AutorizacionSalidasCercanas extends PdfDocument {
             'Fecha_nacimiento_menor_dia': diaNacimientoScout,
             'Fecha_nacimiento_menor_mes': mesNacimientoScout,
             'Fecha_nacimiento_menor_a#C3#B1o': anoNacimientoScout,
-            'Fecha_a#C3#B1o_actividades': cicloActividades || "",
+            'Fecha_a#C3#B1o_permiso': cicloActividades || "",
             'Permiso_rango': rangoDistanciaPermiso || ""
         }
     }

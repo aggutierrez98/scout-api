@@ -33,7 +33,9 @@ const loadDocumentos = async () => {
                 nombre: docData.Nombre!,
                 vence: docData.Vence === "Si",
                 completable: docData.Completable === "Si",
-                fileUploadId: docData["Id carga de archivo"]
+                requiereFamiliar: docData["Requiere familiar"] === "Si",
+                requiereFirma: docData["Requiere firma"] === "Si",
+                fileUploadId: docData["Id carga de archivo"],
             });
         }
 
@@ -123,7 +125,7 @@ const loadDocumentos = async () => {
         console.log("\n------------ ACTUALIZACION TERMINADA -------------\n");
         console.timeEnd("Tiempo de ejecucion");
     } catch (error) {
-        console.log("Error en el script: ", (error as Error));
+        console.error("Error en el script: ", (error as Error));
     } finally {
         await prismaClient.$disconnect();
     }

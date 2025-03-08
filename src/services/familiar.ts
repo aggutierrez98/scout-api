@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import { IFamiliar, IFamiliarScoutData, RelacionFamiliarType } from "../types";
 import { getAge } from "../utils";
 import { prismaClient } from "../utils/lib/prisma-client";
+import { Prisma } from "@prisma/client";
 
 const prisma = prismaClient.$extends({
 	result: {
@@ -32,9 +33,16 @@ const prisma = prismaClient.$extends({
 					return getAge(scout.fechaNacimiento)
 				},
 			},
+		},
+		user: {
+			id: {
+				compute: (data) => data.uuid,
+			},
+			uuid: {
+				compute: () => undefined,
+			},
 		}
 	},
-
 });
 const FamiliarModel = prisma.familiar;
 const FamiliarScoutModel = prisma.familiarScout;
@@ -45,7 +53,10 @@ interface queryParams {
 	offset?: number;
 	filters: {
 		nombre?: string;
+		scoutId?: string
+		existingUser?: string
 	};
+	select?: Prisma.FamiliarSelect
 }
 
 interface IFamiliarService {
@@ -203,9 +214,11 @@ export class FamiliarService implements IFamiliarService {
 		}
 	};
 
-	getFamiliares = async ({ limit = 15, offset = 0, filters = {} }: queryParams) => {
+	getFamiliares = async ({ limit = 15, offset = 0, filters = {}, select }: queryParams) => {
 		const {
 			nombre = "",
+			scoutId,
+			existingUser
 		} = filters;
 
 		const responses = await FamiliarModel.findMany({
@@ -229,6 +242,11 @@ export class FamiliarService implements IFamiliarService {
 												contains: nombre,
 											},
 										},
+										{
+											uuid: {
+												equals: scoutId,
+											},
+										},
 									]
 								}
 							}
@@ -247,11 +265,26 @@ export class FamiliarService implements IFamiliarService {
 								},
 							},
 						]
-					}
+					},
+
 				],
+				padreScout: {
+					some: {
+						scout: {
+							uuid: {
+								equals: scoutId,
+							},
+						}
+					}
+				},
+				user: existingUser
+					? (existingUser === "true"
+						? { isNot: null }
+						: { is: null }
+					) : undefined
 			},
-		}
-		);
+			select
+		});
 
 		return responses;
 

@@ -1,4 +1,4 @@
-import { IUser, IUserData, IScout, IScoutData } from '../types';
+import { IUser, IUserData, IScout, IScoutData, ROLES, IFamiliar } from '../types';
 import { nanoid } from "nanoid";
 import { encrypt, verified } from "../utils/lib/bcrypt.util";
 import { generateToken } from "../utils/lib/jwt.util";
@@ -29,9 +29,24 @@ const prisma = prismaClient.$extends({
                     return getAge(scout.fechaNacimiento)
                 },
             }
+        },
+        familiar: {
+            id: {
+                compute: (data) => data.uuid,
+            },
+            uuid: {
+                compute: () => undefined,
+            },
+            edad: {
+                needs: { fechaNacimiento: true },
+                compute(familiar: IFamiliar) {
+                    return getAge(familiar.fechaNacimiento)
+                },
+            }
         }
     },
 });
+
 
 const UserModel = prisma.user;
 
@@ -41,16 +56,28 @@ interface LoginParams {
 }
 interface GetUserParams {
     username?: string;
-    userId?: string
+    userId?: string,
+    hasLoggedIn?: boolean
 }
-interface CreateParams extends LoginParams {
-    scoutId: string
+interface CreateParams {
+    username: string;
+    password?: string
+    scoutId?: string
+    familiarId?: string
     role?: RolesType
 }
+
+interface CreateAdminParams {
+    username: string;
+    password: string
+    scoutId?: string
+}
+
 interface ModifyParams {
     active?: boolean
     role?: RolesType
     userId: string
+    password?: string
 }
 
 interface queryParams {
@@ -58,33 +85,40 @@ interface queryParams {
     offset?: number;
     filters?: {
         nombre?: string;
+        username?: string;
     };
 };
 
 interface IAuthService {
     loginUser: (userData: LoginParams) => Promise<IUserData | null>;
-    createUser: (userData: CreateParams) => Promise<IUserData | null>;
+    createUser: (userData: CreateParams) => Promise<Omit<IUserData, "token"> | null>;
     getUser: (userData: GetUserParams) => Promise<IUser | null>;
 }
 
 export class AuthService implements IAuthService {
-    getUser = async ({ username, userId }: GetUserParams) => {
+    getUser = async ({ username, userId, hasLoggedIn = true }: GetUserParams) => {
+        const hasLoggedInFilter = hasLoggedIn ? { password: { not: null } } : { password: { equals: null } }
+
         const user = await UserModel.findUnique({
             where: {
                 OR: [{ username }, { uuid: userId }],
                 username,
-                uuid: userId
+                uuid: userId,
+                ...hasLoggedInFilter,
             },
             include: {
-                scout: true
+                scout: true,
+                familiar: true
             }
         })
+
         if (!user) return null
 
         return {
             id: user.id,
             username: user.username,
             scout: user.scout,
+            familiar: user.familiar,
             role: user.role,
             active: user.active
         }
@@ -97,6 +131,7 @@ export class AuthService implements IAuthService {
     }: queryParams) => {
         const {
             nombre = "",
+            username = ""
         } = filters;
 
         const response = await UserModel.findMany({
@@ -125,6 +160,11 @@ export class AuthService implements IAuthService {
                             contains: nombre,
                         }
                     },
+                    {
+                        username: {
+                            equals: username,
+                        }
+                    },
                 ],
 
 
@@ -146,10 +186,11 @@ export class AuthService implements IAuthService {
                 username
             },
             include: {
-                scout: true
+                scout: true,
+                familiar: true
             }
         })
-        if (!user) return null
+        if (!user || !user.password) return null
 
         const validPass = await verified(password, user.password)
         if (!validPass) return null
@@ -159,39 +200,41 @@ export class AuthService implements IAuthService {
             id: user.id,
             username: user.username,
             scout: user.scout as IScoutData,
+            familiar: user.familiar as IFamiliar,
             role: user.role as RolesType,
             token,
         }
     };
 
-    createUser = async ({ password, username, scoutId, role }: CreateParams) => {
+    createUser = async ({ password, username, scoutId, familiarId, role }: CreateParams) => {
         const uuid = nanoid(10);
-        const passHash = await encrypt(password)
+        const newPassword = password ? await encrypt(password) : undefined
 
         const user = await UserModel.create({
             data: {
                 uuid,
                 username,
-                password: passHash,
+                password: newPassword,
                 scoutId: scoutId,
+                familiarId: familiarId,
                 role
             },
             include: {
-                scout: true
+                scout: true,
+                familiar: true
             }
         });
 
-        const token = generateToken(user.id)
         return {
             id: user.id,
             scout: user.scout as IScoutData,
+            familiar: user.familiar as IFamiliar,
             username: user.username,
             role: user.role as RolesType,
-            token
         }
     }
 
-    createUAdminUser = async ({ password, username, scoutId }: CreateParams) => {
+    createUAdminUser = async ({ password, username, scoutId }: CreateAdminParams) => {
         const uuid = nanoid(10);
         const passHash = await encrypt(password)
 
@@ -201,7 +244,7 @@ export class AuthService implements IAuthService {
                 username,
                 password: passHash,
                 scoutId: scoutId,
-                role: "ADMIN"
+                role: ROLES.ADMINISTRADOR
             },
             include: {
                 scout: true
@@ -218,24 +261,29 @@ export class AuthService implements IAuthService {
         }
     }
 
-    modifyUser = async ({ active, role, userId }: ModifyParams) => {
+    modifyUser = async ({ active, role, userId, password }: ModifyParams) => {
+
+        const modifiedPassword = password ? await encrypt(password) : undefined
 
         const user = await UserModel.update({
             data: {
                 active,
-                role
+                role,
+                password: modifiedPassword
             },
             where: {
                 uuid: userId,
             },
             include: {
-                scout: true
+                scout: true,
+                familiar: true
             }
         })
 
         return {
             id: user.id,
             scout: user.scout,
+            familiar: user.familiar,
             username: user.username,
             role: user.role,
             active: user.active

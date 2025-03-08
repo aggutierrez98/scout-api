@@ -3,10 +3,12 @@ import { prismaClient } from "../../lib/prisma-client";
 import { AppError, HttpCode } from "../AppError";
 import { BaseConstructorProps, PdfDocument } from "./PdfDocument";
 import fileUpload from "express-fileupload";
+import { signPdf } from "../../lib/pdf-lib";
 
 interface ConstructorProps extends BaseConstructorProps {
     scoutId: string
     familiarId: string
+    cicloActividades: string
 }
 
 interface Data {
@@ -14,6 +16,7 @@ interface Data {
     familiarId: string
     familiar: Familiar
     scout: Scout
+    cicloActividades: string
     signature: fileUpload.UploadedFile
     theme: "light" | "dark"
 }
@@ -21,9 +24,9 @@ interface Data {
 export class AutorizacionUsoImagen extends PdfDocument {
     data: Data
 
-    constructor({ scoutId, familiarId, data, ...props }: ConstructorProps) {
+    constructor({ scoutId, familiarId, cicloActividades, data, ...props }: ConstructorProps) {
         super(props)
-        this.data = { scoutId, familiarId, ...data }
+        this.data = { scoutId, familiarId, cicloActividades, ...data }
         this.options = {
             fontColor: "#000",
             fontSize: 9,
@@ -63,8 +66,11 @@ export class AutorizacionUsoImagen extends PdfDocument {
         }
     }
     mapData() {
+        const { cicloActividades } = this.data
         const { nombre, apellido, dni, direccion } = this.data.familiar!
         const { nombre: nombreScout, apellido: apellidoScout, dni: dniScout } = this.data.scout!
+
+        console.log({ cicloActividades });
 
         return {
             "Nombre": `${apellido} ${nombre}`,
@@ -74,6 +80,7 @@ export class AutorizacionUsoImagen extends PdfDocument {
             "DNI_menor": dniScout,
             "DNI": dni,
             "Firma_aclaracion": `${apellido} ${nombre}`,
+            "Fecha_a#C3#B1o_permiso": cicloActividades
         }
     }
 
@@ -82,7 +89,23 @@ export class AutorizacionUsoImagen extends PdfDocument {
     }
 
     async sign() {
+        const pdfBytes = await signPdf(
+            {
+                signature: this.data.signature,
+                inputFile: this.buffer,
+                options: {
+                    position: {
+                        x: 330,
+                        y: 290,
+                    },
+                    rotate: 90,
+                    scale: 0.05,
+                    negate: this.data.theme === "dark"
+                }
+            }
+        )
 
+        this.buffer = Buffer.from(pdfBytes)
     }
 
 }

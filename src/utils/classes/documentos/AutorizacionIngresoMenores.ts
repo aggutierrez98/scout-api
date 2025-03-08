@@ -12,6 +12,7 @@ const PARTIDO_DOMICILIO = "Tres de febrero"
 interface ConstructorProps extends BaseConstructorProps {
     scoutId: string
     familiarId: string
+    aclaraciones?: string
 }
 
 interface Data {
@@ -22,17 +23,18 @@ interface Data {
     theme: "light" | "dark"
     scout: Scout
     relacion: RelacionFamiliarType,
+    aclaraciones?: string,
 }
 
 export class AutorizacionIngresoMenores extends PdfDocument {
     data: Data
 
-    constructor({ scoutId, familiarId, data, ...props }: ConstructorProps) {
+    constructor({ scoutId, familiarId, aclaraciones, data, ...props }: ConstructorProps) {
         super(props)
-        this.data = { scoutId, familiarId, ...data }
+        this.data = { scoutId, familiarId, aclaraciones, ...data }
         this.options = {
             fontColor: "#000",
-            fontSize: 9,
+            fontSize: 8,
         }
     }
 
@@ -70,7 +72,7 @@ export class AutorizacionIngresoMenores extends PdfDocument {
         }
     }
     mapData() {
-        const { scout, familiar, relacion } = this.data
+        const { scout, familiar, relacion, aclaraciones } = this.data
         const { nombre, apellido, dni, direccion, localidad, telefono, fechaNacimiento: fechaNacimientoFamiliar, nacionalidad, provincia } = familiar!
         const { nombre: nombreScout, apellido: apellidoScout, fechaNacimiento, dni: dniScout, direccion: direccionScout, localidad: localidadScout, nacionalidad: nacionalidadScout } = scout!
         const nombreApellidoFamiliar = `${apellido} ${nombre}`
@@ -107,7 +109,9 @@ export class AutorizacionIngresoMenores extends PdfDocument {
             'GS_numero_zona': datosGrupo.zona,
             'Fecha_actual_dia': diaFechaActual,
             'Fecha_actual_mes': mesFechaActual,
-            'Fecha_actual_a#C3#B1o': anoFechaActual
+            'Fecha_actual_a#C3#B1o': anoFechaActual,
+            "Aclaraciones_1": aclaraciones?.slice(0, 40) || "",
+            "Aclaraciones_2": aclaraciones?.slice(40) || "",
         }
     }
 
@@ -118,23 +122,42 @@ export class AutorizacionIngresoMenores extends PdfDocument {
 
     async sign() {
 
-        const pdfBytes = await signPdf(
+        let signedPdfBytes = await signPdf(
             {
                 signature: this.data.signature || "",
                 inputFile: this.buffer,
                 options: {
                     position: {
-                        x: 275,
-                        y: 330,
+                        x: 295,
+                        y: 422,
                     },
                     rotate: 90,
+                    scale: .035,
                     negate: this.data.theme === "dark"
                 }
             }
         )
 
-        this.buffer = Buffer.from(pdfBytes)
-    }
+        // Se vuelven a firmar las aclaraciones
+        if (this.data.aclaraciones) {
+            signedPdfBytes = await signPdf(
+                {
+                    signature: this.data.signature || "",
+                    inputFile: Buffer.from(signedPdfBytes),
+                    options: {
+                        position: {
+                            x: 295,
+                            y: 342,
+                        },
+                        scale: 0.035,
+                        rotate: 90,
+                        negate: this.data.theme === "dark"
+                    }
+                }
+            )
+        }
 
+        this.buffer = Buffer.from(signedPdfBytes)
+    }
 
 }

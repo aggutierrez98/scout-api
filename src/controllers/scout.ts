@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 
 import { AppError, HttpCode } from "../utils/classes/AppError";
-import { getAge } from "../utils/helpers/helpers";
-import { FuncionType, OrderToGetScouts } from "../types";
+import { OrderToGetScouts } from "../types";
 import { ScoutService } from "../services/scout";
+import { UploadedFile } from "express-fileupload";
 
 export class ScoutController {
 	public scoutService;
@@ -32,13 +32,16 @@ export class ScoutController {
 
 	getItems = async (req: Request, res: Response, next: NextFunction) => {
 		try {
-			const { offset, limit, orderBy, ...filters } = req.query;
+			const { offset, limit, orderBy, select, ...filters } = req.query;
+
+			const selectedFields = select?.toString().split(",").reduce((acc, field) => ({ ...acc, [`${field}`]: true }), {})
 
 			const response = await this.scoutService.getScouts({
 				limit: limit ? Number(limit) : undefined,
 				offset: offset ? Number(offset) : undefined,
 				orderBy: orderBy as OrderToGetScouts,
 				filters,
+				select: selectedFields
 			});
 
 			res.send(response);
@@ -49,7 +52,6 @@ export class ScoutController {
 
 
 	getAllItems = async (req: Request, res: Response, next: NextFunction) => {
-
 		const reqType = req.url.split("all")[1]
 
 		try {
@@ -114,6 +116,20 @@ export class ScoutController {
 			}
 
 			res.send(response);
+		} catch (e) {
+			next(e);
+		}
+	};
+
+	importItems = async (
+		{ files }: Request,
+		res: Response,
+		next: NextFunction,
+	) => {
+		try {
+			const nomina = files?.nomina
+			const { successful, total } = await this.scoutService.importScouts(nomina as UploadedFile);
+			return res.json({ successful, total });
 		} catch (e) {
 			next(e);
 		}

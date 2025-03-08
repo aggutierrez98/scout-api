@@ -36,9 +36,10 @@ type queryParams = {
     limit?: number;
     offset?: number;
     filters?: {
+        nombre?: string;
+        scoutId?: string;
         tiempoDesde?: Date;
         tiempoHasta?: Date;
-        nombre?: string;
         tipoEntrega?: TipoEntregaType[]
         equipos?: string[];
         funciones?: FuncionType[];
@@ -98,6 +99,7 @@ export class EntregaService implements IEntregaService {
     getEntregas = async ({ limit = 15, offset = 0, filters = {} }: queryParams) => {
         const {
             nombre = "",
+            scoutId,
             tipoEntrega,
             tiempoDesde,
             tiempoHasta,
@@ -144,6 +146,7 @@ export class EntregaService implements IEntregaService {
                     rama: {
                         in: ramas,
                     },
+                    uuid: scoutId
                 },
             },
             include: {

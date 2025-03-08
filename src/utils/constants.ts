@@ -94,7 +94,10 @@ export const VALID_METODOS_PAGO = [
 	"OTRO",
 ] as const;
 
+
+
 export const VALID_ROLES = [
+	"EXTERNO",
 	"JOVEN",
 	"COLABORADOR",
 	"ACOMPAÑANTE",
@@ -107,33 +110,19 @@ export const VALID_ROLES = [
 	"ADMINISTRADOR",
 ] as const
 
-export enum ROLES {
-	JOVEN = "JOVEN",
-	COLABORADOR = "COLABORADOR",
-	ACOMPAÑANTE = "ACOMPAÑANTE",
-	AYUDANTE_RAMA = "AYUDANTE_RAMA",
-	SUBJEFE_RAMA = "SUBJEFE_RAMA",
-	JEFE_RAMA = "JEFE_RAMA",
-	SUBJEFE_GRUPO = "SUBJEFE_GRUPO",
-	JEFE_GRUPO = "JEFE_GRUPO",
-	PADRE_REPRESENTANTE = "PADRE_REPRESENTANTE",
-	ADMINISTRADOR = "ADMINISTRADOR",
-}
 
-export const VALID_ESTADOS = [
-	"ACTIVO",
-	"INACTIVO",
-] as const
+export const FUNCION_TO_ROLE_MAP = {
+	"JOVEN": "JOVEN",
+	"COLABORADOR": "ACOMPAÑANTE",
+	"ACOMPAÑANTE": "ACOMPAÑANTE",
+	"AYUDANTE_RAMA": "AYUDANTE_RAMA",
+	"SUBJEFE_RAMA": "SUBJEFE_RAMA",
+	"JEFE_RAMA": "JEFE_RAMA",
+	"SUBJEFE_GRUPO": "SUBJEFE_GRUPO",
+	"JEFE_GRUPO": "JEFE_GRUPO",
+	"PADRE_REPRESENTANTE": "PADRE_REPRESENTANTE",
 
-export const MENU_COMMANDS = ["pagos", "documentos", "scouts", "familiares", "entregas", "cumpleaños"]
-
-export const SPLIT_STRING = process.env.NODE_ENV === "development" ? " " : ", "
-
-// Number or proxies to skip to limit ips requests by rate-limiter
-export const PROXIES_NUMBER = 1;
-
-// If you add origins they will be the only accepted by CORS
-export const ACCEPTED_ORIGINS: String[] = [];
+} as const;
 
 export const FUNCIONES_MAP = {
 	"Asist. Zonal Actividades Seguras": "ACOMPAÑANTE",
@@ -169,36 +158,34 @@ export const FUNCIONES_MAP = {
 	"Representante Juvenil al Consejo de Grupo": "JOVEN",
 }
 
-export type DOCUMENTOS_NAMES = "Caratula legajo" | "Autorizacion de uso de imagen" | "Autorizacion para retiro de jovenes" | "Autorizacion ingreso de menores de edad" | "Autorizacion de salidas cercanas";
+export const RAMAS_MAP = {
+	"Castores": "CASTORES",
+	"Lobatos y Lobeznas": "MANADA",
+	"Scouts": "SCOUTS",
+	"Caminantes": "CAMINANTES",
+	"Rovers": "ROVERS"
+} as const
 
-export const DOCUMENTOS_POSITIONS: Record<DOCUMENTOS_NAMES, { x: number, y: number }> = {
-	"Caratula legajo": {
-		x: 0,
-		y: 0
-	},
-	"Autorizacion de uso de imagen": {
-		x: 0,
-		y: 0
-	},
-	"Autorizacion para retiro de jovenes": {
-		x: 0,
-		y: 0
-	},
-	"Autorizacion ingreso de menores de edad": {
-		x: 0,
-		y: 0
-	},
-	"Autorizacion de salidas cercanas": {
-		x: 275,
-		y: 330
-	},
-}
+export const VALID_TIPOS_EVENTO = [
+	"SALIDA",
+	"ACANTONAMIENTO",
+	"CAMPAMENTO"
+] as const
 
 
-export enum PDFDocumentsEnum {
-	CaratulaLegajo = "Caratula legajo",
-	AutorizacionUsoImagen = "Autorizacion de uso de imagen",
-	AutorizacionRetiro = "Autorizacion para retiro de jovenes",
-	AutorizacionIngresoMenores = "Autorizacion ingreso de menores de edad",
-	AutorizacionSalidasCercanas = "Autorizacion de salidas cercanas",
-}
+export const VALID_ESTADOS = [
+	"ACTIVO",
+	"INACTIVO",
+] as const
+
+export const MENU_COMMANDS = ["pagos", "documentos", "scouts", "familiares", "entregas", "cumpleaños"]
+export const SPLIT_STRING = process.env.NODE_ENV === "development" ? " " : ", "
+
+
+
+
+
+// If you add origins they will be the only accepted by CORS
+export const ACCEPTED_ORIGINS: String[] = [];
+// Number or proxies to skip to limit ips requests by rate-limiter
+export const PROXIES_NUMBER = 1;

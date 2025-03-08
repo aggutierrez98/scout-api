@@ -1,11 +1,9 @@
-// import { Scout } from "@prisma/client";
 import { Familiar, Scout as PrismaScout, Scout } from "@prisma/client";
 import { VALID_RELATIONSHIPS } from "../../constants";
 import { prismaClient } from "../../lib/prisma-client";
 import { AppError, HttpCode } from "../AppError";
 import { BaseConstructorProps, PdfDocument } from "./PdfDocument";
 import { RelacionFamiliarType } from "../../../types";
-import fileUpload from "express-fileupload";
 
 interface ConstructorProps extends BaseConstructorProps {
     scoutId: string
@@ -15,12 +13,9 @@ type ScoutWithFamiliaresType = PrismaScout & { familiarScout: { relacion: string
 
 interface Data {
     scoutId: string,
-    familiarId: string
     familiar: Familiar
     scout: ScoutWithFamiliaresType
     relacion: RelacionFamiliarType,
-    signature: fileUpload.UploadedFile
-    theme: "light" | "dark"
 }
 
 
@@ -53,7 +48,6 @@ export class CaratulaLegajo extends PdfDocument {
                                 estadoCivil: true,
                             },
                         },
-
                     }
                 }
             }
@@ -98,8 +92,6 @@ export class CaratulaLegajo extends PdfDocument {
     }
 
 
-    async sign() {
-
-    }
+    async sign() { }
 
 }

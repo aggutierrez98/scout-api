@@ -64,7 +64,7 @@ const transformStreamToBuffer = async (stream: Stream): Promise<Buffer> => {
     })
 }
 
-export async function getPDFFile(fileId: string, destination?: string): Promise<Buffer | undefined> {
+export async function getPDFFile(fileId: string): Promise<Buffer | undefined> {
 
     try {
         const drive = google.drive({ version: "v3", auth: serviceAccountAuth });
@@ -82,19 +82,4 @@ export async function getPDFFile(fileId: string, destination?: string): Promise<
     } catch (error) {
         console.error(error);
     }
-
-    // Guardar en el destino
-    // const dest = createWriteStream(destination);
-    // response.data.pipe(dest);
-
-    // return new Promise((resolve, reject) => {
-    //     dest.on("finish", () => resolve(`✅ Archivo guardado en: ${destination}`));
-    //     dest.on("error", reject);
-    // });
-
-    // // 📝 Reemplaza con el ID del archivo en Google Drive
-    // const fileId = "TU_FILE_ID_AQUI";
-    // const destination = "archivo_descargado.pdf";
-
-
 }

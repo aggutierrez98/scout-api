@@ -28,9 +28,10 @@ type queryParams = {
 	limit?: number;
 	offset?: number;
 	filters?: {
+		nombre?: string;
+		scoutId?: string
 		tiempoDesde?: Date;
 		tiempoHasta?: Date;
-		nombre?: string;
 		concepto?: string;
 		rendido?: string;
 		metodoPago?: MetodosPagoType
@@ -67,6 +68,7 @@ export class PagoService implements IPagoService {
 		const {
 			nombre = "",
 			concepto = "",
+			scoutId,
 			equipos,
 			metodoPago,
 			rendido,
@@ -96,6 +98,7 @@ export class PagoService implements IPagoService {
 					rama: {
 						in: ramas,
 					},
+					uuid: scoutId
 				},
 				rendido: rendido ? rendido === "true" ? true : false : undefined,
 				fechaPago: {

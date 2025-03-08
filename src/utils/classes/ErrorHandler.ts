@@ -20,6 +20,7 @@ class ErrorHandler {
 
 	private handleTrustedError(error: AppError, response: Response) {
 		logger.debug(error.message);
+		logger.debug(error.stack!);
 		return response
 			.status(error.httpCode)
 			.json({ name: error.name, message: error.message });
@@ -30,7 +31,7 @@ class ErrorHandler {
 		response?: Response,
 	): void {
 		logger.error("Error interno del servidor");
-		logger.error(`${error.name}: ${error.message}`);
+		logger.error(`${error.name}: ${error.message} \nStack: ${error.stack}`);
 
 		if (response) {
 			response
@@ -38,7 +39,7 @@ class ErrorHandler {
 				.json({ message: "Error Interno del Servidor" });
 		}
 
-		process.exit(1);
+		// if (process.env.NODE_ENV !== "production") process.exit(1);
 	}
 }
 export const errorHandler = new ErrorHandler();

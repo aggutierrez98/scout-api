@@ -4,12 +4,18 @@ import {
 	IScoutData,
 	ProgresionType,
 	RamasType,
+	ScoutXLSX,
 	SexoType,
 } from "../types";
 import { OrderToGetScouts } from "../types";
 import { nanoid } from "nanoid";
-import { getAge } from "../utils";
+import { AppError, getAge, HttpCode } from "../utils";
 import { prismaClient } from "../utils/lib/prisma-client";
+import fileUpload from "express-fileupload";
+import { readXlsxBuffer } from "../utils/lib/exceljs";
+import { Prisma } from "@prisma/client";
+import logger from "../utils/classes/Logger";
+import { mapXLSXScoutToScoutData } from "../utils/helpers/mapXLSXScoutToScoutData";
 
 const prisma = prismaClient.$extends({
 	result: {
@@ -74,8 +80,10 @@ type queryParams = {
 		equipos?: string[];
 		progresiones?: ProgresionType[];
 		funciones?: FuncionType[];
-		ramas?: RamasType[]
+		ramas?: RamasType[],
+		existingUser?: string
 	};
+	select?: Prisma.ScoutSelect
 };
 
 interface IScoutService {
@@ -85,7 +93,7 @@ interface IScoutService {
 		offset,
 		orderBy,
 		filters,
-	}: queryParams) => Promise<IScoutData[]>;
+	}: queryParams) => Promise<Partial<IScoutData>[]>;
 	getScout: (id: string) => Promise<IScoutData | null>;
 	updateScout: (id: string, dataUpdated: IScout) => Promise<IScoutData | null>;
 	deleteScout: (id: string) => Promise<IScoutData | null>;
@@ -116,6 +124,7 @@ export class ScoutService implements IScoutService {
 		offset = 0,
 		orderBy = "apellido",
 		filters = {},
+		select
 	}: queryParams) => {
 		const {
 			funciones,
@@ -124,6 +133,7 @@ export class ScoutService implements IScoutService {
 			equipos,
 			sexo,
 			ramas,
+			existingUser
 		} = filters;
 
 		const responseItem = await ScoutModel.findMany({
@@ -156,7 +166,13 @@ export class ScoutService implements IScoutService {
 						},
 					},
 				],
+				user: existingUser
+					? (existingUser === "true"
+						? { isNot: null }
+						: { is: null }
+					) : undefined
 			},
+			select,
 		});
 
 		return responseItem;
@@ -285,4 +301,42 @@ export class ScoutService implements IScoutService {
 		const responseItem = await ScoutModel.delete({ where: { uuid: id } });
 		return responseItem;
 	};
+
+	importScouts = async (nomina: fileUpload.UploadedFile) => {
+		const scoutsData = readXlsxBuffer(nomina.data) as Partial<ScoutXLSX>[]
+
+		const scouts: Prisma.ScoutCreateManyInput[] = [];
+		for (const scoutData of scoutsData) {
+			const data = await mapXLSXScoutToScoutData(scoutData)
+			const foundExisting = await prismaClient.scout.findFirst({
+				where: { dni: data.dni }
+			});
+
+			if (!foundExisting) {
+				scouts.push({
+					...data,
+					uuid: nanoid(10)
+				});
+			}
+		}
+
+		logger.debug(`-> Cargando ${scouts.length} scouts a la bd...`);
+
+		try {
+			const scoutsResult = await prismaClient.scout.createMany({
+				data: scouts,
+			});
+			return {
+				total: scouts.length,
+				successful: scoutsResult.count,
+			}
+		} catch (error) {
+			logger.error(error as string)
+			throw new AppError({
+				name: "BAD_FILE",
+				httpCode: HttpCode.BAD_REQUEST,
+				description: "El archivo enviado contiene valores no validos"
+			})
+		}
+	}
 }

@@ -29,7 +29,9 @@ export class FamiliarController {
 	};
 
 	getItems = async (req: Request, res: Response, next: NextFunction) => {
-		const { offset, limit, ...filters } = req.query;
+		const { offset, limit, select, ...filters } = req.query;
+
+		const selectedFields = select?.toString().split(",").reduce((acc, field) => ({ ...acc, [`${field}`]: true }), {})
 
 		try {
 			try {
@@ -37,6 +39,7 @@ export class FamiliarController {
 					limit: limit ? Number(limit) : undefined,
 					offset: offset ? Number(offset) : undefined,
 					filters,
+					select: selectedFields
 				});
 				res.send(response);
 			} catch (e) {

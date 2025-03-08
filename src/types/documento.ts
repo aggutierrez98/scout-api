@@ -3,6 +3,8 @@ export interface IDocumento {
     documentoId: string;
     fechaPresentacion?: Date;
     uploadId?: string
+    requiereFirma?: boolean
+    requiereFamiliar?: boolean
 }
 
 export interface IDocumentoEntregado {
@@ -22,6 +24,8 @@ export interface IDocumentoData {
     vence: boolean;
     completable: boolean;
     fileUploadId: string | null
+    requiereFirma: boolean
+    requiereFamiliar: boolean
 }
 
 export type DocumentoXLSX = {
@@ -34,5 +38,7 @@ export type DocDataXLSX = {
     Nombre: string
     Vence: "Si" | "No"
     Completable: "Si" | "No"
+    "Requiere firma"?: "Si" | "No"
+    "Requiere familiar"?: "Si" | "No"
     "Id carga de archivo"?: string
 }

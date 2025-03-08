@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { AppError, HttpCode } from "../utils/classes/AppError";
 import { AuthService } from "../services/auth";
 import { generateToken, verifyToken } from "../utils/lib/jwt.util";
+import { NotifactionsResponse, Notification } from "../types";
 
 export class AuthController {
     public authService;
@@ -23,6 +24,24 @@ export class AuthController {
                 });
             }
             // req.session.user = { id: data.id, username: data.username };
+            res.send(response);
+        } catch (e) {
+            next(e);
+        }
+    };
+
+    firstLogin = async ({ body }: Request, res: Response, next: NextFunction) => {
+        try {
+            const { username, password } = body;
+            const user = await this.authService.getUser({ username: username?.toString(), hasLoggedIn: false });
+            if (!user) {
+                throw new AppError({
+                    name: "NOT_VALID_USER",
+                    httpCode: HttpCode.UNAUTHORIZED,
+                    description: "El usuario no es valido"
+                });
+            }
+            const response = await this.authService.modifyUser({ userId: user.id, password });
             res.send(response);
         } catch (e) {
             next(e);
@@ -83,6 +102,7 @@ export class AuthController {
                     id: user.id,
                     role: user.role,
                     scout: user.scout,
+                    familiar: user.familiar,
                     username: user.username
                 })
             }
@@ -107,8 +127,41 @@ export class AuthController {
                 id: user.id,
                 username: user.username,
                 role: user.role,
-                scout: user.scout
+                scout: user.scout,
+                familiar: user.familiar
             })
+        } catch (e) {
+            next(e)
+        }
+    }
+
+    getNotifications = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const user = res.locals.currentUser
+
+            const { offset, limit, orderBy } = req.query;
+
+            // const response = await this.authService.getNotifications({
+            //     limit: limit ? Number(limit) : undefined,
+            //     offset: offset ? Number(offset) : undefined,
+            //     // orderBy
+            // });
+
+            if (!user) {
+                throw new AppError({
+                    name: "NOT_VALID_USER",
+                    httpCode: HttpCode.UNAUTHORIZED,
+                    description: "Usuario inexistente"
+                });
+            }
+
+            const notifications: Notification[] = [
+                // { id: "1", message: "Tuvieja", read: false },
+                // { id: "2", message: "Hola", read: false },
+            ]
+            const unreadCount = notifications.filter(notification => !notification.read).length
+
+            res.json({ notifications, unreadCount })
         } catch (e) {
             next(e)
         }
@@ -140,6 +193,7 @@ export class AuthController {
             next(e);
         }
     }
+
     // // renewToken = async ({ body }: Request, res: Response, next: NextFunction) => {
     // //     try {
     // //         const response = await this.authService.loginUser(body);

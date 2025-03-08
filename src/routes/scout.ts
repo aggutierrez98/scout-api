@@ -8,6 +8,7 @@ import {
 	DeleteScoutSchema,
 	GetScoutSchema,
 	GetScoutsSchema,
+	ImportScoutsSchema,
 	PostScoutSchema,
 	PutScoutSchema,
 } from "../validators/scout";
@@ -20,14 +21,14 @@ export default function createScoutRouter(scoutService: ScoutService) {
 		validate(GetScoutsSchema),
 		scoutController.getItems
 	);
-	router.get(
-		"/allScouts",
-		scoutController.getAllItems
-	);
-	router.get(
-		"/allEducadores",
-		scoutController.getAllItems
-	);
+	// router.get(
+	// 	"/allScouts",
+	// 	scoutController.getAllItems
+	// );
+	// router.get(
+	// 	"/allEducadores",
+	// 	scoutController.getAllItems
+	// );
 	router.get(
 		"/:id",
 		validate(GetScoutSchema),
@@ -35,6 +36,7 @@ export default function createScoutRouter(scoutService: ScoutService) {
 		scoutController.getItem,
 	);
 	router.post("/", validate(PostScoutSchema), scoutController.insertItem);
+	router.post("/import", validate(ImportScoutsSchema), scoutController.importItems);
 	router.put(
 		"/:id",
 		validate(PutScoutSchema),

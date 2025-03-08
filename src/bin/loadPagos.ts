@@ -89,7 +89,7 @@ const loadPagos = async () => {
         console.log("\n------------ ACTUALIZACION TERMINADA -------------\n");
         console.timeEnd("Tiempo de ejecucion");
     } catch (error) {
-        console.log("Error en el script: ", (error as Error).message);
+        console.error("Error en el script: ", (error as Error).message);
     } finally {
         await prismaClient.$disconnect();
     }

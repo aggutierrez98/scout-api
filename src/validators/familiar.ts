@@ -71,8 +71,9 @@ export const GetFamiliarSchema = z.object({
 
 export const GetFamiliaresSchema = z.object({
 	query: QuerySearchSchema.extend({
+		scoutId: IdSchema.refine(validScoutID).optional(),
 		// nombre: z.string().max(85).regex(nameRegex).optional(),
-	}),
+	}).optional(),
 });
 
 export const PostFamiliarSchema = z.object({

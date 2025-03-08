@@ -26,7 +26,6 @@ export const checkSession = async (req: RequestExt, res: Response, next: NextFun
 		let isUser;
 		try {
 			isUser = verifyToken(`${jwt}`) as { id: string };
-
 		} catch (error) {
 			throw new AppError({
 				name: "INVALID_TOKEN",

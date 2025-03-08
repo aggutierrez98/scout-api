@@ -16,3 +16,15 @@ export type UsuarioXLSX = {
     DNI: string
     UserId: string
 }
+
+
+export type Notification = {
+    id: string,
+    message: string,
+    read: boolean
+}
+
+export interface NotifactionsResponse {
+    notifications: Notification[]
+    unreadCount: number
+}

@@ -1,100 +1,18 @@
 import {
 	FuncionType,
 	IDocumento,
-	IDocumentoData,
 	IDocumentoEntregado,
+	PDFDocumentsEnum,
 	ProgresionType,
 	RamasType,
 } from "../types";
 import { nanoid } from "nanoid";
 import { prismaClient } from "../utils/lib/prisma-client";
-import { AppError, HttpCode, PDFDocumentsEnum } from "../utils";
-import { AutorizacionSalidasCercanas } from "../utils/classes/documentos/AutorizacionSalidasCercanas";
-import { CaratulaLegajo } from "../utils/classes/documentos/CaratulaLegajo";
-import { AutorizacionIngresoMenores } from "../utils/classes/documentos/AutorizacionIngresoMenores";
-import { AutorizacionRetiro } from "../utils/classes/documentos/AutorizacionRetiro";
-import { AutorizacionUsoImagen } from "../utils/classes/documentos/AutorizacionUsoImagen";
-import { Documento } from "@prisma/client";
-import { getFileInS3, uploadToS3 } from "../utils/lib/s3.util";
+import { AppError, HttpCode } from "../utils";
+import { getFileInS3 } from "../utils/lib/s3.util";
 import { PdfDocument } from '../utils/classes/documentos/PdfDocument';
 import logger from "../utils/classes/Logger";
-import fileUpload from "express-fileupload";
-
-type FillDocumentoData = {
-	scoutId: string,
-	signature?: fileUpload.UploadedFile,
-	theme?: "light" | "dark",
-	familiarId: string,
-	cicloActividades: string,
-	rangoDistanciaPermiso: string,
-	docData: IDocumentoData
-}
-
-type PdfModelFunc = (data: FillDocumentoData) => any;
-const pdfModelsFuncs: Record<PDFDocumentsEnum, PdfModelFunc> = {
-	[PDFDocumentsEnum.CaratulaLegajo]: ({ docData, signature, theme, scoutId }: FillDocumentoData) => {
-		return new CaratulaLegajo({
-			documentName: docData.nombre,
-			fileUploadId: docData.fileUploadId!,
-			scoutId,
-			data: {
-				signature,
-				theme,
-			},
-		});
-	},
-	[PDFDocumentsEnum.AutorizacionUsoImagen]: ({ docData, signature, theme, scoutId, familiarId }: FillDocumentoData) => {
-		return new AutorizacionUsoImagen({
-			documentName: docData.nombre,
-			fileUploadId: docData.fileUploadId!,
-			scoutId,
-			familiarId,
-			data: {
-				signature,
-				theme,
-			},
-		});
-	},
-	[PDFDocumentsEnum.AutorizacionRetiro]: ({ docData, signature, theme, scoutId, familiarId }: FillDocumentoData) => {
-		return new AutorizacionRetiro({
-			documentName: docData.nombre,
-			fileUploadId: docData.fileUploadId!,
-			scoutId,
-			familiarId,
-			data: {
-				signature,
-				theme,
-			},
-		});
-	},
-	[PDFDocumentsEnum.AutorizacionIngresoMenores]: ({ docData, signature, theme, scoutId, familiarId }: FillDocumentoData) => {
-		return new AutorizacionIngresoMenores({
-			documentName: docData.nombre,
-			fileUploadId: docData.fileUploadId!,
-			scoutId,
-			familiarId,
-			data: {
-				signature,
-				theme,
-			},
-		});
-	},
-	[PDFDocumentsEnum.AutorizacionSalidasCercanas]: ({ docData, signature, theme, scoutId, familiarId, cicloActividades, rangoDistanciaPermiso }: FillDocumentoData) => {
-		return new AutorizacionSalidasCercanas({
-			documentName: docData.nombre,
-			fileUploadId: docData.fileUploadId!,
-			scoutId,
-			familiarId,
-			cicloActividades,
-			rangoDistanciaPermiso,
-			data: {
-				signature,
-				theme,
-			},
-		});
-	},
-};
-
+import { FillDocumentoData, PDFDocumentInstantiator } from "../utils/classes/documentos/DocumentoInstantiator";
 
 const prisma = prismaClient.$extends({
 	result: {
@@ -124,6 +42,7 @@ type getQueryParams = {
 	offset?: number;
 	filters: {
 		nombre?: string;
+		scoutId?: string;
 		vence?: string;
 		tiempoDesde?: Date;
 		tiempoHasta?: Date;
@@ -131,7 +50,6 @@ type getQueryParams = {
 		funciones?: FuncionType[];
 		ramas?: RamasType[];
 		progresiones?: ProgresionType[]
-
 	};
 };
 
@@ -143,15 +61,16 @@ interface IDocumentoService {
 }
 
 export class DocumentoService implements IDocumentoService {
-	insertDocumento = async (documento: IDocumento) => {
+	insertDocumento = async ({ documentoId, fechaPresentacion, scoutId, uploadId }: IDocumento) => {
+
 		const uuid = nanoid(10);
 		const responseInsert = await DocumentoModel.create({
 			data: {
-				...documento,
 				uuid,
-				documentoId: documento.documentoId,
-				scoutId: documento.scoutId,
-				uploadId: documento.uploadId
+				documentoId: documentoId,
+				scoutId: scoutId,
+				uploadId: uploadId,
+				fechaPresentacion: fechaPresentacion,
 			},
 			include: {
 				documento: {
@@ -160,6 +79,8 @@ export class DocumentoService implements IDocumentoService {
 						vence: true,
 						completable: true,
 						fileUploadId: true,
+						requiereFamiliar: true,
+						requiereFirma: true
 					},
 				},
 				scout: {
@@ -186,6 +107,7 @@ export class DocumentoService implements IDocumentoService {
 			vence,
 			tiempoDesde,
 			tiempoHasta,
+			scoutId,
 		} = filters;
 
 		const responseItem = await DocumentoModel.findMany({
@@ -199,6 +121,8 @@ export class DocumentoService implements IDocumentoService {
 						vence: true,
 						completable: true,
 						fileUploadId: true,
+						requiereFamiliar: true,
+						requiereFirma: true
 					},
 				},
 				scout: {
@@ -221,7 +145,8 @@ export class DocumentoService implements IDocumentoService {
 					},
 					rama: {
 						in: ramas
-					}
+					},
+					uuid: scoutId
 				},
 				documento: {
 					vence: vence ? vence === "true" ? true : false : undefined,
@@ -275,6 +200,8 @@ export class DocumentoService implements IDocumentoService {
 							vence: true,
 							completable: true,
 							fileUploadId: true,
+							requiereFamiliar: true,
+							requiereFirma: true
 						},
 					},
 					scout: {
@@ -301,6 +228,8 @@ export class DocumentoService implements IDocumentoService {
 						vence: true,
 						completable: true,
 						fileUploadId: true,
+						requiereFamiliar: true,
+						requiereFirma: true
 					},
 				},
 				scout: {
@@ -315,24 +244,21 @@ export class DocumentoService implements IDocumentoService {
 		return responseItem;
 	};
 
-	fillDocumento = async (data: {
-		scoutId: string,
-		signature?: fileUpload.UploadedFile,
-		documentoId: string,
-		familiarId?: string,
-		theme: "light" | "dark",
-		cicloActividades?: string,
-		rangoDistanciaPermiso?: string
-	}
-	) => {
+	fillDocumento = async (data: FillDocumentoData) => {
 		try {
 			const {
 				scoutId,
 				signature,
 				familiarId,
 				theme,
-				cicloActividades = "2025",
-				rangoDistanciaPermiso = "5 Kilometros"
+				cicloActividades,
+				rangoDistanciaPermiso,
+				fechaEventoComienzo,
+				fechaEventoFin,
+				lugarEvento,
+				tipoEvento,
+				retiroData,
+				aclaraciones
 			} = data
 
 			const docData = (await DocumentosDataModel.findUnique({
@@ -347,13 +273,33 @@ export class DocumentoService implements IDocumentoService {
 				description: "No se enviaron datos del familiar"
 			})
 
-			if (!pdfModelsFuncs[docData.nombre as PDFDocumentsEnum]) throw new AppError({
+			if (!docData.fileUploadId || !docData.completable) throw new AppError({
 				name: "BAD_REQUEST",
 				httpCode: HttpCode.BAD_REQUEST,
 				description: "El documento enviado no es completable"
 			})
 
-			const pdfModel: (PdfDocument) = pdfModelsFuncs[docData.nombre as PDFDocumentsEnum]({ docData, scoutId, signature, theme, familiarId, cicloActividades, rangoDistanciaPermiso })
+			if (!PDFDocumentInstantiator[docData.nombre as PDFDocumentsEnum]) throw new AppError({
+				name: "BAD_REQUEST",
+				httpCode: HttpCode.BAD_REQUEST,
+				description: "La complecion del documento no se encuentra implementada"
+			})
+
+			const pdfModel: (PdfDocument) = PDFDocumentInstantiator[docData.nombre as PDFDocumentsEnum]({
+				docData,
+				scoutId,
+				signature,
+				theme,
+				familiarId,
+				cicloActividades,
+				rangoDistanciaPermiso,
+				lugarEvento,
+				fechaEventoComienzo,
+				fechaEventoFin,
+				tipoEvento,
+				retiroData,
+				aclaraciones
+			})
 
 			await pdfModel.getData()
 			pdfModel.mapData()
@@ -404,3 +350,4 @@ export class DocumentoService implements IDocumentoService {
 		}
 	}
 }
+

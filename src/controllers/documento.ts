@@ -70,8 +70,8 @@ export class DocumentoController {
 		try {
 			const signature = req.files?.signature
 
-			const responseDocumento = await this.documentoService.fillDocumento({ ...req.body, signature });
-			if (!responseDocumento) {
+			const responseDocumentoFilled = await this.documentoService.fillDocumento({ ...req.body, retiroData: JSON.parse(req.body.retiroData), signature });
+			if (!responseDocumentoFilled) {
 				throw new AppError({
 					name: "CREATION_ERROR",
 					httpCode: HttpCode.BAD_REQUEST,
@@ -79,7 +79,14 @@ export class DocumentoController {
 				});
 			}
 
-			return res.json({
+			const responseDocumento = await this.documentoService.insertDocumento(
+				{
+					...req.body,
+					uploadId: responseDocumentoFilled.uploadId
+				}
+			);
+
+			return res.send({
 				msg: "Creado exitosamente",
 				data: responseDocumento
 			})

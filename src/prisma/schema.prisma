@@ -9,14 +9,16 @@ datasource db {
 }
 
 model User {
-  id       Int     @id @default(autoincrement())
-  uuid     String  @unique
-  username String  @unique
-  password String
-  role     String  @default("EXTERNO")
-  active   Boolean @default(true)
-  scout    Scout?  @relation(fields: [scoutId], references: [uuid])
-  scoutId  String? @unique
+  id         Int       @id @default(autoincrement())
+  uuid       String    @unique
+  username   String    @unique
+  password   String?
+  role       String    @default("EXTERNO")
+  active     Boolean   @default(true)
+  scout      Scout?    @relation(fields: [scoutId], references: [uuid])
+  scoutId    String?   @unique
+  familiar   Familiar? @relation(fields: [familiarId], references: [uuid])
+  familiarId String?   @unique
 }
 
 model Scout {
@@ -35,10 +37,10 @@ model Scout {
   mail                  String?
   progresionActual      String?
   religion              String?               @default("CATOLICA")
-  rama                  String?               @default("CASTORES")
+  rama                  String?
   equipo                Equipo?               @relation(fields: [equipoId], references: [uuid])
   equipoId              String?
-  funcion               String?               @default("JOVEN")
+  funcion               String?
   estado                String?               @default("ACTIVO")
   documentosPresentados DocumentoPresentado[]
   entregasObtenidas     EntregaRealizada[]
@@ -58,6 +60,8 @@ model Documento {
   vence               Boolean
   completable         Boolean
   fileUploadId        String?
+  requiereFamiliar    Boolean               @default(false)
+  requiereFirma       Boolean               @default(false)
   documentoPresentado DocumentoPresentado[]
 }
 
@@ -109,6 +113,7 @@ model Familiar {
   fechaCreacion      DateTime        @default(now())
   fechaActualizacion DateTime        @updatedAt
   padreScout         FamiliarScout[]
+  user               User?
 }
 
 model FamiliarScout {
@@ -128,7 +133,7 @@ model Equipo {
   uuid               String   @unique
   nombre             String   @unique
   lema               String?
-  rama               String?  @default("CASTORES")
+  rama               String
   fechaCreacion      DateTime @default(now())
   fechaActualizacion DateTime @updatedAt
   scout              Scout[]

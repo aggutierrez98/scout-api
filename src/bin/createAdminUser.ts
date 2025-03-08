@@ -4,10 +4,9 @@ import { nanoid } from "nanoid";
 import { encrypt } from "../utils/lib/bcrypt.util";
 import { RegisterSchema } from "../validators/auth";
 import { prismaClient } from "../utils/lib/prisma-client";
-import { ROLES } from "../utils";
+import { ROLES } from "../types";
 
 const createAdmin = async () => {
-
 
     try {
         console.log(
@@ -36,11 +35,11 @@ const createAdmin = async () => {
             data: { password: passHash, uuid, username, role },
         })
 
-        if (res) console.log(`\nUsuario "${username}" creado con exito!\n`)
+        if (res) console.info(`\nUsuario "${username}" creado con exito!\n`)
         else console.log(`\nError al crear usuario!\n`)
 
     } catch (error) {
-        console.log("\nError en el script: ", (error as Error).message);
+        console.error("\nError en el script: ", (error as Error).message);
     } finally {
         console.log(
             "\n------------ SCRIPT FINALIZADO -------------\n",

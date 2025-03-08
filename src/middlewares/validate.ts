@@ -6,23 +6,25 @@ import { errorMap } from "../utils/lib/zod.util";
 export const validate =
 	(schema: AnyZodObject | ZodEffects<AnyZodObject>) =>
 		async (req: Request, res: Response, next: NextFunction) => {
+
 			try {
 				const parseReturn = await schema.safeParseAsync(
 					{
 						body: req.body,
 						query: req.query,
 						params: req.params,
+						files: req.files
 					},
 					{ errorMap },
 				);
 
 				if (!parseReturn.success) {
 					let errorMessage = "Parametros incorrectos: \n";
-
 					let i = 0;
 					for (const error of parseReturn.error.errors) {
 						errorMessage = errorMessage.concat(
-							`[${i + 1} → ${error.path[1]}]: ${error.message} \n`,
+							//@ts-ignore
+							`[${i + 1} → ${error.path[1] || error.path[0]}]: ${error.message} \n`,
 						);
 						i++;
 					}
