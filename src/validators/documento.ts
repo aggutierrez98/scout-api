@@ -68,7 +68,8 @@ export const FillDataSchema = z.object({
 	}).optional()).optional()
 }).superRefine(async ({ documentoId, familiarId }, ctx) => {
 	const respItem = await prismaClient.documento.findUnique({ where: { uuid: documentoId } });
-	if (respItem!.requiereFamiliar) {
+	if (!respItem) return
+	if (respItem.requiereFamiliar) {
 		if (!familiarId) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
@@ -86,7 +87,8 @@ export const FillDocumentSchema = z.object({
 	files: signatureFileSchema
 }).superRefine(async ({ body: { documentoId }, files }, ctx) => {
 	const respItem = await prismaClient.documento.findUnique({ where: { uuid: documentoId } });
-	if (respItem!.requiereFirma) {
+	if (!respItem) return
+	if (respItem.requiereFirma) {
 		if (!files?.signature) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
