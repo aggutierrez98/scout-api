@@ -10,4 +10,6 @@ dist
 **.zip
 backup.sql
 **/prisma/**.db
+**/prisma/**.db-wal
+**/prisma/**.db-shm
 **/prisma/migrations/**

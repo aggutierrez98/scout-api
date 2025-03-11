@@ -3,7 +3,6 @@
 ## **Necesarias**
 
 * [ ] Armar un google FORM para que los padres sean quienes suben los datos de sus hijos.
-* [ ] Mejorar mensaje de confirmacion de firma de documento y avisar que es necesario imprimir el documento.
 * [ ] Generar muestreo de rutas y consultas segun permisos en app y api
 * [ ] Crear seccion de notificaciones en app y funcionalidad en api. Se notificaran documentos pendientes, por confirmar, como tambien cumpleaños, recordatorios custom, etc.
 
@@ -20,6 +19,7 @@
 * [ ] Mejorar sistema de roles y permisos (tambien poder asignar los mismos)
 * [ ] Arreglar instancia de turso-dev-db en dockercompose file para poder levantarla en local basada en el archivo
 * [ ] Ver de optimizar mapeo roles a funciones (y viceversa)
+* [ ] Crear funcionalidad de eventos (que tendran asignada fecha y lugar y se podran pagar, notificar y crear autorizaciones sobre estos)
 
 ## **Terminadas**
 
@@ -35,3 +35,4 @@
 * [X] Mejorar script para que saque todo lo posible en funcion de la nomina (dato funcion implica mas datos adentro)
 * [X] Obtener data de familiarId desde usuario para completar documentos
 * [X] Agregar filtros de documentos/pagos/entregas por scout (nombre / id / dni) (agregar links a esas pantallas en app).
+* [X] Mejorar mensaje de confirmacion de firma de documento y avisar que es necesario imprimir el documento.

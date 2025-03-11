@@ -6,9 +6,9 @@ import fileUpload from "express-fileupload";
 import { signPdf } from "../../lib/pdf-lib";
 
 interface ConstructorProps extends BaseConstructorProps {
-    scoutId: string
-    familiarId: string
-    cicloActividades: string
+    scoutId?: string
+    familiarId?: string
+    cicloActividades?: string
 }
 
 interface Data {
@@ -70,8 +70,6 @@ export class AutorizacionUsoImagen extends PdfDocument {
         const { nombre, apellido, dni, direccion } = this.data.familiar!
         const { nombre: nombreScout, apellido: apellidoScout, dni: dniScout } = this.data.scout!
 
-        console.log({ cicloActividades });
-
         return {
             "Nombre": `${apellido} ${nombre}`,
             "Domicilio": direccion,
@@ -88,7 +86,7 @@ export class AutorizacionUsoImagen extends PdfDocument {
         return `${this.data?.scoutId}/`
     }
 
-    async sign() {
+    async sign({ returnBase64 }: { returnBase64?: boolean }) {
         const pdfBytes = await signPdf(
             {
                 signature: this.data.signature,
@@ -101,10 +99,12 @@ export class AutorizacionUsoImagen extends PdfDocument {
                     rotate: 90,
                     scale: 0.05,
                     negate: this.data.theme === "dark"
-                }
+                },
+                returnBase64: !!returnBase64
             }
         )
 
+        if (returnBase64) return pdfBytes as string
         this.buffer = Buffer.from(pdfBytes)
     }
 

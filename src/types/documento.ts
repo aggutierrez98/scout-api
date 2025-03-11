@@ -1,8 +1,11 @@
+// import { UploadedFile } from "express-fileupload";
+
 export interface IDocumento {
     scoutId?: string | null;
     documentoId: string;
     fechaPresentacion?: Date;
     uploadId?: string
+    fileUrl?: string
     requiereFirma?: boolean
     requiereFamiliar?: boolean
 }

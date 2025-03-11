@@ -43,12 +43,12 @@ const LINES = {
 }
 
 interface ConstructorProps extends BaseConstructorProps {
-    scoutId: string
-    familiarId: string,
-    fechaEventoComienzo: Date
-    fechaEventoFin: Date
-    lugarEvento: string
-    tipoEvento: TipoEventoType
+    scoutId?: string
+    familiarId?: string,
+    fechaEventoComienzo?: Date
+    fechaEventoFin?: Date
+    lugarEvento?: string
+    tipoEvento?: TipoEventoType
 }
 
 interface Data {
@@ -168,7 +168,7 @@ export class AutorizacionEventos extends PdfDocument {
         return `${this.data.scoutId}/`
     }
 
-    async sign() {
+    async sign({ returnBase64 }: { returnBase64?: boolean }) {
         const pdfBytes = await signPdf(
             {
                 signature: this.data.signature,
@@ -181,10 +181,12 @@ export class AutorizacionEventos extends PdfDocument {
                     rotate: 90,
                     scale: 0.04,
                     negate: this.data.theme === "dark"
-                }
+                },
+                returnBase64: !!returnBase64
             }
         )
 
+        if (returnBase64) return pdfBytes as string
         this.buffer = Buffer.from(pdfBytes)
     }
 

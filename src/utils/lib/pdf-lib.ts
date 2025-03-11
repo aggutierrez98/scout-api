@@ -18,12 +18,14 @@ export type StraighThroughLine = { start: { x: number, y: number }, end: { x: nu
 interface FillFormProperties {
     inputFile: string | Buffer,
     dataObject: { [key: string]: string | StraighThroughLine[] | boolean },
-    options?: FillingOptions
+    options?: FillingOptions,
+    returnBase64?: boolean
 }
 
 interface SignProperties {
     inputFile: Buffer,
     signature: fileUpload.UploadedFile,
+    returnBase64?: boolean
     options: {
         rotate?: number,
         position: {
@@ -35,7 +37,7 @@ interface SignProperties {
     }
 }
 
-export const fillPdfForm = async ({ dataObject, inputFile, options: { fontColor, fontFamily, fontSize, strikeThrough } = {} }: FillFormProperties) => {
+export const fillPdfForm = async ({ dataObject, inputFile, options: { fontColor, fontFamily, fontSize, strikeThrough } = {}, returnBase64 = false, }: FillFormProperties) => {
 
     let file = inputFile;
     if (typeof inputFile === "string") file = await readFile(inputFile)
@@ -94,11 +96,12 @@ export const fillPdfForm = async ({ dataObject, inputFile, options: { fontColor,
         }
     }
 
+    if (returnBase64) return await pdfDoc.saveAsBase64()
     return await pdfDoc.save()
 }
 
 
-export const signPdf = async ({ signature, inputFile, options: { position: { x, y }, scale = 0.05, rotate = 0, negate = false } }: SignProperties) => {
+export const signPdf = async ({ signature, inputFile, options: { position: { x, y }, scale = 0.05, rotate = 0, negate = false }, returnBase64 = false }: SignProperties) => {
     if (!signature) throw new Error("No se envio la firma")
 
     const pdfDoc = await PDFDocument.load(inputFile)
@@ -117,6 +120,7 @@ export const signPdf = async ({ signature, inputFile, options: { position: { x, 
     const { width, height } = signatureImage.scale(scale);
 
     page.drawImage(signatureImage, { x, y, width, height });
-    const signedPdfBytes = await pdfDoc.save();
-    return signedPdfBytes
+
+    if (returnBase64) return await pdfDoc.saveAsBase64()
+    return await pdfDoc.save()
 }

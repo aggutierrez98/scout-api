@@ -91,7 +91,14 @@ export class DocumentoService implements IDocumentoService {
 				},
 			},
 		});
-		return responseInsert;
+
+		const docName = responseInsert.documento.nombre.split(" ").join("_")
+		const fileName = `${scoutId}/${docName}_${uploadId}.pdf`
+		const fileInS3 = await getFileInS3(fileName)
+		return {
+			...responseInsert,
+			fileUrl: fileInS3
+		};
 	};
 	getDocumentos = async ({
 		limit = 10,
@@ -258,7 +265,9 @@ export class DocumentoService implements IDocumentoService {
 				lugarEvento,
 				tipoEvento,
 				retiroData,
-				aclaraciones
+				aclaraciones,
+				confirmation,
+				documentoFilled
 			} = data
 
 			const docData = (await DocumentosDataModel.findUnique({
@@ -266,12 +275,6 @@ export class DocumentoService implements IDocumentoService {
 					uuid: data.documentoId
 				}
 			}))!
-
-			if (!familiarId) throw new AppError({
-				name: "NOT_FOUND",
-				httpCode: HttpCode.BAD_REQUEST,
-				description: "No se enviaron datos del familiar"
-			})
 
 			if (!docData.fileUploadId || !docData.completable) throw new AppError({
 				name: "BAD_REQUEST",
@@ -298,13 +301,22 @@ export class DocumentoService implements IDocumentoService {
 				fechaEventoFin,
 				tipoEvento,
 				retiroData,
-				aclaraciones
+				aclaraciones,
+				documentoFilled
 			})
 
-			await pdfModel.getData()
-			pdfModel.mapData()
-			await pdfModel.fill()
-			await pdfModel.sign()
+			if (!documentoFilled) {
+				await pdfModel.getData()
+				pdfModel.mapData()
+				const base64str = await pdfModel.fill({ returnBase64: true })
+				return { data: base64str as string }
+			}
+
+			if (documentoFilled && !confirmation) {
+				const base64str = await pdfModel.sign({ returnBase64: true })
+				return { data: base64str as string }
+			}
+
 			await pdfModel.upload()
 			return { uploadId: pdfModel.uploadId }
 

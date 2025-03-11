@@ -70,7 +70,65 @@ export class DocumentoController {
 		try {
 			const signature = req.files?.signature
 
-			const responseDocumentoFilled = await this.documentoService.fillDocumento({ ...req.body, retiroData: JSON.parse(req.body.retiroData), signature });
+			const responseDocumentoFilled = await this.documentoService.fillDocumento({
+				...req.body,
+				signature
+			});
+			if (!responseDocumentoFilled) {
+				throw new AppError({
+					name: "CREATION_ERROR",
+					httpCode: HttpCode.BAD_REQUEST,
+					description: "Fallo al crear archivo"
+				});
+			}
+
+			return res.send({
+				msg: "Creado exitosamente",
+				data: responseDocumentoFilled
+			})
+
+		} catch (e) {
+			next(e);
+		}
+	};
+
+	signDocument = async (req: Request, res: Response, next: NextFunction) => {
+		try {
+			const signature = req.files?.signature
+			const documentoFilled = req.files?.documentoFilled
+
+			const responseDocumentoFilled = await this.documentoService.fillDocumento({
+				...req.body,
+				documentoFilled,
+				signature
+			});
+
+			if (!responseDocumentoFilled) {
+				throw new AppError({
+					name: "CREATION_ERROR",
+					httpCode: HttpCode.BAD_REQUEST,
+					description: "Fallo al crear archivo"
+				});
+			}
+
+			return res.send({
+				msg: "Creado exitosamente",
+				data: responseDocumentoFilled
+			})
+
+		} catch (e) {
+			next(e);
+		}
+	};
+
+	uploadDocument = async (req: Request, res: Response, next: NextFunction) => {
+		try {
+			const responseDocumentoFilled = await this.documentoService.fillDocumento({
+				...req.body,
+				documentoFilled: req.files?.documentoFilled,
+				confirmation: true
+			});
+
 			if (!responseDocumentoFilled) {
 				throw new AppError({
 					name: "CREATION_ERROR",
@@ -86,10 +144,7 @@ export class DocumentoController {
 				}
 			);
 
-			return res.send({
-				msg: "Creado exitosamente",
-				data: responseDocumento
-			})
+			return res.json(responseDocumento)
 
 		} catch (e) {
 			next(e);

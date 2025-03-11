@@ -22,57 +22,63 @@ export type FillDocumentoData = {
     fechaEventoFin?: string,
     tipoEvento?: TipoEventoType
     retiroData?: RetiroData
+    confirmation?: boolean
+    documentoFilled?: fileUpload.UploadedFile
 }
 
 export type PdfModelFunc = (data: FillDocumentoData) => any;
 export const PDFDocumentInstantiator: Record<PDFDocumentsEnum, PdfModelFunc> = {
-    [PDFDocumentsEnum.CaratulaLegajo]: ({ docData, scoutId }: FillDocumentoData) => {
+    [PDFDocumentsEnum.CaratulaLegajo]: ({ docData, scoutId, documentoFilled }: FillDocumentoData) => {
         return new CaratulaLegajo({
             documentName: docData.nombre,
             fileUploadId: docData.fileUploadId!,
+            documentoFilled: documentoFilled?.data,
             scoutId,
         });
     },
-    [PDFDocumentsEnum.AutorizacionUsoImagen]: ({ docData, signature, theme, cicloActividades, scoutId, familiarId }: FillDocumentoData) => {
+    [PDFDocumentsEnum.AutorizacionUsoImagen]: ({ docData, signature, theme, cicloActividades, scoutId, familiarId, documentoFilled }: FillDocumentoData) => {
         return new AutorizacionUsoImagen({
             documentName: docData.nombre,
             fileUploadId: docData.fileUploadId!,
             cicloActividades: cicloActividades!,
             scoutId,
             familiarId: familiarId!,
+            documentoFilled: documentoFilled?.data,
             data: {
                 signature,
                 theme,
             },
         });
     },
-    [PDFDocumentsEnum.AutorizacionRetiro]: ({ docData, signature, theme, retiroData, scoutId, familiarId }: FillDocumentoData) => {
+    [PDFDocumentsEnum.AutorizacionRetiro]: ({ docData, signature, theme, retiroData, scoutId, familiarId, documentoFilled }: FillDocumentoData) => {
         return new AutorizacionRetiro({
             documentName: docData.nombre,
             fileUploadId: docData.fileUploadId!,
             scoutId,
             familiarId: familiarId!,
             retiroData: retiroData!,
+            documentoFilled: documentoFilled?.data,
             data: {
                 theme,
                 signature,
             },
         });
     },
-    [PDFDocumentsEnum.AutorizacionIngresoMenores]: ({ docData, signature, theme, scoutId, familiarId, aclaraciones }: FillDocumentoData) => {
+    [PDFDocumentsEnum.AutorizacionIngresoMenores]: ({ docData, signature, theme, scoutId, familiarId, documentoFilled, aclaraciones }: FillDocumentoData) => {
         return new AutorizacionIngresoMenores({
             documentName: docData.nombre,
             fileUploadId: docData.fileUploadId!,
             scoutId,
             familiarId: familiarId!,
             aclaraciones: aclaraciones!,
+            documentoFilled: documentoFilled?.data,
             data: {
                 signature,
                 theme,
             },
         });
     },
-    [PDFDocumentsEnum.AutorizacionSalidasCercanas]: ({ docData, signature, theme, scoutId, familiarId, cicloActividades = "2025", rangoDistanciaPermiso = "5 Kilometros" }: FillDocumentoData) => {
+    [PDFDocumentsEnum.AutorizacionSalidasCercanas]: ({ docData, signature, theme, scoutId, familiarId, documentoFilled, cicloActividades = "2025", rangoDistanciaPermiso = "5 Kilometros" }: FillDocumentoData) => {
         return new AutorizacionSalidasCercanas({
             documentName: docData.nombre,
             fileUploadId: docData.fileUploadId!,
@@ -80,13 +86,14 @@ export const PDFDocumentInstantiator: Record<PDFDocumentsEnum, PdfModelFunc> = {
             familiarId: familiarId!,
             cicloActividades,
             rangoDistanciaPermiso,
+            documentoFilled: documentoFilled?.data,
             data: {
                 signature,
                 theme,
             },
         });
     },
-    [PDFDocumentsEnum.AutorizacionEventos]: ({ docData, signature, theme, scoutId, familiarId, fechaEventoComienzo, fechaEventoFin, lugarEvento, tipoEvento }: FillDocumentoData) => {
+    [PDFDocumentsEnum.AutorizacionEventos]: ({ docData, signature, theme, scoutId, familiarId, documentoFilled, fechaEventoComienzo, fechaEventoFin, lugarEvento, tipoEvento }: FillDocumentoData) => {
         return new AutorizacionEventos({
             documentName: docData.nombre,
             fileUploadId: docData.fileUploadId!,
@@ -96,6 +103,7 @@ export const PDFDocumentInstantiator: Record<PDFDocumentsEnum, PdfModelFunc> = {
             fechaEventoFin: new Date(fechaEventoFin!),
             lugarEvento: lugarEvento!,
             tipoEvento: tipoEvento!,
+            documentoFilled: documentoFilled?.data,
             data: {
                 signature,
                 theme,

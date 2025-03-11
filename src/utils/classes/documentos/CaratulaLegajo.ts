@@ -6,13 +6,13 @@ import { BaseConstructorProps, PdfDocument } from "./PdfDocument";
 import { RelacionFamiliarType } from "../../../types";
 
 interface ConstructorProps extends BaseConstructorProps {
-    scoutId: string
+    scoutId?: string
 }
 
 type ScoutWithFamiliaresType = PrismaScout & { familiarScout: { relacion: string, familiar: Familiar }[] }
 
 interface Data {
-    scoutId: string,
+    scoutId?: string,
     familiar: Familiar
     scout: ScoutWithFamiliaresType
     relacion: RelacionFamiliarType,

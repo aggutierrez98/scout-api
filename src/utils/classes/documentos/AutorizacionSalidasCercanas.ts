@@ -10,10 +10,10 @@ const datosGrupo = JSON.parse(process.env.DATOS_GRUPO || "")
 const PARTIDO_DOMICILIO = "Tres de febrero"
 
 interface ConstructorProps extends BaseConstructorProps {
-    scoutId: string
-    familiarId: string,
-    cicloActividades: string
-    rangoDistanciaPermiso: string
+    scoutId?: string
+    familiarId?: string,
+    cicloActividades?: string
+    rangoDistanciaPermiso?: string
 }
 
 interface Data {
@@ -122,7 +122,7 @@ export class AutorizacionSalidasCercanas extends PdfDocument {
         return `${this.data.scoutId}/`
     }
 
-    async sign() {
+    async sign({ returnBase64 }: { returnBase64?: boolean }) {
         const pdfBytes = await signPdf(
             {
                 signature: this.data.signature,
@@ -134,11 +134,12 @@ export class AutorizacionSalidasCercanas extends PdfDocument {
                     },
                     rotate: 90,
                     negate: this.data.theme === "dark"
-                }
+                },
+                returnBase64: !!returnBase64
             }
         )
 
+        if (returnBase64) return pdfBytes as string
         this.buffer = Buffer.from(pdfBytes)
     }
-
 }

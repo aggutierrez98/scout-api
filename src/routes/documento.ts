@@ -8,6 +8,8 @@ import {
 	GetDocumentosSchema,
 	PostDocumentoSchema,
 	FillDocumentSchema,
+	SignDocumentSchema,
+	UploadDocumentSchema,
 } from "../validators/documento";
 import { DocumentoService } from "../services/documento";
 
@@ -37,6 +39,16 @@ export default function createDocumentoRouter(documentoService: DocumentoService
 		"/fill",
 		validate(FillDocumentSchema),
 		documentoController.fillDocument,
+	);
+	router.post(
+		"/sign",
+		validate(SignDocumentSchema),
+		documentoController.signDocument,
+	);
+	router.post(
+		"/upload",
+		validate(UploadDocumentSchema),
+		documentoController.uploadDocument,
 	);
 	router.delete(
 		"/:id",

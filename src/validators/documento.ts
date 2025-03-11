@@ -7,13 +7,18 @@ import { prismaClient } from "../utils/lib/prisma-client";
 import { validFamiliarID } from ".";
 import { VALID_TIPOS_EVENTO } from '../utils/constants';
 
-export const signatureFileSchema = z.object({
+export const filesSchema = z.object({
 	signature: z.object({
 		mimetype: z.string().regex(/^image\/(png)$/, { message: "La imagen no tiene un formato valido" }), // Permitimos solo imágenes PNG
 		size: z.number().max(5 * 1024 * 200, "El archivo no debe superar los 200KB"), // Max 200KB de tamaño
 		data: z.instanceof(Buffer, { message: "No se envio el archivo correctamente" }), //Debe tener un buffer de datos adentro
-	})
-}).optional().nullable();
+	}).optional().nullable(),
+	documentoFilled: z.object({
+		mimetype: z.string().regex(/^application\/(pdf)$/, { message: "El documento no tiene un formato valido" }), // Permitimos solo archivos pdf
+		size: z.number().max(5 * 1024 * 200, "El archivo no debe superar los 500KB"), // Max 200KB de tamaño
+		data: z.instanceof(Buffer, { message: "No se envio el archivo correctamente" }), //Debe tener un buffer de datos adentro
+	}).optional().nullable(),
+})
 
 export const validDocumentoId = async (id: string) => {
 	const DocumentoModel = prismaClient.documentoPresentado;
@@ -38,6 +43,7 @@ export const DocumentoSchema = z.object({
 
 const parseJsonPreprocessor = (value: any, ctx: z.RefinementCtx) => {
 	if (typeof value === 'string') {
+		console.log({ value });
 		try {
 			return JSON.parse(value);
 		} catch (e) {
@@ -49,6 +55,24 @@ const parseJsonPreprocessor = (value: any, ctx: z.RefinementCtx) => {
 	}
 	return value;
 };
+
+
+
+
+// retiroData: z.preprocess(parseJsonPreprocessor, z.object({
+// 	solo: z.boolean().optional(),
+// 	personas: z.array(z.string()).optional()
+// }).optional()).optional()
+
+const stringToJSONSchema = z.string()
+	.transform((str, ctx): z.infer<ReturnType<any>> => {
+		try {
+			return JSON.parse(str)
+		} catch (e) {
+			ctx.addIssue({ code: 'custom', message: 'Invalid JSON' })
+			return z.NEVER
+		}
+	})
 
 export const FillDataSchema = z.object({
 	scoutId: z.string().refine(validScoutID),
@@ -62,10 +86,10 @@ export const FillDataSchema = z.object({
 	fechaEventoComienzo: z.coerce.date().optional(),
 	fechaEventoFin: z.coerce.date().optional(),
 	tipoEvento: z.enum(VALID_TIPOS_EVENTO).optional(),
-	retiroData: z.preprocess(parseJsonPreprocessor, z.object({
+	retiroData: stringToJSONSchema.pipe(z.object({
 		solo: z.boolean().optional(),
 		personas: z.array(z.string()).optional()
-	}).optional()).optional()
+	})).optional(),
 }).superRefine(async ({ documentoId, familiarId }, ctx) => {
 	const respItem = await prismaClient.documento.findUnique({ where: { uuid: documentoId } });
 	if (!respItem) return
@@ -81,10 +105,19 @@ export const FillDataSchema = z.object({
 	}
 });
 
+export const SignDataSchema = z.object({
+	scoutId: z.string().refine(validScoutID),
+	documentoId: z.string().refine(validDocumentoCompletableId),
+	theme: z.enum(["light", "dark"]).optional(),
+})
 
 export const FillDocumentSchema = z.object({
 	body: FillDataSchema,
-	files: signatureFileSchema
+})
+
+export const SignDocumentSchema = z.object({
+	body: SignDataSchema.omit({ scoutId: true }),
+	files: filesSchema
 }).superRefine(async ({ body: { documentoId }, files }, ctx) => {
 	const respItem = await prismaClient.documento.findUnique({ where: { uuid: documentoId } });
 	if (!respItem) return
@@ -98,6 +131,11 @@ export const FillDocumentSchema = z.object({
 			});
 		}
 	}
+});
+
+export const UploadDocumentSchema = z.object({
+	body: SignDataSchema.omit({ theme: true }),
+	files: filesSchema.omit({ signature: true })
 });
 
 export const GetDocumentosSchema = z.object({

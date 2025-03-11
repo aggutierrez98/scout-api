@@ -17,13 +17,11 @@ export const validate =
 					},
 					{ errorMap },
 				);
-
 				if (!parseReturn.success) {
 					let errorMessage = "Parametros incorrectos: \n";
 					let i = 0;
 					for (const error of parseReturn.error.errors) {
 						errorMessage = errorMessage.concat(
-							//@ts-ignore
 							`[${i + 1} → ${error.path[1] || error.path[0]}]: ${error.message} \n`,
 						);
 						i++;
@@ -35,6 +33,9 @@ export const validate =
 						httpCode: HttpCode.BAD_REQUEST,
 					});
 				}
+
+				// Transformar body en caso necesario
+				req.body = parseReturn.data.body
 				next();
 			} catch (e) {
 				next(e);

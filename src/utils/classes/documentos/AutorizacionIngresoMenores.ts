@@ -10,8 +10,8 @@ const datosGrupo = JSON.parse(process.env.DATOS_GRUPO || "")
 const PARTIDO_DOMICILIO = "Tres de febrero"
 
 interface ConstructorProps extends BaseConstructorProps {
-    scoutId: string
-    familiarId: string
+    scoutId?: string
+    familiarId?: string
     aclaraciones?: string
 }
 
@@ -120,8 +120,7 @@ export class AutorizacionIngresoMenores extends PdfDocument {
     }
 
 
-    async sign() {
-
+    async sign({ returnBase64 }: { returnBase64?: boolean }) {
         let signedPdfBytes = await signPdf(
             {
                 signature: this.data.signature || "",
@@ -134,29 +133,28 @@ export class AutorizacionIngresoMenores extends PdfDocument {
                     rotate: 90,
                     scale: .035,
                     negate: this.data.theme === "dark"
-                }
+                },
             }
         )
 
-        // Se vuelven a firmar las aclaraciones
-        if (this.data.aclaraciones) {
-            signedPdfBytes = await signPdf(
-                {
-                    signature: this.data.signature || "",
-                    inputFile: Buffer.from(signedPdfBytes),
-                    options: {
-                        position: {
-                            x: 295,
-                            y: 342,
-                        },
-                        scale: 0.035,
-                        rotate: 90,
-                        negate: this.data.theme === "dark"
-                    }
-                }
-            )
-        }
+        signedPdfBytes = await signPdf(
+            {
+                signature: this.data.signature || "",
+                inputFile: Buffer.from(signedPdfBytes),
+                options: {
+                    position: {
+                        x: 295,
+                        y: 342,
+                    },
+                    scale: 0.035,
+                    rotate: 90,
+                    negate: this.data.theme === "dark"
+                },
+                returnBase64: !!returnBase64
+            }
+        )
 
+        if (returnBase64) return signedPdfBytes as string
         this.buffer = Buffer.from(signedPdfBytes)
     }
 

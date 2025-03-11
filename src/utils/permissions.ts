@@ -1,15 +1,16 @@
 
 export const EXTERNO_PERM = [
     "read_scout",
+    "read_familiar",
     "read_equipo",
     "read_documento",
     "read_pago",
     "read_entrega",
-    "read_auth"
+    "read_auth",
+    "create_documento",
 ]
 export const COLABORADOR_PERM = [
     ...EXTERNO_PERM,
-    "read_familiar",
     "create_pago",
     "create_documento",
     "modify_pago",
