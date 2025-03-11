@@ -4,6 +4,8 @@ import { lettersReg } from "../utils/regex";
 import { IdSchema, QuerySearchSchema } from "./generics";
 import { VALID_ROLES } from "../utils";
 import { prismaClient } from "../utils/lib/prisma-client";
+import { validFamiliarID } from "./familiar";
+import { validScoutID } from "./scout";
 
 const passRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9]).{8,12}$/
 
@@ -38,7 +40,9 @@ export const RegisterSchema = z.object({
     body: UserSchema.extend({
         username: z.string().min(8, { message: "El nombre de usuario debe tener al menos 8 caracteres" }).max(20, { message: "El nombre de usuario debe tener como maximo 20 caracteres" }).regex(lettersReg, { message: "El nombre de usuario solo puede contener letras" }).refine(alreadyExistsUser, "El nombre de usuario se encuentra en uso"),
         password: z.string().regex(passRegex, { message: "La contraseña debe tener entre 8 y 12 caracteres, al menos una letra mayúscula, una letra minúscula y un número" }).optional(),
-        role: z.enum(VALID_ROLES).optional()
+        role: z.enum(VALID_ROLES).optional(),
+        familiarId: IdSchema.refine(validFamiliarID).optional(),
+        scoutId: IdSchema.refine(validScoutID).optional(),
     })
 });
 

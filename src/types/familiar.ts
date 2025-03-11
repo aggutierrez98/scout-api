@@ -7,6 +7,7 @@ export interface IFamiliarScout {
 }
 
 export interface IFamiliar {
+    id: string,
     nombre: string;
     apellido: string;
     sexo: string;

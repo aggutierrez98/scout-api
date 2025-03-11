@@ -79,7 +79,7 @@ interface IFamiliarService {
 }
 
 export class FamiliarService implements IFamiliarService {
-	insertFamiliar = async (familiar: IFamiliar) => {
+	insertFamiliar = async (familiar: Omit<IFamiliar, "id">) => {
 		const uuid = nanoid(10);
 
 		const familiarRespInsert = await FamiliarModel.create({
@@ -290,7 +290,7 @@ export class FamiliarService implements IFamiliarService {
 
 	};
 
-	updateFamiliar = async (id: string, dataUpdated: IFamiliar) => {
+	updateFamiliar = async (id: string, dataUpdated: Omit<IFamiliar, "id">) => {
 		const { padreScout, ...data } = await FamiliarModel.update({
 			where: { uuid: id },
 			data: dataUpdated,

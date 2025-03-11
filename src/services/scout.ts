@@ -81,7 +81,8 @@ type queryParams = {
 		progresiones?: ProgresionType[];
 		funciones?: FuncionType[];
 		ramas?: RamasType[],
-		existingUser?: string
+		existingUser?: string,
+		familiarId?: string
 	};
 	select?: Prisma.ScoutSelect
 };
@@ -133,12 +134,13 @@ export class ScoutService implements IScoutService {
 			equipos,
 			sexo,
 			ramas,
-			existingUser
+			existingUser,
+			familiarId
 		} = filters;
 
 		const responseItem = await ScoutModel.findMany({
 			skip: offset,
-			take: limit,
+			take: limit || undefined, // Si el limite === 0  →  no hay limite y se buscan todos
 			orderBy: { [orderBy]: "asc" },
 			where: {
 				sexo: sexo || undefined,
@@ -170,7 +172,12 @@ export class ScoutService implements IScoutService {
 					? (existingUser === "true"
 						? { isNot: null }
 						: { is: null }
-					) : undefined
+					) : undefined,
+				familiarScout: familiarId ? {
+					some: {
+						familiarId
+					}
+				} : {}
 			},
 			select,
 		});
@@ -178,44 +185,6 @@ export class ScoutService implements IScoutService {
 		return responseItem;
 	};
 
-	getAllScouts = async () => {
-		const response = await ScoutModel.findMany({
-			orderBy: { apellido: "asc" },
-			select: {
-				id: true,
-				uuid: true,
-				apellido: true,
-				nombre: true,
-			},
-			where: {
-				// funcion: "JOVEN",
-				user: {
-					is: null
-				}
-			},
-		});
-		return response.map(({ id, apellido, nombre }) => ({ id: id, nombre: `${apellido} ${nombre}`.toLocaleUpperCase() }))
-	}
-	getAllEducadores = async () => {
-		const response = await ScoutModel.findMany({
-			orderBy: { apellido: "asc" },
-			select: {
-				id: true,
-				uuid: true,
-				apellido: true,
-				nombre: true,
-			},
-			where: {
-				funcion: {
-					not: "JOVEN",
-				},
-				user: {
-					is: null
-				}
-			},
-		});
-		return response.map(({ id, apellido, nombre }) => ({ id: id, nombre: `${apellido} ${nombre}`.toLocaleUpperCase() }))
-	}
 
 	getScout = async (id: string) => {
 		try {

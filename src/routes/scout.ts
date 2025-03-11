@@ -21,14 +21,6 @@ export default function createScoutRouter(scoutService: ScoutService) {
 		validate(GetScoutsSchema),
 		scoutController.getItems
 	);
-	// router.get(
-	// 	"/allScouts",
-	// 	scoutController.getAllItems
-	// );
-	// router.get(
-	// 	"/allEducadores",
-	// 	scoutController.getAllItems
-	// );
 	router.get(
 		"/:id",
 		validate(GetScoutSchema),

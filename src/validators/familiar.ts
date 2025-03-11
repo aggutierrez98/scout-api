@@ -35,7 +35,7 @@ export const FamiliarSchema = z.object({
 	telefono: z.string().max(15).regex(numberReg).nullable(),
 	mail: z.string().min(1).email().nullable(),
 	estadoCivil: z.enum(VALID_ESTADO_CIVIL).optional()
-}) satisfies z.Schema<IFamiliar>;
+}) satisfies z.Schema<Omit<IFamiliar, "id">>;
 
 export const UnrelateFamiliarSchema = z.object({
 	body: z.object({

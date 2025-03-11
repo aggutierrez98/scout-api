@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-
 import { AppError, HttpCode } from "../utils/classes/AppError";
-import { OrderToGetScouts } from "../types";
+import { IUserData, OrderToGetScouts } from "../types";
 import { ScoutService } from "../services/scout";
 import { UploadedFile } from "express-fileupload";
 
@@ -34,6 +33,9 @@ export class ScoutController {
 		try {
 			const { offset, limit, orderBy, select, ...filters } = req.query;
 
+			const user: IUserData = res.locals.currentUser
+			if (user.role === "EXTERNO" && user.familiar) filters.familiarId = user.familiar.id
+
 			const selectedFields = select?.toString().split(",").reduce((acc, field) => ({ ...acc, [`${field}`]: true }), {})
 
 			const response = await this.scoutService.getScouts({
@@ -50,23 +52,6 @@ export class ScoutController {
 		}
 	};
 
-
-	getAllItems = async (req: Request, res: Response, next: NextFunction) => {
-		const reqType = req.url.split("all")[1]
-
-		try {
-			let response;
-			if (reqType === "Educadores") {
-				response = await this.scoutService.getAllEducadores()
-			}
-			else if (reqType === "Scouts") {
-				response = await this.scoutService.getAllScouts()
-			}
-			res.send(response);
-		} catch (e) {
-			next(e);
-		}
-	}
 
 	updateItem = async (
 		{ params, body }: Request,
