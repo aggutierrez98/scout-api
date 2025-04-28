@@ -64,6 +64,7 @@ export enum PDFDocumentsEnum {
 	AutorizacionIngresoMenores = "Autorizacion ingreso de menores de edad",
 	AutorizacionSalidasCercanas = "Autorizacion de salidas cercanas",
 	AutorizacionEventos = "Autorizacion para salidas acantonamientos campamentos",
+	ReciboPago = "Recibo de pago",
 }
 
 

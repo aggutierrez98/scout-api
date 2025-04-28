@@ -75,7 +75,7 @@ const stringToJSONSchema = z.string()
 	})
 
 export const FillDataSchema = z.object({
-	scoutId: z.string().refine(validScoutID),
+	scoutId: z.string().refine(validScoutID).optional(),
 	documentoId: z.string().refine(validDocumentoCompletableId),
 	theme: z.enum(["light", "dark"]).optional(),
 	familiarId: z.string().refine(validFamiliarID).optional(),
@@ -85,6 +85,11 @@ export const FillDataSchema = z.object({
 	lugarEvento: z.string().optional(),
 	fechaEventoComienzo: z.coerce.date().optional(),
 	fechaEventoFin: z.coerce.date().optional(),
+	fechaPago: z.coerce.date().optional(),
+	listaPagos: z.array(z.object({
+		monto: z.number().min(0),
+		concepto: z.string().max(100),
+	})).optional(),
 	tipoEvento: z.enum(VALID_TIPOS_EVENTO).optional(),
 	retiroData: stringToJSONSchema.pipe(z.object({
 		solo: z.boolean().optional(),

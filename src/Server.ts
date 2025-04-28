@@ -63,15 +63,15 @@ export default class Server {
 			}),
 		);
 
-		this.app.use(
-			cors({
-				origin: (origin, callback) => {
-					if (!origin) callback(null, true);
-					else if (ACCEPTED_ORIGINS.length === 0 || ACCEPTED_ORIGINS.includes(origin)) callback(null, true);
-					else callback(new Error("Not allowed by CORS"));
-				},
-			}),
-		);
+		// this.app.use(
+		// 	cors({
+		// 		origin: (origin, callback) => {
+		// 			if (!origin) callback(null, true);
+		// 			else if (ACCEPTED_ORIGINS.length === 0 || ACCEPTED_ORIGINS.includes(origin)) callback(null, true);
+		// 			else callback(new Error("Not allowed by CORS"));
+		// 		},
+		// 	}),
+		// );
 		this.app.use(cors())
 
 		this.app.use(express.json());
@@ -123,6 +123,8 @@ export default class Server {
 
 		const entregaService = new EntregaService();
 		router.use("/entrega", checkSession, createEntregaRouter(entregaService));
+
+		// TODO: Crear modelo de eventos
 
 		return router;
 	}

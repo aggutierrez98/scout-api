@@ -8,7 +8,7 @@ import { gracefulShutdownMainProcess } from "./utils";
 	process.on("SIGINT", signal => { gracefulShutdownMainProcess(signal, server) })
 
 	const serverInstance = new ServerModel();
-	await serverInstance.connectWhatsapp();
+	// await serverInstance.connectWhatsapp();
 	serverInstance.loadCrons();
 	server = serverInstance.listen();
 })();

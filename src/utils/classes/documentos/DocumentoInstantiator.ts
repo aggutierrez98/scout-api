@@ -6,6 +6,7 @@ import { AutorizacionUsoImagen } from "./AutorizacionUsoImagen"
 import { AutorizacionIngresoMenores } from "./AutorizacionIngresoMenores"
 import { AutorizacionSalidasCercanas } from "./AutorizacionSalidasCercanas"
 import { AutorizacionEventos } from "./AutorizacionEventos"
+import { ReciboPago } from "./ReciboPago"
 
 export type FillDocumentoData = {
     scoutId: string,
@@ -24,6 +25,11 @@ export type FillDocumentoData = {
     retiroData?: RetiroData
     confirmation?: boolean
     documentoFilled?: fileUpload.UploadedFile
+    fechaPago?: Date,
+    listaPagos?: {
+        monto: number
+        concepto: string
+    }[]
 }
 
 export type PdfModelFunc = (data: FillDocumentoData) => any;
@@ -103,6 +109,21 @@ export const PDFDocumentInstantiator: Record<PDFDocumentsEnum, PdfModelFunc> = {
             fechaEventoFin: new Date(fechaEventoFin!),
             lugarEvento: lugarEvento!,
             tipoEvento: tipoEvento!,
+            documentoFilled: documentoFilled?.data,
+            data: {
+                signature,
+                theme,
+            },
+        });
+    },
+    [PDFDocumentsEnum.ReciboPago]: ({ docData, signature, theme, scoutId, familiarId, documentoFilled, fechaPago, listaPagos }: FillDocumentoData) => {
+        return new ReciboPago({
+            documentName: docData.nombre,
+            fileUploadId: docData.fileUploadId!,
+            // scoutId,
+            familiarId: familiarId!,
+            fechaPago: new Date(fechaPago!),
+            listaPagos: listaPagos!,
             documentoFilled: documentoFilled?.data,
             data: {
                 signature,

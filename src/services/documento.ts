@@ -265,6 +265,8 @@ export class DocumentoService implements IDocumentoService {
 				lugarEvento,
 				tipoEvento,
 				retiroData,
+				fechaPago,
+				listaPagos,
 				aclaraciones,
 				confirmation,
 				documentoFilled
@@ -301,6 +303,8 @@ export class DocumentoService implements IDocumentoService {
 				fechaEventoFin,
 				tipoEvento,
 				retiroData,
+				fechaPago,
+				listaPagos,
 				aclaraciones,
 				documentoFilled
 			})
@@ -309,6 +313,13 @@ export class DocumentoService implements IDocumentoService {
 				await pdfModel.getData()
 				pdfModel.mapData()
 				const base64str = await pdfModel.fill({ returnBase64: true })
+				if (!base64str) {
+					throw new AppError({
+						name: "BAD_REQUEST",
+						httpCode: HttpCode.BAD_REQUEST,
+						description: "Error al completar el documento"
+					})
+				}
 				return { data: base64str as string }
 			}
 

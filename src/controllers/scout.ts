@@ -34,7 +34,8 @@ export class ScoutController {
 			const { offset, limit, orderBy, select, ...filters } = req.query;
 
 			const user: IUserData = res.locals.currentUser
-			if (user.role === "EXTERNO" && user.familiar) filters.familiarId = user.familiar.id
+			const userIsFamiliar = (user.role === "EXTERNO" && !!user.familiar)
+			if (userIsFamiliar) filters.familiarId = user.familiar!.id
 
 			const selectedFields = select?.toString().split(",").reduce((acc, field) => ({ ...acc, [`${field}`]: true }), {})
 

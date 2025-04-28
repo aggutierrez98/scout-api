@@ -45,6 +45,7 @@ export abstract class PdfDocument {
     abstract sign({ returnBase64 }: { returnBase64?: boolean }): Promise<void | string>;
 
     async fill({ returnBase64 }: { returnBase64?: boolean }): Promise<void | string> {
+
         const data = await getPDFFile(this.fileUploadId)
         if (!data) return
 
