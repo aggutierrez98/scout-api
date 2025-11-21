@@ -26,7 +26,9 @@
 * [ ] Chequear si el sistema es inmune a ataques de noSQL injection
 * [ ] Implementar auth biometrico con [hanko](https://www.hanko.io/)
 * [ ] Investigar refresh tokens para luego implementar. [Blog de auth0 sobre refresh tokens](https://auth0.com/blog/refresh-tokens-what-are-they-and-when-to-use-them/)
-
+* [ ] Cambiar winston logger por pino. Y asegurarse de usar logging asyncrono siempre que se pueda.
+* [ ] Ver si es aplicable https://freedium.cfd/https://medium.com/@connect.hashblock/how-i-optimized-my-node-js-saas-with-redis-caching-and-cut-db-reads-by-90-25dfe0e8879a
+ 
 ## **Terminadas**
 
 * [X] Agregar a app react native la opcion de firmar documentos y agregar esa firma a los mismos ([react native signature canvas](https://medium.com/alameda-dev/react-native-pdf-digital-signature-b63e12cdc714)).
