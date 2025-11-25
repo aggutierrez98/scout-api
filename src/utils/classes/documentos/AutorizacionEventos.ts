@@ -5,8 +5,9 @@ import { BaseConstructorProps, PdfDocument } from "./PdfDocument";
 import { RelacionFamiliarType, TipoEventoType } from "../../../types";
 import { signPdf, StraighThroughLine } from "../../lib/pdf-lib";
 import fileUpload from "express-fileupload";
+import { SecretsManager } from "../SecretsManager";
 
-const datosGrupo = JSON.parse(process.env.DATOS_GRUPO || '{"numero":"58","nombre":"Madre Teresa","distrito":"2","zona":"9"}')
+const datosGrupo = SecretsManager.getInstance().getDatosGrupo();
 const PARTIDO_DOMICILIO = "Tres de febrero"
 
 const LINES = {

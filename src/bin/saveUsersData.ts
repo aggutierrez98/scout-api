@@ -1,12 +1,19 @@
+import { SecretsManager } from "../utils/classes/SecretsManager";
 import { writeSpreadSheet } from "../utils/helpers/googleDriveApi";
-import { prismaClient } from "../utils/lib/prisma-client";
 import { Scout } from '@prisma/client';
 
 export const saveUsers = async () => {
-
+    let prismaClient;
     console.time("Tiempo de ejecucion");
     console.log("------------ INICIANDO SCRIPT PARA GUARDAR USUARIOS EN SPREASHEETS -------------\n");
+
     try {
+
+        await SecretsManager.getInstance().initialize();
+        prismaClient = (await import("../utils/lib/prisma-client")).prismaClient;
+        if (!prismaClient) {
+            throw new Error("Prisma Client no inicializado");
+        }
 
         const scouts = await prismaClient.scout.findMany({
             where: {
@@ -37,7 +44,9 @@ export const saveUsers = async () => {
     } catch (error) {
         console.log("Error en el script: ", (error as Error).message);
     } finally {
-        await prismaClient.$disconnect();
+        if (prismaClient) {
+            await prismaClient.$disconnect();
+        }
     }
 };
 

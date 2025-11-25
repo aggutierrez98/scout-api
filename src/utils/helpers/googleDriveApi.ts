@@ -15,15 +15,21 @@ import {
 import { google } from 'googleapis';
 import { createWriteStream } from 'fs';
 import { Stream } from 'stream';
+import { SecretsManager } from '../classes/SecretsManager';
 
-const serviceAccountAuth = new JWT({
-    email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-    key: process.env.GOOGLE_PRIVATE_KEY,
-    scopes: [
-        'https://www.googleapis.com/auth/spreadsheets',
-        "https://www.googleapis.com/auth/drive.readonly"
-    ],
-});
+export const getSercviceAccountAuth = async () => {
+    await SecretsManager.getInstance().initialize()
+    const googleSecrets = SecretsManager.getInstance().getGoogleDriveSecrets();
+
+    return new JWT({
+        email: googleSecrets.SERVICE_ACCOUNT_EMAIL,
+        key: googleSecrets.PRIVATE_KEY,
+        scopes: [
+            'https://www.googleapis.com/auth/spreadsheets',
+            "https://www.googleapis.com/auth/drive.readonly"
+        ],
+    });
+};
 
 export function getSpreadSheetData(sheetIndex: "familiares"): Promise<Partial<FamiliarXLSX>[]>;
 export function getSpreadSheetData(sheetIndex: "scouts"): Promise<Partial<ScoutXLSX>[]>;
@@ -34,7 +40,9 @@ export function getSpreadSheetData(sheetIndex: "documentos"): Promise<Partial<Do
 export function getSpreadSheetData(sheetIndex: "docs-data"): Promise<Partial<DocDataXLSX>[]>;
 export function getSpreadSheetData(sheetIndex: "equipos"): Promise<Partial<EquipoXLSX>[]>;
 export async function getSpreadSheetData(sheetIndex: SheetIndexType) {
-    const doc = new GoogleSpreadsheet(process.env.GOOGLE_SPREADSHEET_DATA_KEY!, serviceAccountAuth);
+    const serviceAccountAuth = await getSercviceAccountAuth();
+    const spreadsheetKey = SecretsManager.getInstance().getGoogleDriveSecrets().SPREADSHEET_DATA_KEY;
+    const doc = new GoogleSpreadsheet(spreadsheetKey, serviceAccountAuth);
     await doc.loadInfo();
     const rows = await doc.sheetsByTitle[sheetIndex].getRows()
     const data = rows.map(docData => docData.toObject()!)
@@ -42,7 +50,9 @@ export async function getSpreadSheetData(sheetIndex: SheetIndexType) {
 }
 
 export async function writeSpreadSheet<T extends SheetIndexType>(sheetIndex: T, data: SpreadsheetDataMap[T]) {
-    const doc = new GoogleSpreadsheet(process.env.GOOGLE_SPREADSHEET_DATA_KEY!, serviceAccountAuth);
+    const spreadsheetKey = SecretsManager.getInstance().getGoogleDriveSecrets().SPREADSHEET_DATA_KEY;
+    const serviceAccountAuth = await getSercviceAccountAuth();
+    const doc = new GoogleSpreadsheet(spreadsheetKey, serviceAccountAuth);
     await doc.loadInfo();
     const sheet = doc.sheetsByTitle[sheetIndex]
     await sheet.clearRows()
@@ -67,6 +77,7 @@ const transformStreamToBuffer = async (stream: Stream): Promise<Buffer> => {
 export async function getPDFFile(fileId: string): Promise<Buffer | undefined> {
 
     try {
+        const serviceAccountAuth = await getSercviceAccountAuth();
         const drive = google.drive({ version: "v3", auth: serviceAccountAuth });
         const response = await drive.files.get(
             {

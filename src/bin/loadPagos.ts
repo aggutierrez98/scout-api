@@ -4,16 +4,23 @@ import { SPLIT_STRING, excelDateToJSDate, parseDMYtoDate } from "../utils";
 import { MetodosPagoType } from "../types";
 import { nanoid } from "nanoid";
 import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
-import { prismaClient } from "../utils/lib/prisma-client";
+import { SecretsManager } from "../utils/classes/SecretsManager";
 
 export const loadPagos = async () => {
 
-    try {
+    let prismaClient;
 
+    try {
         console.time("Tiempo de ejecucion");
         console.log(
             "------------ INICIANDO SCRIPT DE ACTUALIZACION PAGOS -------------\n",
         );
+
+        await SecretsManager.getInstance().initialize();
+        prismaClient = (await import("../utils/lib/prisma-client")).prismaClient;
+        if (!prismaClient) {
+            throw new Error("Prisma Client no inicializado");
+        }
 
         const data = await getSpreadSheetData("pagos")
 
@@ -91,7 +98,9 @@ export const loadPagos = async () => {
     } catch (error) {
         console.error("Error en el script: ", (error as Error).message);
     } finally {
-        await prismaClient.$disconnect();
+        if (prismaClient) {
+            await prismaClient.$disconnect();
+        }
     }
 };
 

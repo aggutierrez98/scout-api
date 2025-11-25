@@ -3,15 +3,23 @@ import ProgressBar from "progress";
 import { SPLIT_STRING, excelDateToJSDate, parseDMYtoDate } from "../utils";
 import { nanoid } from "nanoid";
 import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
-import { prismaClient } from "../utils/lib/prisma-client";
+import { SecretsManager } from "../utils/classes/SecretsManager";
 
 export const loadDocumentos = async () => {
+
+    let prismaClient
 
     try {
         console.time("Tiempo de ejecucion");
         console.log(
             "------------ INICIANDO SCRIPT DE ACTUALIZACION DOCUMENTOS -------------\n",
         );
+
+        await SecretsManager.getInstance().initialize();
+        prismaClient = (await import("../utils/lib/prisma-client")).prismaClient;
+        if (!prismaClient) {
+            throw new Error("Prisma Client no inicializado");
+        }
 
         const data = await getSpreadSheetData("documentos")
         const docsdata = await getSpreadSheetData("docs-data")
@@ -127,7 +135,9 @@ export const loadDocumentos = async () => {
     } catch (error) {
         console.error("Error en el script: ", (error as Error));
     } finally {
-        await prismaClient.$disconnect();
+        if (prismaClient) {
+            await prismaClient.$disconnect();
+        }
     }
 };
 

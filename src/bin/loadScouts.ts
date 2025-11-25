@@ -4,13 +4,20 @@ import { SPLIT_STRING, VALID_RELATIONSHIPS, excelDateToJSDate, parseDMYtoDate } 
 import { EstadosType, FuncionType, ProgresionType, RelacionFamiliarType, ReligionType, ScoutXLSX } from "../types";
 import { nanoid } from "nanoid";
 import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
-import { prismaClient } from "../utils/lib/prisma-client";
+import { SecretsManager } from "../utils/classes/SecretsManager";
 
 export const loadScouts = async () => {
+    let prismaClient;
 
     try {
         console.time("Tiempo de ejecucion");
         console.log("------------ INICIANDO SCRIPT DE ACTUALIZACION SCOUTS -------------\n");
+
+        await SecretsManager.getInstance().initialize();
+        prismaClient = (await import("../utils/lib/prisma-client")).prismaClient;
+        if (!prismaClient) {
+            throw new Error("Prisma Client no inicializado");
+        }
 
         const data = await getSpreadSheetData("scouts")
         const dataUsers = await getSpreadSheetData("usuarios")
@@ -154,7 +161,9 @@ export const loadScouts = async () => {
     } catch (error) {
         console.error("Error en el script: ", (error as Error).message);
     } finally {
-        await prismaClient.$disconnect();
+        if (prismaClient) {
+            await prismaClient.$disconnect();
+        }
     }
 };
 

@@ -1110,14 +1110,21 @@ const uuid = nanoid(); // "V1StGXR8_Z5jdHi6B-myT"
    - Toda entrada de usuario debe tener schema Zod
    - Coloca schemas en `validators/`
 
-4. **Maneja errores apropiadamente**
+4. **Usa SecretsManager para secretos**
+   - ❌ NUNCA: `const secret = process.env.JWT_SECRET`
+   - ✅ SIEMPRE: `const secret = SecretsManager.getJWTSecret()`
+   - Todos los secretos deben venir de Infisical vía SecretsManager
+   - Solo `INFISICAL_*`, `NODE_ENV` y `PORT` pueden leerse de process.env
+
+5. **Maneja errores apropiadamente**
    - Usa `AppError` para errores controlados
    - Lanza con `throw new AppError({...})`
    - Nunca retornes error sin logging
 
-5. **Actualiza documentación**
+6. **Actualiza documentación**
    - Si cambias endpoint, actualiza Swagger
-   - Si agregas variable de entorno, actualiza .env.example
+   - Si agregas secreto, agrégalo a Infisical Dashboard y types/secrets.ts
+   - Si cambias arquitectura, actualiza AI_CONTEXT.md
 
 ### Cuando Agregues Features
 
@@ -1143,10 +1150,31 @@ const uuid = nanoid(); // "V1StGXR8_Z5jdHi6B-myT"
 
 3. **Nuevas Integraciones**
    ```typescript
-   // 1. Agregar credenciales a .env.example
-   // 2. Crear wrapper en utils/lib/
-   // 3. Documentar en README.md sección de integraciones
-   // 4. Manejar errores de conexión apropiadamente
+   // 1. Agregar secretos a Infisical Dashboard (no a .env)
+   // 2. Agregar tipos en src/types/secrets.ts
+   // 3. Agregar método getter en SecretsManager.ts
+   // 4. Crear wrapper en utils/lib/ que use SecretsManager
+   // 5. Documentar en README.md sección de integraciones
+   // 6. Manejar errores de conexión apropiadamente
+   
+   // Ejemplo: Agregar integración con Stripe
+   // a) En Infisical Dashboard: Crear folder STRIPE/ con STRIPE_API_KEY
+   // b) En secrets.ts:
+   export interface StripeSecrets {
+     STRIPE_API_KEY: string;
+     STRIPE_WEBHOOK_SECRET: string;
+   }
+   
+   // c) En SecretsManager.ts:
+   static getStripeSecrets(): StripeSecrets {
+     return {
+       STRIPE_API_KEY: this.getSecret('STRIPE_API_KEY', 'STRIPE'),
+       STRIPE_WEBHOOK_SECRET: this.getSecret('STRIPE_WEBHOOK_SECRET', 'STRIPE')
+     };
+   }
+   
+   // d) En utils/lib/stripe.util.ts:
+   const { STRIPE_API_KEY } = SecretsManager.getStripeSecrets();
    ```
 
 ### Testing (Pendiente)
@@ -1228,11 +1256,14 @@ db.sessions.deleteMany({})
 ### 5. Problemas con AWS S3
 
 ```typescript
-// Verificar configuración
+// Verificar configuración desde Infisical
+import { SecretsManager } from './utils/classes/SecretsManager';
+
+const awsSecrets = SecretsManager.getAWSSecrets();
 console.log('AWS Config:', {
-  region: process.env.AWS_S3_REGION,
-  bucket: process.env.AWS_S3_BUCKET_NAME,
-  hasAccessKey: !!process.env.AWS_S3_ACCESS_KEY
+  region: awsSecrets.region,
+  bucket: awsSecrets.bucketName,
+  hasAccessKey: !!awsSecrets.accessKey
 });
 
 // Test de upload
@@ -1263,6 +1294,7 @@ await uploadToS3(testBuffer, 'test/test.txt');
 - **Turso**: https://docs.turso.tech
 - **Express**: https://expressjs.com
 - **Zod**: https://zod.dev
+- **Infisical**: https://infisical.com/docs
 - **AWS SDK S3**: https://docs.aws.amazon.com/sdk-for-javascript/v3/
 - **Google Sheets API**: https://developers.google.com/sheets/api
 - **WhatsApp Web.js**: https://wwebjs.dev
@@ -1275,12 +1307,203 @@ await uploadToS3(testBuffer, 'test/test.txt');
 - **Folder Structure**: Ver README.md sección "Estructura de Carpetas"
 - **API Endpoints**: Ver `/docs` (Swagger UI) cuando el servidor esté corriendo
 
-### Variables de Entorno
+### Variables de Entorno y Gestión de Secretos
+
+#### Infisical - Gestión Centralizada de Secretos
+
+Este proyecto usa **Infisical** para gestionar todos los secretos de forma centralizada y segura. En lugar de tener múltiples variables de entorno locales, solo necesitas configurar las credenciales de acceso a Infisical.
+
+**Variables locales requeridas** (`.env.development`):
+
+```dosini
+# Variables de Node.js
+NODE_ENV=development
+PORT=8080
+
+# Credenciales de Infisical (proporcionadas por el administrador)
+INFISICAL_TOKEN=st.xxx.xxxxx.xxxxx          # Service Token del ambiente
+INFISICAL_PROJECT_ID=your-project-id-here   # ID del proyecto
+INFISICAL_ENV=dev                           # Ambiente: dev, staging, prod
+INFISICAL_SITE_URL=https://app.infisical.com  # URL del servidor (opcional)
+```
+
+**Secretos gestionados por Infisical**:
+
+Todos los siguientes secretos se obtienen automáticamente desde Infisical al iniciar la aplicación:
+
+- **JWT**: `JWT_SECRET`, `JWT_EXPIRY`
+- **Turso (Base de datos)**: `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`
+- **Redis (Caché)**: `REDIS_URI`
+- **AWS S3**: `S3_ACCESS_KEY`, `S3_SECRET_ACCESS_KEY`, `S3_REGION`, `S3_BUCKET_NAME`
+- **Google Drive**: `GOOGLE_DRIVE_CLIENT_EMAIL`, `GOOGLE_DRIVE_PRIVATE_KEY`, `GOOGLE_DRIVE_FOLDER_ID`
+- **BetterStack (Logging)**: `BETTERSTACK_AUTH_TOKEN`, `BETTERSTACK_SOURCE_TOKEN`
+- **Datos del Grupo**: `GRUPO_NUMERO`, `GRUPO_NOMBRE`, `GRUPO_DISTRITO`, etc.
+
+#### Cómo Funciona
+
+```typescript
+// 1. Al iniciar la aplicación (src/index.ts)
+await SecretsManager.initialize();
+
+// 2. En cualquier parte del código, obtén secretos de forma tipada
+import { SecretsManager } from './utils/classes/SecretsManager';
+
+// Obtener secreto JWT
+const jwtSecret = SecretsManager.getJWTSecret();
+
+// Obtener secretos de AWS
+const awsSecrets = SecretsManager.getAWSSecrets();
+// { accessKey: string, secretAccessKey: string, region: string, bucketName: string }
+
+// Obtener secretos de Turso
+const tursoSecrets = SecretsManager.getTursoSecrets();
+// { databaseUrl: string, authToken: string }
+```
+
+#### Arquitectura de Secretos
+
+```
+┌─────────────────────────────────────────┐
+│  Infisical Dashboard (Web)             │
+│  ┌──────────────────────────────────┐  │
+│  │  Project: scout-api              │  │
+│  │  ├─ Environment: dev             │  │
+│  │  │  ├─ Index (root)              │  │
+│  │  │  │  ├─ JWT_SECRET             │  │
+│  │  │  │  ├─ REDIS_URI              │  │
+│  │  │  ├─ Folder: AWS/              │  │
+│  │  │  │  ├─ S3_ACCESS_KEY          │  │
+│  │  │  │  └─ S3_SECRET_ACCESS_KEY   │  │
+│  │  │  ├─ Folder: TURSO/            │  │
+│  │  │  ├─ Folder: GOOGLE_DRIVE/     │  │
+│  │  │  └─ Folder: BETTERSTACK/      │  │
+│  │  └─ Environment: prod            │  │
+│  │     └─ (misma estructura)        │  │
+│  └──────────────────────────────────┘  │
+└─────────────────────────────────────────┘
+              ↓ (Service Token)
+┌─────────────────────────────────────────┐
+│  Scout API (Node.js)                    │
+│  ┌──────────────────────────────────┐  │
+│  │  SecretsManager.initialize()     │  │
+│  │  ├─ Lee INFISICAL_TOKEN          │  │
+│  │  ├─ Lee INFISICAL_PROJECT_ID     │  │
+│  │  ├─ Lee INFISICAL_ENV (dev/prod) │  │
+│  │  ├─ Conecta con Infisical SDK    │  │
+│  │  ├─ Descarga todos los secretos  │  │
+│  │  └─ Los cachea en memoria        │  │
+│  └──────────────────────────────────┘  │
+│                ↓                        │
+│  ┌──────────────────────────────────┐  │
+│  │  Código de la App                │  │
+│  │  ├─ getJWTSecret()               │  │
+│  │  ├─ getAWSSecrets()              │  │
+│  │  ├─ getTursoSecrets()            │  │
+│  │  └─ etc...                       │  │
+│  └──────────────────────────────────┘  │
+└─────────────────────────────────────────┘
+```
+
+#### Tipos de Secretos
+
+```typescript
+// src/types/secrets.ts - Tipos TypeScript para todos los secretos
+
+export interface AppSecrets {
+  JWT_SECRET: string;
+  JWT_EXPIRY: string;
+  REDIS_URI: string;
+}
+
+export interface AWSSecrets {
+  S3_ACCESS_KEY: string;
+  S3_SECRET_ACCESS_KEY: string;
+  S3_REGION: string;
+  S3_BUCKET_NAME: string;
+}
+
+export interface TursoSecrets {
+  TURSO_DATABASE_URL: string;
+  TURSO_AUTH_TOKEN: string;
+}
+
+export interface GoogleDriveSecrets {
+  GOOGLE_DRIVE_CLIENT_EMAIL: string;
+  GOOGLE_DRIVE_PRIVATE_KEY: string;
+  GOOGLE_DRIVE_FOLDER_ID: string;
+}
+
+export interface BetterStackSecrets {
+  BETTERSTACK_AUTH_TOKEN: string;
+  BETTERSTACK_SOURCE_TOKEN: string;
+}
+
+export interface DatosGrupo {
+  GRUPO_NUMERO: string;
+  GRUPO_NOMBRE: string;
+  GRUPO_DISTRITO: string;
+  GRUPO_LOGO_URL?: string;
+  // ... más campos del grupo
+}
+```
+
+#### Flujo para Desarrolladores
+
+1. **Solicitar credenciales al administrador**
+   - El admin te proporciona: `INFISICAL_TOKEN`, `INFISICAL_PROJECT_ID`, `INFISICAL_ENV`
+   - Son credenciales específicas del ambiente (dev tiene su token, prod otro)
+
+2. **Configurar localmente**
+   ```bash
+   # Copiar ejemplo
+   cp .env.example .env.development
+   
+   # Pegar credenciales del admin
+   INFISICAL_TOKEN=st.dev.xxxxx
+   INFISICAL_PROJECT_ID=project-id
+   INFISICAL_ENV=dev
+   ```
+
+3. **Ejecutar la aplicación**
+   ```bash
+   npm run dev
+   # La app descarga automáticamente todos los secretos desde Infisical
+   ```
+
+4. **Usar secretos en el código**
+   ```typescript
+   // ❌ NUNCA hacer esto
+   const secret = process.env.JWT_SECRET;
+   
+   // ✅ SIEMPRE hacer esto
+   const secret = SecretsManager.getJWTSecret();
+   ```
+
+#### Ventajas de este Enfoque
+
+- ✅ **Centralización**: Todos los secretos en un solo lugar
+- ✅ **Seguridad**: No hay secretos en código ni en archivos .env versionados
+- ✅ **Ambientes**: Un token por ambiente (dev/staging/prod)
+- ✅ **Tipado**: TypeScript valida que uses los secretos correctos
+- ✅ **Rotación**: El admin puede rotar secretos sin tocar código
+- ✅ **Auditoría**: Infisical registra quién accede a qué secretos
+
+#### Archivos Importantes
+
+```
+src/
+├── types/
+│   └── secrets.ts              # Interfaces de todos los secretos
+├── utils/
+│   └── classes/
+│       └── SecretsManager.ts   # Singleton para gestión de secretos
+└── index.ts                    # Inicializa SecretsManager al arrancar
+```
 
 Ver `.env.example` para lista completa y actualizada de variables requeridas.
 
 ---
 
 **Última actualización**: Noviembre 2025  
-**Versión del documento**: 1.0.0  
+**Versión del documento**: 1.1.0  
 **Mantenedor**: @aggutierrez98

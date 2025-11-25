@@ -3,12 +3,20 @@ const prompt = prp();
 import { nanoid } from "nanoid";
 import { encrypt } from "../utils/lib/bcrypt.util";
 import { RegisterSchema } from "../validators/auth";
-import { prismaClient } from "../utils/lib/prisma-client";
 import { ROLES } from "../types";
+import { SecretsManager } from "../utils/classes/SecretsManager";
 
 const createAdmin = async () => {
 
+    let prismaClient;
+
     try {
+        await SecretsManager.getInstance().initialize();
+        prismaClient = (await import("../utils/lib/prisma-client")).prismaClient;
+        if (!prismaClient) {
+            throw new Error("Prisma Client no inicializado");
+        }
+
         console.log(
             "------------ INICIANDO CREACION DE USUARIO ADMIN DENTRO DE DB -------------\n",
         );
@@ -44,7 +52,9 @@ const createAdmin = async () => {
         console.log(
             "\n------------ SCRIPT FINALIZADO -------------\n",
         );
-        await prismaClient.$disconnect();
+        if (prismaClient) {
+            await prismaClient.$disconnect();
+        }
     }
 };
 

@@ -1,9 +1,15 @@
 import { PrismaClient } from '@prisma/client'
 import { PrismaLibSql } from '@prisma/adapter-libsql'
 import logger from '../classes/Logger';
+import { SecretsManager } from '../classes/SecretsManager';
 
-const dbUrl = process.env.TURSO_DATABASE_URL!
-const dbToken = process.env.TURSO_AUTH_TOKEN
+// if(SecretsManager.getInstance().isInitialized() === false) {
+//     await SecretsManager.getInstance().initialize()
+// }
+
+const tursoSecrets = SecretsManager.getInstance().getTursoSecrets();
+const dbUrl = tursoSecrets.DATABASE_URL;
+const dbToken = tursoSecrets.AUTH_TOKEN;
 
 logger.info(`Conexion a DB: ${dbUrl}`);
 

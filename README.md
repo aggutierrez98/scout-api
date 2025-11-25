@@ -16,20 +16,25 @@ API REST para gestión de grupos Scout con bot de WhatsApp integrado. Sistema co
 ## 🚀 Tecnologías Utilizadas
 
 ### Backend Core
+
 - **Node.js** (v18.14.2+): Entorno de ejecución JavaScript
 - **Express.js**: Framework web minimalista y flexible
 - **TypeScript**: Superset tipado de JavaScript para mayor seguridad de tipos
 
 ### Base de Datos
+
 - **Turso (LibSQL)**: Base de datos SQLite distribuida y serverless
 - **Prisma ORM**: ORM moderno con generación de tipos automática
 - **@prisma/adapter-libsql**: Adaptador para conectar Prisma con Turso/LibSQL
 
 ### Caché y Sesiones
+
 - **Redis**: Sistema de caché en memoria para optimizar consultas frecuentes
 - **MongoDB**: Almacenamiento de sesiones remotas de WhatsApp (vía wwebjs-mongo)
 
 ### Seguridad y Autenticación
+
+- **Infisical SDK**: Gestión centralizada y segura de secretos y variables de entorno
 - **JWT (jsonwebtoken)**: Autenticación basada en tokens
 - **bcryptjs**: Hash seguro de contraseñas
 - **helmet**: Protección de headers HTTP
@@ -38,31 +43,37 @@ API REST para gestión de grupos Scout con bot de WhatsApp integrado. Sistema co
 - **cors**: Configuración de políticas CORS
 
 ### Integraciones Externas
+
 - **AWS S3**: Almacenamiento de documentos PDF en la nube
 - **Google Drive API**: Importación de datos desde Google Spreadsheets
 - **Google Sheets**: Fuente de datos para carga masiva
 - **WhatsApp Web.js**: Bot automatizado de WhatsApp
 
 ### Procesamiento de Archivos
+
 - **pdf-lib**: Generación y manipulación de PDFs
 - **xlsx**: Procesamiento de archivos Excel
 - **sharp**: Procesamiento y optimización de imágenes
 - **express-fileupload**: Manejo de uploads de archivos
 
 ### Validación y Documentación
+
 - **Zod**: Validación de esquemas y tipos en runtime
 - **Swagger (swagger-jsdoc, swagger-ui-express)**: Documentación automática de API
 
 ### Logging y Monitoreo
+
 - **Winston**: Sistema de logging estructurado
 - **Logtail**: Servicio de logs en la nube
 - **Morgan**: Logger de peticiones HTTP
 
 ### Automatización
+
 - **node-cron**: Tareas programadas (recordatorios de cumpleaños, etc.)
 - **puppeteer**: Automatización de navegador para WhatsApp Web
 
 ### Herramientas de Desarrollo
+
 - **ts-node & ts-node-dev**: Ejecución de TypeScript en desarrollo
 - **nodemon**: Recarga automática del servidor
 - **concurrently**: Ejecución paralela de comandos
@@ -127,20 +138,25 @@ La API sigue una **arquitectura en capas** (Layered Architecture) con separació
 ### Características Arquitectónicas
 
 #### 1. **Patrón MVC Modificado**
+
 - **Routes**: Definen endpoints y aplican middlewares
 - **Controllers**: Manejan lógica HTTP (request/response)
 - **Services**: Contienen lógica de negocio pura
 - **Models**: Definición de esquemas (Prisma)
 
 #### 2. **Inyección de Dependencias**
+
 Los controladores reciben servicios como parámetros:
+
 ```typescript
 const scoutService = new ScoutService();
 const scoutController = new ScoutController({ scoutService });
 ```
 
 #### 3. **Middleware Pipeline**
+
 Cada petición pasa por una cadena de middlewares:
+
 - Logging (Morgan)
 - Security (Helmet, Rate Limiting)
 - Authentication (JWT verification)
@@ -150,17 +166,21 @@ Cada petición pasa por una cadena de middlewares:
 - Error handling
 
 #### 4. **Sistema de Caché Inteligente**
+
 - `cacheMiddleware`: Almacena respuestas en Redis
 - `cleanCacheMiddleware`: Invalida caché al modificar datos
 - TTL configurable por endpoint
 
 #### 5. **Manejo Centralizado de Errores**
+
 - Clase `AppError` personalizada
 - Middleware `errorMiddleware` global
 - Logging estructurado con Winston
 
 #### 6. **Sistema de Permisos RBAC**
+
 Roles: `ADMIN`, `DIRIGENTE`, `EXTERNO`
+
 - Validación por recurso y método HTTP
 - Implementado en `validatePermissions`
 
@@ -326,25 +346,36 @@ scout-api/
 Antes de comenzar, asegúrate de tener instalado:
 
 1. **Node.js** (v22.13.1 o superior)
+
    ```bash
    node --version  # Verificar versión
    ```
-
 2. **npm** (v9.5.0 o superior)
+
    ```bash
    npm --version
    ```
-
 3. **Docker & Docker Compose** (requerido)
+
    - **Obligatorio para desarrollo**: Ejecuta Turso (LibSQL) y Redis
    - [Descargar Docker Desktop](https://www.docker.com/products/docker-desktop)
    - Verificar instalación:
+
    ```bash
    docker --version
    docker compose version
    ```
+4. **Credenciales de Infisical** (solicitar al administrador)
 
-4. **Git**
+   - **No necesitas crear cuenta en Infisical**
+   - El administrador del proyecto te proporcionará:
+     - `INFISICAL_SERVICE_TOKEN` - Service Token del ambiente de desarrollo
+     - `INFISICAL_PROJECT_ID` - ID del proyecto
+     - `INFISICAL_ENV` - Ambiente (ej: `dev`, `staging`, `prod`)
+     - `INFISICAL_SITE_URL` - URL del servidor (opcional)
+   - Estos valores te darán acceso a todos los secretos del ambiente configurado
+5. **Git**
+
    ```bash
    git --version
    ```
@@ -364,88 +395,102 @@ cd scout-api
 npm install
 ```
 
-### 3. Configurar Variables de Entorno
+### 3. Configurar Variables de Entorno e Infisical
 
-Crea un archivo `.env.development` en la raíz del proyecto basándote en `.env.example`:
+Este proyecto usa **Infisical** para gestionar secretos de forma centralizada y segura.
+
+#### a) Solicitar Service Token de Infisical
+
+**Solicita al administrador del proyecto** las siguientes credenciales para tu entorno:
+
+- `INFISICAL_SERVICE_TOKEN` - Service Token para el ambiente de desarrollo
+- `INFISICAL_PROJECT_ID` - ID del proyecto en Infisical
+- `INFISICAL_ENV` - Ambiente de Infisical (ej: `dev`, `staging`, `prod`)
+- `INFISICAL_SITE_URL` - URL del servidor Infisical (usualmente `https://app.infisical.com`)
+
+> 💡 **Nota**: El administrador generará un Service Token específico para el ambiente de desarrollo. Cada ambiente (dev/staging/prod) tiene su propio token con acceso solo a los secretos de ese ambiente. Todos los secretos (AWS, Google Drive, Turso, etc.) están configurados centralmente.
+
+#### b) Crear archivo .env.development
 
 ```bash
 cp .env.example .env.development
 ```
 
-#### Variables Requeridas
+Edita `.env.development` y completa con las credenciales proporcionadas:
 
 ```dosini
-# ============================================
-# SERVIDOR
-# ============================================
-PORT=8080                                    # Puerto del servidor Node.js
+NODE_ENV=development
+PORT=8080
 
-# ============================================
-# SEGURIDAD
-# ============================================
-JWT_SECRET=tu_clave_secreta_super_segura    # Clave para firmar JWT (mínimo 32 caracteres)
-
-# ============================================
-# BASE DE DATOS (TURSO/LIBSQL)
-# ============================================
-TURSO_DATABASE_URL=http://127.0.0.1:9000    # URL de Turso (Docker local)
-TURSO_AUTH_TOKEN=                            # Token de autenticación (vacío en local)
-DATABASE_URL=file:/var/lib/sqld/scout.db    # Ruta interna de LibSQL (para migraciones)
-
-# ============================================
-# REDIS (CACHÉ)
-# ============================================
-REDIS_CONNECTION_URI=redis://localhost:6379  # URI de conexión Redis
-
-# ============================================
-# GOOGLE DRIVE API
-# ============================================
-# Credenciales de Service Account para Google Drive/Sheets
-GOOGLE_SERVICE_ACCOUNT_EMAIL=tu-service-account@proyecto.iam.gserviceaccount.com
-GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-GOOGLE_SPREADSHEET_DATA_KEY=1ABC...xyz      # ID de la hoja de cálculo
-
-# Cómo obtener credenciales:
-# 1. Ir a https://console.cloud.google.com
-# 2. Crear proyecto o seleccionar uno existente
-# 3. Habilitar Google Drive API y Google Sheets API
-# 4. Crear Service Account en IAM & Admin
-# 5. Crear clave JSON y extraer email y private_key
-# 6. Compartir el Spreadsheet con el email del Service Account
-
-# ============================================
-# AWS S3 (ALMACENAMIENTO)
-# ============================================
-AWS_S3_ACCESS_KEY=AKIA...                   # Access Key ID de AWS
-AWS_S3_SECRET_ACCESS_KEY=...                # Secret Access Key
-AWS_S3_BUCKET_NAME=scout-documentos         # Nombre del bucket
-AWS_S3_REGION=us-east-1                     # Región del bucket
-
-# Cómo configurar:
-# 1. Crear bucket S3 en AWS Console
-# 2. Crear usuario IAM con permisos S3
-# 3. Generar Access Keys en IAM
-# 4. Configurar política del bucket para permitir PutObject/GetObject
-
-# ============================================
-# LOGTAIL (LOGGING EN LA NUBE)
-# ============================================
-LOGTAIL_TOKEN=tu_token_logtail              # Token de Logtail (opcional)
-LOGTAIL_INGESTING_HOST=in.logtail.com       # Host de ingesta
-
-# Obtener token en: https://logtail.com
-
-# ============================================
-# WHATSAPP BOT (OPCIONAL)
-# ============================================
-# MONGODB_URI=mongodb://localhost:27017/whatsapp  # URI MongoDB para sesiones
-# WHATSAPP_US_CHAT_ID=123456789@c.us              # ID del chat de WhatsApp
-
-# ============================================
-# DATOS DEL GRUPO SCOUT
-# ============================================
-DATOS_GRUPO='{"nombre":"Grupo Scout X","numero":123,"distrito":"Norte"}'
+# Credenciales proporcionadas por el administrador
+INFISICAL_SERVICE_TOKEN=<service-token-del-admin>
+INFISICAL_PROJECT_ID=<project-id>
+INFISICAL_ENV=dev
+INFISICAL_SITE_URL=https://app.infisical.com
 ```
+
+#### c) Secretos gestionados centralmente
+
+Los siguientes secretos están configurados en Infisical por el administrador (no necesitas configurarlos localmente):
+
+**Secretos principales:**
+
+- `DATABASE_URL` - Ruta local de SQLite (file:./src/prisma/scout.db)
+- `JWT_SECRET` - Clave para firmar tokens JWT
+- `REDIS_CONNECTION_URI` - URI de conexión a Redis
+- `DATOS_GRUPO` - JSON con datos del grupo: `{"numero":"58","nombre":"Madre Teresa","distrito":"2","zona":"9"}`
+
+**AWS S3 (almacenamiento de documentos):**
+
+- `S3_ACCESS_KEY` - Access Key ID de AWS
+- `S3_SECRET_ACCESS_KEY` - Secret Access Key
+- `S3_BUCKET_NAME` - Nombre del bucket
+- `S3_REGION` - Región del bucket (ej: us-east-1)
+
+**BetterStack (logs en producción):**
+
+- `BETTERSTACK_AUTH_TOKEN` - Token de autenticación
+- `BETTERSTACK_INGESTING_HOST` - Host de ingesta (in.logs.betterstack.com)
+
+**Google Drive (carga de datos):**
+
+- `GOOGLE_DRIVE_PRIVATE_KEY` - Private key del Service Account
+- `GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL` - Email del Service Account
+- `GOOGLE_DRIVE_SPREADSHEET_DATA_KEY` - ID de la hoja de datos
+
+**Turso (producción):**
+
+- `TURSO_AUTH_TOKEN` - Token de autenticación de Turso Cloud
+- `TURSO_DATABASE_URL` - URL de base de datos Turso (libsql://...)
+
+#### d) ¿Cómo funciona? (Arquitectura)
+
+Al iniciar la aplicación, el `SecretsManager` (singleton) se autentica con Infisical usando tus credenciales y descarga todos los secretos de forma segura:
+
+```
+Tu máquina                          Infisical Cloud
+─────────────                       ───────────────
+                                  
+.env.development                    📦 Proyecto Scout API
+  ├─ CLIENT_ID      ────┐           ├─ JWT_SECRET
+  ├─ CLIENT_SECRET  ────┼──────────►├─ AWS Keys
+  └─ PROJECT_ID     ────┘   Auth    ├─ Google Drive Keys
+                                    ├─ Turso Credentials
+SecretsManager                      └─ Redis URI
+  └─ Descarga secretos tipados
+  
+Tu código usa:
+  • SecretsManager.getInstance().getJWTSecret()
+  • SecretsManager.getInstance().getAWSSecrets()
+  • etc. (todo tipado en TypeScript)
+```
+
+**Ventajas de este enfoque:**
+✅ **Cero configuración local** - Solo 4 variables en tu `.env`
+✅ **Secretos centralizados** - El admin actualiza, todos reciben los cambios
+✅ **Sin secretos en Git** - `.env.development` solo tiene credenciales de acceso
+✅ **Tipado completo** - TypeScript valida todos los secretos
+✅ **Rotación fácil** - El admin rota secretos sin tocar tu código
 
 ### 4. Inicializar Entorno Docker (Primera Vez)
 
@@ -457,6 +502,7 @@ npm run docker:init-with-data
 ```
 
 Este comando realiza automáticamente:
+
 1. 🐳 Levanta contenedores Docker (Turso + Redis)
 2. 📦 Copia la base de datos `src/prisma/scout.db` al contenedor
 3. 🗑️ Limpia datos existentes en la base de datos
@@ -466,6 +512,7 @@ Este comando realiza automáticamente:
 **Tiempo estimado:** 2-3 minutos
 
 Esto levanta:
+
 - **Turso (LibSQL)**: Puerto 9000 - Base de datos SQLite con datos de desarrollo
 - **Redis**: Puerto 6379 - Sistema de caché en memoria
 
@@ -476,8 +523,9 @@ npm run create-admin:dev
 ```
 
 Este script interactivo te pedirá:
+
 - Username
-- Password  
+- Password
 - Confirmación de password
 
 El usuario creado tendrá rol `ADMIN` con todos los permisos.
@@ -497,6 +545,7 @@ El servidor iniciará en `http://localhost:3000` (o el puerto configurado en `.e
 ## 🔄 Flujo de Trabajo Diario
 
 ### Primera vez trabajando en el proyecto
+
 ```bash
 npm run docker:init-with-data  # Inicia Docker + carga datos
 npm run create-admin:dev       # Crea usuario administrador
@@ -506,17 +555,20 @@ npm run dev                     # Inicia servidor
 ### Sesiones posteriores
 
 **Si los contenedores están detenidos:**
+
 ```bash
 npm run docker:init  # Solo inicia contenedores
 npm run dev          # Inicia servidor
 ```
 
 **Si los contenedores ya están corriendo:**
+
 ```bash
 npm run dev  # Solo inicia el servidor
 ```
 
 **Verificar estado de contenedores:**
+
 ```bash
 npm run docker:status
 ```
@@ -602,27 +654,28 @@ npm run create-admin:dev    # Crear nuevo usuario admin
 #### Configuración
 
 1. **Crear Proyecto en Google Cloud Console**
+
    - Ir a [Google Cloud Console](https://console.cloud.google.com)
    - Crear un nuevo proyecto o seleccionar uno existente
-
 2. **Habilitar APIs**
+
    ```
    Google Drive API
    Google Sheets API
    ```
-
 3. **Crear Service Account**
+
    - Ir a `IAM & Admin` > `Service Accounts`
    - Crear Service Account
    - Generar clave JSON
    - Extraer `client_email` y `private_key`
-
 4. **Compartir Spreadsheet**
+
    - Abrir tu Google Sheet
    - Compartir con el email del Service Account (client_email)
    - Copiar el ID del Sheet (de la URL)
-
 5. **Configurar Variables**
+
    ```dosini
    GOOGLE_SERVICE_ACCOUNT_EMAIL=...@....iam.gserviceaccount.com
    GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
@@ -642,6 +695,7 @@ await writeSpreadSheet('scouts', scoutsData);
 ```
 
 #### Hojas Disponibles
+
 - `scouts`: Datos de scouts
 - `familiares`: Datos de familiares
 - `equipos`: Equipos/patrullas
@@ -657,11 +711,12 @@ await writeSpreadSheet('scouts', scoutsData);
 #### Configuración
 
 1. **Crear Bucket S3**
+
    - Ir a [AWS S3 Console](https://s3.console.aws.amazon.com)
    - Crear nuevo bucket
    - Configurar región (ej: `us-east-1`)
-
 2. **Configurar Políticas**
+
    ```json
    {
      "Version": "2012-10-17",
@@ -678,14 +733,14 @@ await writeSpreadSheet('scouts', scoutsData);
      ]
    }
    ```
-
 3. **Crear Usuario IAM**
+
    - Ir a `IAM` > `Users`
    - Crear usuario con acceso programático
    - Adjuntar política de S3
    - Generar Access Keys
-
 4. **Configurar Variables**
+
    ```dosini
    AWS_S3_ACCESS_KEY=AKIA...
    AWS_S3_SECRET_ACCESS_KEY=...
@@ -713,27 +768,27 @@ const signedUrl = await getFileInS3('documentos/scout_123.pdf');
 #### Turso en Producción (Turso Cloud)
 
 1. **Crear cuenta** en [turso.tech](https://turso.tech)
-
 2. **Instalar CLI**
+
    ```bash
    brew install tursodatabase/tap/turso
    # o
    curl -sSfL https://get.tur.so/install.sh | bash
    ```
-
 3. **Crear base de datos**
+
    ```bash
    turso db create scout-db
    turso db show scout-db
    ```
-
 4. **Obtener credenciales**
+
    ```bash
    turso db tokens create scout-db
    turso db show scout-db --url
    ```
-
 5. **Configurar variables**
+
    ```dosini
    TURSO_DATABASE_URL=libsql://scout-db-[user].turso.io
    TURSO_AUTH_TOKEN=eyJhb...
@@ -788,18 +843,19 @@ cacheManager.set(cacheKey, data, {
 #### Configuración
 
 1. **MongoDB para sesiones** (opcional, se puede usar LocalAuth)
+
    ```dosini
    MONGODB_URI=mongodb://localhost:27017/whatsapp
    WHATSAPP_US_CHAT_ID=123456789@c.us
    ```
-
 2. **Activar en código**
+
    ```typescript
    // En src/index.ts (actualmente comentado)
    await serverInstance.connectWhatsapp();
    ```
-
 3. **Escanear QR**
+
    - Al iniciar, se mostrará un QR en la consola
    - Escanear con WhatsApp Web en tu teléfono
 
@@ -982,6 +1038,7 @@ docker run -p 3000:3000 --env-file .env.production scout-api
 ### Consideraciones de Producción
 
 ✅ **Hacer**:
+
 - Usar `NODE_ENV=production`
 - Habilitar rate limiting (`express-rate-limit`)
 - Configurar CORS con dominios específicos
@@ -992,6 +1049,7 @@ docker run -p 3000:3000 --env-file .env.production scout-api
 - Configurar monitoreo (PM2, DataDog, etc.)
 
 ❌ **No hacer**:
+
 - Exponer variables de entorno en el código
 - Usar base de datos local de Turso
 - Deshabilitar autenticación JWT
@@ -1001,16 +1059,19 @@ docker run -p 3000:3000 --env-file .env.production scout-api
 ### Notas Importantes
 
 **WhatsApp Web.js**:
+
 - Solo funciona correctamente con Node.js v18.14.2 y npm v9.5.0
 - Si usas otra versión, cambia a `LocalAuth` en lugar de `MongoStore`
 - Puppeteer requiere dependencias adicionales en Linux (librerías gráficas)
 
 **Docker**:
+
 - Los contenedores deben estar corriendo antes de iniciar el servidor
 - Usar `npm run docker:status` para verificar estado de contenedores
 - Si los contenedores están detenidos, ejecutar `npm run docker:init`
 
 **Prisma**:
+
 - El esquema se gestiona mediante migraciones en Prisma (ver `src/prisma/migrations/`)
 - Nunca editar archivos en `@prisma/client` manualmente
 - Regenerar cliente: `npx prisma generate`
@@ -1020,6 +1081,7 @@ docker run -p 3000:3000 --env-file .env.production scout-api
 ## 📞 Soporte
 
 Para reportar issues o contribuir:
+
 - **GitHub Issues**: [scout-api/issues](https://github.com/aggutierrez98/scout-api/issues)
 - **Repository**: [github.com/aggutierrez98/scout-api](https://github.com/aggutierrez98/scout-api)
 

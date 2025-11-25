@@ -1,12 +1,14 @@
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import logger from "../classes/Logger";
+import { SecretsManager } from "../classes/SecretsManager";
 
+const awsSecrets = SecretsManager.getInstance().getAWSSecrets();
 const awsConfiguration = {
-    accessKeyId: process.env.AWS_S3_ACCESS_KEY || "",
-    secretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY || "",
-    region: process.env.AWS_S3_REGION || "",
-    bucketName: process.env.AWS_S3_BUCKET_NAME || ""
+    accessKeyId: awsSecrets.S3_ACCESS_KEY,
+    secretAccessKey: awsSecrets.S3_SECRET_ACCESS_KEY,
+    region: awsSecrets.S3_REGION,
+    bucketName: awsSecrets.S3_BUCKET_NAME
 }
 
 const client = new S3Client({

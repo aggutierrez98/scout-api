@@ -1,6 +1,7 @@
 import winston from "winston";
 import { Logtail } from "@logtail/node";
 import { LogtailTransport } from "@logtail/winston";
+import { SecretsManager } from "../classes/SecretsManager";
 
 const level = () => {
 	const env = process.env.NODE_ENV || "development";
@@ -35,9 +36,21 @@ const format = winston.format.combine(
 const defineTransports = () => {
 	const env = process.env.NODE_ENV || "development";
 	const isDevelopment = env === "development";
-	return isDevelopment
-		? [new winston.transports.Console()]
-		: [new winston.transports.Console(), new LogtailTransport(new Logtail(process.env.LOGTAIL_TOKEN ?? "", { endpoint: `https://${process.env.LOGTAIL_INGESTING_HOST}`, }))];
+	
+	if (isDevelopment) {
+		return [new winston.transports.Console()];
+	}
+	
+	// Producción: usar BetterStack (antes Logtail)
+	const betterstack = SecretsManager.getInstance().getBetterStackSecrets();
+	return [
+		new winston.transports.Console(),
+		new LogtailTransport(
+			new Logtail(betterstack.AUTH_TOKEN, {
+				endpoint: `https://${betterstack.INGESTING_HOST}`,
+			})
+		)
+	];
 };
 
 const winstonLogger = winston.createLogger({

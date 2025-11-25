@@ -1,5 +1,6 @@
 import { createClient } from "redis";
 import logger from "./Logger";
+import { SecretsManager } from "./SecretsManager";
 type CacheValue = any | null;
 
 const MAX_REDIS_CONNECTION_RETRIES = 20
@@ -11,7 +12,7 @@ export class CacheManager {
 
 	constructor() {
 		this.client = createClient({
-			url: process.env.REDIS_CONNECTION_URI,
+			url: SecretsManager.getInstance().getRedisURI(),
 			socket: {
 				reconnectStrategy: function (retries) {
 					if (retries > MAX_REDIS_CONNECTION_RETRIES) {

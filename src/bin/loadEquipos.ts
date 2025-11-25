@@ -2,15 +2,23 @@ import { Prisma } from "@prisma/client";
 import ProgressBar from "progress";
 import { nanoid } from "nanoid";
 import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
-import { prismaClient } from "../utils/lib/prisma-client";
+import { SecretsManager } from "../utils/classes/SecretsManager";
 
 export const loadEquipos = async () => {
+
+    let prismaClient;
 
     try {
         console.time("Tiempo de ejecucion");
         console.log(
             "------------ INICIANDO SCRIPT DE ACTUALIZACION EQUIPOS -------------\n",
         );
+
+        await SecretsManager.getInstance().initialize();
+        prismaClient = (await import("../utils/lib/prisma-client")).prismaClient;
+        if (!prismaClient) {
+            throw new Error("Prisma Client no inicializado");
+        }
 
         const data = await getSpreadSheetData("equipos")
 
@@ -50,7 +58,9 @@ export const loadEquipos = async () => {
     } catch (error) {
         console.error("Error en el script: ", (error as Error).message);
     } finally {
-        await prismaClient.$disconnect();
+        if (prismaClient) {
+            await prismaClient.$disconnect();
+        }
     }
 };
 
