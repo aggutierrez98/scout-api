@@ -13,4 +13,3 @@ backup.sql
 **/prisma/**.db-wal
 **/prisma/**.db-shm
 **/prisma/migrations/**
-.qodo
