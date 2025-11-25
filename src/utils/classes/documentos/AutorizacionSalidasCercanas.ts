@@ -6,7 +6,7 @@ import { RelacionFamiliarType } from "../../../types";
 import { signPdf } from "../../lib/pdf-lib";
 import fileUpload from "express-fileupload";
 
-const datosGrupo = JSON.parse(process.env.DATOS_GRUPO || "")
+const datosGrupo = JSON.parse(process.env.DATOS_GRUPO || '{"numero":"58","nombre":"Madre Teresa","distrito":"2","zona":"9"}')
 const PARTIDO_DOMICILIO = "Tres de febrero"
 
 interface ConstructorProps extends BaseConstructorProps {

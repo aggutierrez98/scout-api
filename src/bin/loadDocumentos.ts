@@ -5,7 +5,7 @@ import { nanoid } from "nanoid";
 import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
 import { prismaClient } from "../utils/lib/prisma-client";
 
-const loadDocumentos = async () => {
+export const loadDocumentos = async () => {
 
     try {
         console.time("Tiempo de ejecucion");
@@ -131,4 +131,4 @@ const loadDocumentos = async () => {
     }
 };
 
-loadDocumentos();
+// loadDocumentos();

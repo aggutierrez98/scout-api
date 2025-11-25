@@ -6,7 +6,7 @@ import { nanoid } from "nanoid";
 import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
 import { prismaClient } from "../utils/lib/prisma-client";
 
-const loadPagos = async () => {
+export const loadPagos = async () => {
 
     try {
 
@@ -95,4 +95,4 @@ const loadPagos = async () => {
     }
 };
 
-loadPagos();
+// loadPagos();

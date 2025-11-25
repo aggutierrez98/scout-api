@@ -1,52 +1,74 @@
 services:
-  # db-service:
-  #   container_name: dev-database
-  #   image: mysql
-  #   user: root
-  #   volumes:
-  #     - db-data:/var/lib/mysql
-  #   env_file: .env.development
-  #   ports:
-  #     - 3306:3306
-  #   networks:
-  #     - db-network
-
-  # phpmyadmin:
-  #   image: phpmyadmin
-  #   ports:
-  #     - 9000:80
-  #   restart: always
-  #   environment:
-  #     PMA_HOST: db-service
-  #   depends_on:
-  #     - db-service
-  #   networks:
-  #     - db-network
-
+  # ============================================
+  # TURSO (LibSQL) - Base de datos SQLite
+  # ============================================
   turso-dev-db:
-      image:  ghcr.io/tursodatabase/libsql-server:latest
-      # env_file:
-      #   - .env.development
-      ports:
-        - "9000:8080"
-      volumes:
-        - ./data:/var/lib/sqld
-      environment:
-        SQLD_DB_PATH: "/var/lib/sqld/scout.db" # Ruta dentro del contenedor a la base de datos
-        # SQLD_NODE: "primary"
-        # SQLD_HTTP_LISTEN_ADDR: "0.0.0.0:9000" # Puerto donde escucha el servidor sqld
-      restart: unless-stopped
+    container_name: scout-turso-dev
+    image: ghcr.io/tursodatabase/libsql-server:latest
+    ports:
+      - "9000:8080" # Mapear puerto 8080 del contenedor al puerto 9000 del host
+    volumes:
+      # Volumen persistente que contendrá la copia de scout.db
+      - turso_data:/var/lib/sqld
+      # Montar el archivo original como solo lectura en /tmp
+      - ./src/prisma/scout.db:/tmp/source-scout.db:ro
+      
+      - ./src/bin/init-turso.sh:/usr/local/bin/init-turso.sh:ro # Script de seed de datos
+    environment:
+      # Ruta a la base de datos (LibSQL maneja internamente)
+      SQLD_DB_PATH: "/var/lib/sqld/scout.db"
+      # Habilitar modo HTTP (necesario para Turso client)
+      SQLD_HTTP_LISTEN_ADDR: "0.0.0.0:8080"
+      # Configuración de nodo primario (para modo standalone)
+      SQLD_NODE: "primary"
+    entrypoint: ["/bin/sh", "/usr/local/bin/init-turso.sh"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - scout-network
 
+  # ============================================
+  # REDIS - Sistema de caché
+  # ============================================
   redis-dev:
-    image: redis
-    restart: always
+    container_name: scout-redis-dev
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/var/lib/redis/data
+      # Persistencia de datos Redis (AOF)
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - scout-network
 
+# ============================================
+# VOLUMENES PERSISTENTES
+# ============================================
 volumes:
+  # Datos de Redis (AOF persistence)
   redis_data:
-# networks:
-#   db-network:
-#     driver: bridge
+    driver: local
+  # Datos del servidor LibSQL
+  turso_data:
+    driver: local
+
+# ============================================
+# RED INTERNA
+# ============================================
+networks:
+  scout-network:
+    driver: bridge
+    name: scout-dev-network

@@ -1,4 +1,4 @@
-import { Decimal } from "@prisma/client/runtime/library";
+// import { Decimal } from "@prisma/client/runtime/library";
 import { getAge, getEntregaFromType } from "../utils";
 import { prismaClient } from "../utils/lib/prisma-client";
 import logger from "../utils/classes/Logger";
@@ -79,7 +79,7 @@ interface ScoutPago {
         apellido: string
     }
     concepto: string;
-    monto: number | Decimal | string;
+    monto: number  | string;
     metodoPago: string;
     fechaPago: Date;
 }

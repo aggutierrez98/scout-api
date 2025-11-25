@@ -300,9 +300,6 @@ scout-api/
 │   ├── index.ts                      # Punto de entrada
 │   └── Server.ts                     # Clase principal del servidor
 │
-├── data/                             # Datos locales (Turso dev)
-│   └── scout/
-│
 ├── prisma/                           # Prisma root (alternativo)
 │   └── migrations/
 │
@@ -328,25 +325,26 @@ scout-api/
 
 Antes de comenzar, asegúrate de tener instalado:
 
-1. **Node.js** (v18.14.2 o superior)
+1. **Node.js** (v22.13.1 o superior)
    ```bash
    node --version  # Verificar versión
    ```
 
-2. **npm** (v9.5.0 o superior) o **yarn**
+2. **npm** (v9.5.0 o superior)
    ```bash
    npm --version
    ```
 
-3. **Docker Desktop** (opcional, para desarrollo local)
-   - Requerido para ejecutar Redis en contenedor
-   - [Descargar Docker](https://www.docker.com/products/docker-desktop)
+3. **Docker & Docker Compose** (requerido)
+   - **Obligatorio para desarrollo**: Ejecuta Turso (LibSQL) y Redis
+   - [Descargar Docker Desktop](https://www.docker.com/products/docker-desktop)
+   - Verificar instalación:
+   ```bash
+   docker --version
+   docker compose version
+   ```
 
-4. **Chromium** o Google Chrome
-   - Requerido por WhatsApp Web.js (Puppeteer)
-   - Viene instalado en la mayoría de sistemas
-
-5. **Git**
+4. **Git**
    ```bash
    git --version
    ```
@@ -380,7 +378,7 @@ cp .env.example .env.development
 # ============================================
 # SERVIDOR
 # ============================================
-PORT=3000                                    # Puerto del servidor Node.js
+PORT=8080                                    # Puerto del servidor Node.js
 
 # ============================================
 # SEGURIDAD
@@ -390,11 +388,9 @@ JWT_SECRET=tu_clave_secreta_super_segura    # Clave para firmar JWT (mínimo 32 
 # ============================================
 # BASE DE DATOS (TURSO/LIBSQL)
 # ============================================
-TURSO_DATABASE_URL=http://127.0.0.1:9000    # URL de Turso (local en desarrollo)
+TURSO_DATABASE_URL=http://127.0.0.1:9000    # URL de Turso (Docker local)
 TURSO_AUTH_TOKEN=                            # Token de autenticación (vacío en local)
-
-# En desarrollo local, Turso corre con:
-# turso dev --db-file ./src/prisma/scout.db --port 9000
+DATABASE_URL=file:/var/lib/sqld/scout.db    # Ruta interna de LibSQL (para migraciones)
 
 # ============================================
 # REDIS (CACHÉ)
@@ -451,71 +447,29 @@ LOGTAIL_INGESTING_HOST=in.logtail.com       # Host de ingesta
 DATOS_GRUPO='{"nombre":"Grupo Scout X","numero":123,"distrito":"Norte"}'
 ```
 
-### 4. Configurar Base de Datos
+### 4. Inicializar Entorno Docker (Primera Vez)
 
-La API utiliza **Turso** (LibSQL) que es SQLite compatible pero con capacidades distribuidas.
-
-#### Desarrollo Local
+**⚠️ Este paso es obligatorio la primera vez que trabajas con el proyecto:**
 
 ```bash
-# Iniciar Turso en modo desarrollo (ejecuta automáticamente con npm run dev)
-turso dev --db-file ./src/prisma/scout.db --port 9000
+# Inicializa Docker (Turso + Redis) y carga datos de desarrollo
+npm run docker:init-with-data
 ```
 
-#### Crear Esquema de Base de Datos
+Este comando realiza automáticamente:
+1. 🐳 Levanta contenedores Docker (Turso + Redis)
+2. 📦 Copia la base de datos `src/prisma/scout.db` al contenedor
+3. 🗑️ Limpia datos existentes en la base de datos
+4. 📥 Carga datos de desarrollo desde Google Sheets (scouts, familiares, equipos, etc.)
+5. 👤 Permite crear un usuario administrador
 
-```bash
-# Aplicar el esquema Prisma a la base de datos
-npm run push:dev
-```
+**Tiempo estimado:** 2-3 minutos
 
-Esto ejecuta `prisma db push` que:
-- Crea las tablas según el schema
-- No genera archivos de migración (útil en desarrollo)
+Esto levanta:
+- **Turso (LibSQL)**: Puerto 9000 - Base de datos SQLite con datos de desarrollo
+- **Redis**: Puerto 6379 - Sistema de caché en memoria
 
-### 5. Iniciar Redis (Caché)
-
-Redis se usa para cachear peticiones frecuentes y mejorar el rendimiento.
-
-```bash
-# Iniciar Redis con Docker
-docker compose up -d
-```
-
-Esto levanta un contenedor con Redis en el puerto `6379`.
-
-**Alternativa sin Docker:**
-```bash
-# Instalar Redis localmente
-# macOS
-brew install redis
-redis-server
-
-# Ubuntu/Debian
-sudo apt install redis-server
-sudo systemctl start redis
-```
-
-### 6. Cargar Datos de Prueba
-
-Para desarrollo, puedes cargar datos desde Google Sheets:
-
-```bash
-# Script que ejecuta todas las cargas en orden
-sh src/bin/dumpData.sh
-```
-
-O individualmente:
-```bash
-npm run load-equipos:dev      # Cargar equipos/patrullas
-npm run load-scouts:dev       # Cargar scouts
-npm run load-familiares:dev   # Cargar familiares
-npm run load-documentos:dev   # Cargar tipos de documentos
-npm run load-entregas:dev     # Cargar entregas de insignias
-npm run load-pagos:dev        # Cargar pagos
-```
-
-### 7. Crear Usuario Administrador
+### 5. Crear Usuario Administrador
 
 ```bash
 npm run create-admin:dev
@@ -523,64 +477,120 @@ npm run create-admin:dev
 
 Este script interactivo te pedirá:
 - Username
-- Password
+- Password  
 - Confirmación de password
 
 El usuario creado tendrá rol `ADMIN` con todos los permisos.
 
-### 8. Iniciar Servidor de Desarrollo
+> **Nota:** Este paso requiere que los contenedores Docker estén corriendo.
+
+### 6. Iniciar Servidor de Desarrollo
+
+Una vez completada la inicialización Docker del paso 4, puedes trabajar normalmente:
 
 ```bash
 npm run dev
 ```
 
-Esto ejecuta:
-- **Turso**: Base de datos local en puerto 9000
-- **Nodemon**: Recarga automática al detectar cambios
-- **Servidor Express**: En el puerto especificado en `.env.development`
+El servidor iniciará en `http://localhost:3000` (o el puerto configurado en `.env.development`).
 
-#### Verificar que funciona
+## 🔄 Flujo de Trabajo Diario
 
+### Primera vez trabajando en el proyecto
 ```bash
-# Health check
-curl http://localhost:3000/api/auth/health
-
-# Documentación Swagger
-open http://localhost:3000/docs
+npm run docker:init-with-data  # Inicia Docker + carga datos
+npm run create-admin:dev       # Crea usuario administrador
+npm run dev                     # Inicia servidor
 ```
 
-### 9. Herramientas de Desarrollo
+### Sesiones posteriores
 
-#### Prisma Studio (GUI para la BD)
+**Si los contenedores están detenidos:**
+```bash
+npm run docker:init  # Solo inicia contenedores
+npm run dev          # Inicia servidor
+```
+
+**Si los contenedores ya están corriendo:**
+```bash
+npm run dev  # Solo inicia el servidor
+```
+
+**Verificar estado de contenedores:**
+```bash
+npm run docker:status
+```
+
+### Recargar datos de desarrollo
+
+Si necesitas refrescar los datos desde Google Sheets:
+
+```bash
+npm run docker:load-data
+```
+
+Este comando ejecuta automáticamente:
+
+1. Limpieza de datos existentes (`deleteDBData`)
+2. Guardado de usuarios (`save-users`)
+3. Carga secuencial de: equipos → scouts → familiares → documentos → entregas → pagos
+
+### 7. Verificar Instalación
+
+Una vez iniciado el servidor (`npm run dev`), verifica que todo funciona:
+
+```bash
+# Health check del API
+curl http://localhost:8080/api/auth/health
+
+# Abrir documentación Swagger
+open http://localhost:8080/docs
+
+# Verificar estado de Docker
+npm run docker:status
+```
+
+El servidor ejecuta:
+
+- **Turso (LibSQL)**: Base de datos en puerto 9000 (contenedor Docker)
+- **Redis**: Caché en puerto 6379 (contenedor Docker)
+- **Express API**: En el puerto configurado en `.env.development` (default: 8080)
+- **Nodemon**: Hot reload automático al detectar cambios
+
+## 🛠️ Herramientas de Desarrollo
+
+### Prisma Studio
+
+Interfaz gráfica para explorar y editar la base de datos:
 
 ```bash
 npm run studio:dev
 ```
 
-Abre una interfaz web en `http://localhost:5555` para explorar y editar datos.
+Se abre en `http://localhost:5555`
 
-#### Logs
+### Logs del Sistema
 
-Los logs se muestran en consola con colores:
+El servidor muestra logs con colores según severidad:
+
 - 🟢 **INFO**: Operaciones normales
 - 🟡 **WARN**: Advertencias
-- 🔴 **ERROR**: Errores
-- 🟣 **HTTP**: Peticiones HTTP
-- ⚪ **DEBUG**: Información de depuración
+- 🔴 **ERROR**: Errores críticos
+- 🟣 **HTTP**: Peticiones HTTP entrantes
+- ⚪ **DEBUG**: Información de depuración detallada
 
-#### Hot Reload
+### Hot Reload
 
-El servidor se recarga automáticamente al guardar cambios en archivos `.ts`.
+Nodemon detecta cambios en archivos `.ts` y reinicia el servidor automáticamente.
 
-### 10. Limpiar Base de Datos
+### Reiniciar Base de Datos
 
-Si necesitas reiniciar la base de datos:
+Si necesitas limpiar y recargar la base de datos completamente:
 
 ```bash
-npm run deleteDBData:dev   # Borrar todos los datos
-npm run push:dev           # Recrear esquema
-sh src/bin/dumpData.sh     # Recargar datos de prueba
-npm run create-admin:dev   # Crear nuevo admin
+npm run deleteDBData:dev    # Borrar todos los datos
+npm run docker:load-data    # Recargar desde Google Sheets
+npm run create-admin:dev    # Crear nuevo usuario admin
 ```
 
 ## 🔌 Integraciones de Terceros
@@ -700,14 +710,7 @@ const signedUrl = await getFileInS3('documentos/scout_123.pdf');
 
 **Propósito**: Base de datos distribuida SQLite con sincronización en la nube.
 
-#### Desarrollo Local
-
-```bash
-# Ejecutar servidor local (incluido en npm run dev)
-turso dev --db-file ./src/prisma/scout.db --port 9000
-```
-
-#### Producción en Turso Cloud
+#### Turso en Producción (Turso Cloud)
 
 1. **Crear cuenta** en [turso.tech](https://turso.tech)
 
@@ -830,12 +833,25 @@ cacheManager.set(cacheKey, data, {
 
 ## 📜 Scripts Disponibles
 
+### Docker (Entorno de Desarrollo)
+
+```bash
+npm run docker:init              # Iniciar Docker (Turso + Redis)
+npm run docker:init-with-data    # Iniciar Docker + cargar datos de desarrollo
+npm run docker:load-data         # Solo cargar datos (Docker debe estar corriendo)
+npm run docker:up                # Levantar contenedores
+npm run docker:down              # Detener contenedores
+npm run docker:restart           # Reiniciar contenedores
+npm run docker:logs              # Ver logs de contenedores
+npm run docker:status            # Ver estado de contenedores
+```
+
 ### Desarrollo
 
 ```bash
 npm run dev                  # Iniciar servidor de desarrollo con hot-reload
-npm run studio:dev           # Abrir Prisma Studio
-npm run push:dev             # Aplicar cambios del schema a la BD
+npm run dev:docker           # Iniciar Docker + servidor en un comando
+npm run studio:dev           # Abrir Prisma Studio (GUI de base de datos)
 ```
 
 ### Producción
@@ -844,7 +860,6 @@ npm run push:dev             # Aplicar cambios del schema a la BD
 npm run build                # Compilar TypeScript a JavaScript
 npm start                    # Iniciar servidor en producción
 npm run studio               # Prisma Studio en producción
-npm run push                 # Push schema en producción
 ```
 
 ### Gestión de Datos
@@ -990,13 +1005,15 @@ docker run -p 3000:3000 --env-file .env.production scout-api
 - Si usas otra versión, cambia a `LocalAuth` en lugar de `MongoStore`
 - Puppeteer requiere dependencias adicionales en Linux (librerías gráficas)
 
-**Turso Dev**:
-- En desarrollo, ejecutar `turso dev` antes de iniciar el servidor
-- El comando `npm run dev` ya lo hace automáticamente con `concurrently`
+**Docker**:
+- Los contenedores deben estar corriendo antes de iniciar el servidor
+- Usar `npm run docker:status` para verificar estado de contenedores
+- Si los contenedores están detenidos, ejecutar `npm run docker:init`
 
 **Prisma**:
-- Ejecutar `npm run push:dev` después de cambios en `schema.prisma`
+- El esquema se gestiona mediante migraciones en Prisma (ver `src/prisma/migrations/`)
 - Nunca editar archivos en `@prisma/client` manualmente
+- Regenerar cliente: `npx prisma generate`
 
 ---
 

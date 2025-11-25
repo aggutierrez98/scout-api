@@ -1,11 +1,12 @@
 import { writeSpreadSheet } from "../utils/helpers/googleDriveApi";
 import { prismaClient } from "../utils/lib/prisma-client";
+import { Scout } from '@prisma/client';
 
-const createAdmin = async () => {
+export const saveUsers = async () => {
 
+    console.time("Tiempo de ejecucion");
+    console.log("------------ INICIANDO SCRIPT PARA GUARDAR USUARIOS EN SPREASHEETS -------------\n");
     try {
-        console.time("Tiempo de ejecucion");
-        console.log("------------ INICIANDO SCRIPT PARA GUARDAR USUARIOS EN SPREASHEETS -------------\n");
 
         const scouts = await prismaClient.scout.findMany({
             where: {
@@ -22,8 +23,9 @@ const createAdmin = async () => {
             }
         })
 
-        const result = await writeSpreadSheet("usuarios", scouts.map(scout => ({
+        const result = await writeSpreadSheet("usuarios", scouts.map((scout: Scout) => ({
             DNI: scout.dni,
+            //@ts-ignore
             UserId: scout.user?.uuid!
         })))
 
@@ -39,4 +41,4 @@ const createAdmin = async () => {
     }
 };
 
-createAdmin();
+// saveUsers();

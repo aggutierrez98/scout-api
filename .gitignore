@@ -13,3 +13,6 @@ backup.sql
 **/prisma/**.db-wal
 **/prisma/**.db-shm
 **/prisma/migrations/**
+
+# Ignore mount volumes
+data/*

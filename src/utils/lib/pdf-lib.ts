@@ -42,7 +42,7 @@ export const fillPdfForm = async ({ dataObject, inputFile, options: { fontColor,
     let file = inputFile;
     if (typeof inputFile === "string") file = await readFile(inputFile)
 
-    const pdfDoc = await PDFDocument.load(file)
+    const pdfDoc = await PDFDocument.load(typeof file === "string" ? file : new Uint8Array(file))
     const form = pdfDoc.getForm()
 
     let fontSelected
@@ -104,7 +104,7 @@ export const fillPdfForm = async ({ dataObject, inputFile, options: { fontColor,
 export const signPdf = async ({ signature, inputFile, options: { position: { x, y }, scale = 0.05, rotate = 0, negate = false }, returnBase64 = false }: SignProperties) => {
     if (!signature) throw new Error("No se envio la firma")
 
-    const pdfDoc = await PDFDocument.load(inputFile)
+    const pdfDoc = await PDFDocument.load(new Uint8Array(inputFile))
     const page = pdfDoc.getPages()[0];
 
     const finalImage = await sharp(signature.data)
@@ -115,7 +115,7 @@ export const signPdf = async ({ signature, inputFile, options: { position: { x, 
         .removeAlpha() // Eliminar fondo
         .toBuffer();
 
-    const signatureImage = await pdfDoc.embedPng(finalImage);
+    const signatureImage = await pdfDoc.embedPng(new Uint8Array(finalImage));
 
     const { width, height } = signatureImage.scale(scale);
 

@@ -6,11 +6,11 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.750.0",
     "@aws-sdk/s3-request-presigner": "^3.750.0",
-    "@libsql/client": "^0.8.0",
+    "@libsql/client": "^0.8.1",
     "@logtail/node": "^0.4.12",
     "@logtail/winston": "^0.4.12",
     "@pdf-lib/fontkit": "^1.1.1",
-    "@prisma/adapter-libsql": "^6.3.1",
+    "@prisma/adapter-libsql": "7.0",
     "bcryptjs": "^2.4.3",
     "compression": "^1.7.4",
     "concurrently": "^9.1.2",
@@ -44,7 +44,7 @@
     "swagger-ui-express": "^5.0.0",
     "tiny-csrf": "^1.1.3",
     "toobusy-js": "^0.5.1",
-    "whatsapp-web.js": "^1.26.0",
+    "whatsapp-web.js": "^1.23.0",
     "winston": "^3.10.0",
     "ws": "^8.18.0",
     "wwebjs-mongo": "1.1.0",
@@ -53,7 +53,7 @@
   },
   "description": "Scout api for personal use",
   "devDependencies": {
-    "@prisma/client": "^6.3.1",
+    "@prisma/client": "^7.0.0",
     "@types/bcryptjs": "^2.4.3",
     "@types/compression": "^1.7.3",
     "@types/cors": "2.8.13",
@@ -70,10 +70,10 @@
     "@types/swagger-ui-express": "^4.1.3",
     "@types/toobusy-js": "^0.5.2",
     "nodemon": "3.0.1",
-    "prisma": "^6.3.1",
+    "prisma": "^7.0.0",
     "ts-node": "10.9.1",
     "ts-node-dev": "^2.0.0",
-    "typescript": "5.1.6"
+    "typescript": "5.9"
   },
   "homepage": "https://github.com/aggutierrez98/scout-api#readme",
   "keywords": [],
@@ -87,15 +87,16 @@
       "src"
     ]
   },
-  "prisma": {
-    "schema": "src/prisma/schema.prisma"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aggutierrez98/scout-api.git"
   },
   "scripts": {
+    "build": "NODE_ENV=production dotenv -e .env.production npx tsc",
+    "dev": "NODE_ENV=development dotenv -e .env.development -- nodemon --trace-sync-io",
+    "start": "NODE_ENV=production dotenv -e .env.production -- node dist/index.js",
     "create-admin:dev": "dotenv -e .env.development -- ts-node src/bin/createAdminUser.ts",
+    "create-admin:prod": "dotenv -e .env.production -- ts-node src/bin/createAdminUser.ts",
     "save-users:dev": "NODE_ENV=development dotenv -e .env.development -- ts-node src/bin/saveUsersData.ts",
     "load-pagos:dev": "NODE_ENV=development dotenv -e .env.development -- ts-node src/bin/loadPagos.ts",
     "load-entregas:dev": "NODE_ENV=development dotenv -e .env.development -- ts-node src/bin/loadEntregas.ts",
@@ -104,8 +105,6 @@
     "load-scouts:dev": "NODE_ENV=development dotenv -e .env.development -- ts-node src/bin/loadScouts.ts",
     "load-equipos:dev": "dotenv -e .env.development -- ts-node src/bin/loadEquipos.ts",
     "deleteDBData:dev": "dotenv -e .env.development -- ts-node src/bin/deleteDBData.ts",
-    "swagger-gen:dev": "dotenv -e .env.development -- ts-node src/bin/autoGenSwagger.ts",
-    "createAdmin": "dotenv -e .env.production -- ts-node src/bin/createAdminUser.ts",
     "save-users": "dotenv -e .env.production -- ts-node src/bin/saveUsersData.ts",
     "load-pagos": "dotenv -e .env.production -- ts-node src/bin/loadPagos.ts",
     "load-entregas": "dotenv -e .env.production -- ts-node src/bin/loadEntregas.ts",
@@ -113,15 +112,17 @@
     "load-familiares": "dotenv -e .env.production -- ts-node src/bin/loadFamiliares.ts",
     "load-equipos": "dotenv -e .env.production -- ts-node src/bin/loadEquipos.ts",
     "load-scouts": "dotenv -e .env.production -- ts-node src/bin/loadScouts.ts",
-    "deleteDBData": "dotenv -e .env.production -- ts-node src/bin/deleteDBData.ts",
-    "fill-pdf": "dotenv -e .env.development -- ts-node src/bin/completePdf.ts",
-    "push:dev": "dotenv -e .env.development -- prisma db push",
-    "push": "dotenv -e .env.production -- prisma db push",
-    "build": "NODE_ENV=production dotenv -e .env.production npx tsc",
-    "dev": "concurrently \"turso dev --db-file ./src/prisma/scout.db --port 9000\" \"NODE_ENV=development dotenv -e .env.development -- nodemon --trace-sync-io\"",
-    "start": "NODE_ENV=production dotenv -e .env.production -- node dist/index.js",
-    "studio:dev": "dotenv -e .env.development -- prisma studio",
-    "studio": "dotenv -e .env.production -- prisma studio",
+    "delete-data:dev": "dotenv -e .env.production -- ts-node src/bin/deleteDBData.ts",
+    "seed-db:dev": "dotenv -e .env.development -- ts-node src/bin/seedPrisma.ts --trace-deprecation",
+    "docker:init": "docker compose up -d && sleep 10 && echo '✅ Docker inicializado - Turso y Redis corriendo'",
+    "docker:load-data": "npm run delete-data:dev && npm run seed-db:dev",
+    "docker:init-with-data": "npm run docker:init && echo '📦 Cargando datos de desarrollo...' && npm run docker:load-data && echo '✅ Base de datos inicializada con datos'",
+    "prisma:migrate:dev": "dotenv -e .env.development -- prisma migrate dev",
+    "prisma:migrate-reset:dev": "dotenv -e .env.development -- prisma migrate reset",
+    "prisma:generate-client:dev": "dotenv -e .env.development -- prisma generate",
+    "prisma:push:dev": "dotenv -e .env.development -- prisma db push",
+    "prisma:push:prod": "dotenv -e .env.production -- prisma db push",
+    "fill-pdf:dev": "dotenv -e .env.development -- ts-node src/bin/completePdf.ts",
     "test": "npm run test"
   },
   "version": "1.0.0"

@@ -4,7 +4,7 @@ import { nanoid } from "nanoid";
 import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
 import { prismaClient } from "../utils/lib/prisma-client";
 
-const loadEquipos = async () => {
+export const loadEquipos = async () => {
 
     try {
         console.time("Tiempo de ejecucion");
@@ -36,7 +36,7 @@ const loadEquipos = async () => {
         }
 
         console.log(`\n-> Cargando ${equipos.length} equipos a la bd...`);
-        // await prismaClient.$queryRaw`ALTER TABLE Equipo AUTO_INCREMENT = 1`;
+        await prismaClient.$executeRaw`DELETE FROM Equipo`;
         await prismaClient.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Equipo'`;
 
         const result = await prismaClient.equipo.createMany({
@@ -54,4 +54,4 @@ const loadEquipos = async () => {
     }
 };
 
-loadEquipos();
+// loadEquipos();

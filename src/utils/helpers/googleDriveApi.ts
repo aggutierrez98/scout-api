@@ -59,7 +59,7 @@ const transformStreamToBuffer = async (stream: Stream): Promise<Buffer> => {
             reject(error);
         })
         stream.on("end", async () => {
-            resolve(Buffer.concat(dataBuffer));
+            resolve(Buffer.concat(dataBuffer as readonly Uint8Array[]));
         });
     })
 }

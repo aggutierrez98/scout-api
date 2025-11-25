@@ -6,7 +6,7 @@ import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
 import { EstadoCivilType } from "../types";
 import { prismaClient } from "../utils/lib/prisma-client";
 
-const insertFamiliares = async () => {
+export const loadFamiliares = async () => {
 
     try {
         console.time("Tiempo de ejecucion");
@@ -59,7 +59,7 @@ const insertFamiliares = async () => {
         }
 
         console.log(`\n-> Cargando ${familiares.length} familiares a la bd...`);
-        // await prismaClient.$queryRaw`ALTER TABLE Familiar AUTO_INCREMENT = 1`;
+        await prismaClient.$executeRaw`DELETE FROM Familiar`;
         await prismaClient.$executeRaw`DELETE FROM sqlite_sequence WHERE name = 'Familiar'`;
         const result = await prismaClient.familiar.createMany({
             data: familiares,
@@ -76,4 +76,4 @@ const insertFamiliares = async () => {
     }
 };
 
-insertFamiliares();
+// loadFamiliares();
