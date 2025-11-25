@@ -1,4 +1,4 @@
-# Scout API
+# uScout API
 
 API REST para gestión de grupos Scout con bot de WhatsApp integrado. Sistema completo de administración de scouts, familiares, documentos, pagos y entregas de insignias.
 
@@ -184,11 +184,9 @@ Roles: `ADMIN`, `DIRIGENTE`, `EXTERNO`
 - Validación por recurso y método HTTP
 - Implementado en `validatePermissions`
 
-## 📁 Estructura de Carpetas
+## 📁 Estructura de Carpetasscout-api/├── src/
 
 ```
-scout-api/
-├── src/
 │   ├── bin/                          # Scripts de utilidad y comandos CLI
 │   │   ├── createAdminUser.ts        # Crear usuario administrador
 │   │   ├── deleteDBData.ts           # Limpiar base de datos
@@ -324,7 +322,6 @@ scout-api/
 │   └── migrations/
 │
 ├── .env.example                      # Variables de entorno ejemplo
-├── backup.sql                        # Backup de base de datos
 ├── docker-compose.yml                # Compose para Redis
 ├── package.json                      # Dependencias y scripts
 ├── pm2.config.js                     # Configuración PM2
@@ -470,7 +467,7 @@ Al iniciar la aplicación, el `SecretsManager` (singleton) se autentica con Infi
 ```
 Tu máquina                          Infisical Cloud
 ─────────────                       ───────────────
-                                  
+                                
 .env.development                    📦 Proyecto Scout API
   ├─ CLIENT_ID      ────┐           ├─ JWT_SECRET
   ├─ CLIENT_SECRET  ────┼──────────►├─ AWS Keys
