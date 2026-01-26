@@ -1,9 +1,9 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import ProgressBar from "progress";
-import { SPLIT_STRING, VALID_ENTREGAS_TYPE, excelDateToJSDate, parseDMYtoDate } from "../utils";
+import { SPLIT_STRING, VALID_ENTREGAS_TYPE, excelDateToJSDate, parseDMYtoDate } from "../../utils";
 import { nanoid } from "nanoid";
-import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
-import { SecretsManager } from "../utils/classes/SecretsManager";
+import { getSpreadSheetData } from "../../utils/helpers/googleDriveApi";
+import { SecretsManager } from "../../utils/classes/SecretsManager";
 
 export const loadEntregas = async () => {
     let prismaClient;
@@ -15,7 +15,7 @@ export const loadEntregas = async () => {
         );
 
         await SecretsManager.getInstance().initialize();
-        prismaClient = (await import("../utils/lib/prisma-client")).prismaClient;
+        prismaClient = (await import("../../utils/lib/prisma-client")).prismaClient;
         if (!prismaClient) {
             throw new Error("Prisma Client no inicializado");
         }

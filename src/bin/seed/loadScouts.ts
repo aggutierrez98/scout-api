@@ -1,10 +1,10 @@
 import { Prisma } from "@prisma/client";
 import ProgressBar from "progress";
-import { SPLIT_STRING, VALID_RELATIONSHIPS, excelDateToJSDate, parseDMYtoDate } from "../utils";
-import { EstadosType, FuncionType, ProgresionType, RelacionFamiliarType, ReligionType, ScoutXLSX } from "../types";
+import { SPLIT_STRING, VALID_RELATIONSHIPS, excelDateToJSDate, parseDMYtoDate } from "../../utils";
+import { EstadosType, FuncionType, ProgresionType, RelacionFamiliarType, ReligionType, ScoutXLSX } from "../../types";
 import { nanoid } from "nanoid";
-import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
-import { SecretsManager } from "../utils/classes/SecretsManager";
+import { getSpreadSheetData } from "../../utils/helpers/googleDriveApi";
+import { SecretsManager } from "../../utils/classes/SecretsManager";
 
 export const loadScouts = async () => {
     let prismaClient;
@@ -14,10 +14,13 @@ export const loadScouts = async () => {
         console.log("------------ INICIANDO SCRIPT DE ACTUALIZACION SCOUTS -------------\n");
 
         await SecretsManager.getInstance().initialize();
-        prismaClient = (await import("../utils/lib/prisma-client")).prismaClient;
+        prismaClient = (await import("../../utils/lib/prisma-client")).prismaClient;
         if (!prismaClient) {
             throw new Error("Prisma Client no inicializado");
         }
+
+        await prismaClient.$connect();
+
 
         const data = await getSpreadSheetData("scouts")
         const dataUsers = await getSpreadSheetData("usuarios")

@@ -22,6 +22,7 @@
 ### Conceptos Clave del Movimiento Scout
 
 #### Scouts
+
 Son los niños/jóvenes que participan en el grupo Scout. Cada scout pertenece a una **rama** según su edad:
 
 - **Manada** (6-10 años): Lobatos/Lobeznas
@@ -30,18 +31,23 @@ Son los niños/jóvenes que participan en el grupo Scout. Cada scout pertenece a
 - **Pioneros** (17-21 años): Dirigentes en formación
 
 Cada scout tiene:
+
 - **Progresión**: Nivel de avance en su formación (Huella, Senda, Travesía)
 - **Función**: Rol dentro de su equipo (Guía, Subguía, Tesorero, etc.)
 - **Estado**: ACTIVO, INACTIVO, EGRESADO
 
 #### Equipos/Patrullas
+
 Grupos pequeños de scouts (5-8 integrantes) dentro de una rama. Cada equipo tiene:
+
 - **Nombre**: Generalmente de animales (Águilas, Lobos, Cóndores)
 - **Lema**: Frase motivacional del equipo
 - **Rama**: Categoría a la que pertenece
 
 #### Documentos
+
 Papeles administrativos requeridos por scout:
+
 - **Ficha médica**: Información de salud
 - **Autorizaciones**: Permisos de padres
 - **DNI**: Fotocopia de documento
@@ -49,26 +55,33 @@ Papeles administrativos requeridos por scout:
 - **Ficha de inscripción**: Datos personales
 
 Propiedades:
+
 - `vence`: Si el documento tiene fecha de vencimiento
 - `completable`: Si se puede generar automáticamente desde la API
 - `requiereFamiliar`: Si necesita datos del familiar
 - `requiereFirma`: Si necesita firma escaneada
 
 #### Entregas
+
 Insignias o reconocimientos otorgados a los scouts:
+
 - **Especialidades**: Por habilidades específicas (Primeros Auxilios, Campismo)
 - **Progresión**: Insignias de avance de nivel
 - **Mérito**: Reconocimientos especiales
 
 #### Pagos
+
 Cuotas mensuales o pagos por actividades:
+
 - `concepto`: Descripción del pago (Cuota Mensual, Campamento, Material)
 - `monto`: Importe en moneda local
 - `metodoPago`: Efectivo, Transferencia, MercadoPago
 - `rendido`: Si fue contabilizado oficialmente
 
 #### Familiares
+
 Tutores o padres/madres de los scouts:
+
 - Relación: PADRE, MADRE, TUTOR, OTRO
 - Un scout puede tener múltiples familiares
 - Relación many-to-many vía tabla `FamiliarScout`
@@ -77,61 +90,167 @@ Tutores o padres/madres de los scouts:
 
 ### Stack Tecnológico
 
+#### Backend Core
+
+- **Node.js** (v22.13.1+): Entorno de ejecución JavaScript
+- **Express.js**: Framework web minimalista y flexible
+- **TypeScript**: Superset tipado de JavaScript para mayor seguridad de tipos
+
+#### Base de Datos
+
+- **Turso (LibSQL)**: Base de datos SQLite distribuida y serverless
+- **Prisma ORM**: ORM moderno con generación de tipos automática
+- **@prisma/adapter-libsql**: Adaptador para conectar Prisma con Turso/LibSQL
+
+#### Caché
+
+- **Redis**: Sistema de caché en memoria para optimizar consultas frecuentes
+
+#### Seguridad y Autenticación
+
+- **Infisical SDK**: Gestión centralizada y segura de secretos y variables de entorno
+- **JWT (jsonwebtoken)**: Autenticación basada en tokens
+- **bcryptjs**: Hash seguro de contraseñas
+- **helmet**: Protección de headers HTTP
+- **express-rate-limit**: Limitación de peticiones para prevenir ataques
+- **tiny-csrf**: Protección contra ataques CSRF
+- **cors**: Configuración de políticas CORS
+
+#### Integraciones Externas
+
+- **AWS S3**: Almacenamiento de documentos PDF en la nube
+- **Google Drive API**: Importación de datos desde Google Spreadsheets
+- **Google Sheets**: Fuente de datos para carga masiva
+- **Infisical**: Centralización de secretos
+
+#### Procesamiento de Archivos
+
+- **pdf-lib**: Generación y manipulación de PDFs
+- **xlsx**: Procesamiento de archivos Excel
+- **sharp**: Procesamiento y optimización de imágenes
+- **express-fileupload**: Manejo de uploads de archivos
+
+#### Validación y Documentación
+
+- **Zod**: Validación de esquemas y tipos en runtime
+- **Swagger (swagger-jsdoc, swagger-ui-express)**: Documentación automática de API
+
+#### Logging y Monitoreo
+
+- **Winston**: Sistema de logging estructurado
+- **Logtail**: Servicio de logs en la nube
+- **Morgan**: Logger de peticiones HTTP
+
+#### Automatización
+
+- **node-cron**: Tareas programadas (recordatorios de cumpleaños, etc.)
+- **puppeteer**: Automatización de navegador para WhatsApp Web
+
+#### Herramientas de Desarrollo
+
+- **ts-node & ts-node-dev**: Ejecución de TypeScript en desarrollo
+- **nodemon**: Recarga automática del servidor
+- **concurrently**: Ejecución paralela de comandos
+- **dotenv**: Gestión de variables de entorno
+- **DBeaver Community**: Cliente universal de base de datos para explorar y administrar la BD Turso/SQLite
+
 ```
-┌─────────────────────────────────────────────┐
-│              CAPA DE PRESENTACIÓN           │
-│  ┌─────────────────────────────────────┐   │
-│  │   Swagger UI (Documentación)        │   │
-│  │   WhatsApp Bot (Notificaciones)     │   │
-│  │   REST API Endpoints                │   │
-│  └─────────────────────────────────────┘   │
-└─────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────┐
-│           CAPA DE MIDDLEWARE                │
-│  ┌──────────────┐  ┌──────────────┐        │
-│  │ Rate Limiting│  │  Too Busy    │        │
-│  └──────────────┘  └──────────────┘        │
-│  ┌──────────────┐  ┌──────────────┐        │
-│  │  Auth (JWT)  │  │  Validation  │        │
-│  └──────────────┘  └──────────────┘        │
-│  ┌──────────────┐  ┌──────────────┐        │
-│  │  Cache Redis │  │  Error Handler│       │
-│  └──────────────┘  └──────────────┘        │
-└─────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────┐
-│            CAPA DE APLICACIÓN               │
-│                                             │
-│  Routes → Controllers → Services → Models   │
-│                                             │
-│  ┌─────────────────────────────────────┐   │
-│  │         SERVICIOS                   │   │
-│  │  • AuthService                      │   │
-│  │  • ScoutService                     │   │
-│  │  • DocumentoService                 │   │
-│  │  • PagoService                      │   │
-│  │  • FamiliarService                  │   │
-│  │  • EquipoService                    │   │
-│  │  • EntregaService                   │   │
-│  └─────────────────────────────────────┘   │
-└─────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────┐
-│           CAPA DE PERSISTENCIA              │
-│                                             │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
-│  │  Prisma  │  │  Redis   │  │  S3 SDK  │ │
-│  └──────────┘  └──────────┘  └──────────┘ │
-└─────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────┐
-│               DATOS                         │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
-│  │  Turso   │  │  Redis   │  │  AWS S3  │ │
-│  │ (LibSQL) │  │  Cache   │  │   PDFs   │ │
-│  └──────────┘  └──────────┘  └──────────┘ │
-└─────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│              Client (Frontend/Bot)              │
+└─────────────────────────────────────────────────┘
+                       ↓
+┌─────────────────────────────────────────────────┐
+│           Middlewares (Seguridad/Cache)         │
+│  • Authentication (JWT)                         │
+│  • Authorization (RBAC)                         │
+│  • Rate Limiting                                │
+│  • Cache (Redis)                                │
+│  • Validation (Zod)                             │
+│  • Error Handling                               │
+└─────────────────────────────────────────────────┘
+                       ↓
+┌─────────────────────────────────────────────────┐
+│              Routes (Endpoints)                 │
+│  • /api/auth                                    │
+│  • /api/scout                                   │
+│  • /api/documento                               │
+│  • /api/pago                                    │
+│  • /api/familiar                                │
+│  • /api/equipo                                  │
+│  • /api/entrega                                 │
+└─────────────────────────────────────────────────┘
+                       ↓
+┌─────────────────────────────────────────────────┐
+│            Controllers (HTTP Logic)             │
+│  • Request handling                             │
+│  • Response formatting                          │
+│  • HTTP status codes                            │
+└─────────────────────────────────────────────────┘
+                       ↓
+┌─────────────────────────────────────────────────┐
+│          Services (Business Logic)              │
+│  • Domain operations                            │
+│  • Data transformation                          │
+│  • Business rules                               │
+└─────────────────────────────────────────────────┘
+                       ↓
+┌─────────────────────────────────────────────────┐
+│            Mappers (Data Mapping)               │
+│  • Transform Prisma models to DTOs              │
+│  • uuid → id conversion                         │
+│  • Computed fields (e.g., edad)                 │
+│  • Type-safe data transformation                │
+└─────────────────────────────────────────────────┘
+                       ↓
+┌─────────────────────────────────────────────────┐
+│         Models/Prisma (Data Access)             │
+│  • Database queries                             │
+│  • Data validation                              │
+│  • Relationships                                │
+└─────────────────────────────────────────────────┘
+                       ↓
+┌─────────────────────────────────────────────────┐
+│           Database (Turso/LibSQL)               │
+└─────────────────────────────────────────────────┘
+```
+
+### Capa de Mappers
+
+Sistema de transformación de datos entre la capa de persistencia (Prisma) y la capa de aplicación:
+
+**Propósito:**
+
+- **Abstracción de datos**: Separa la representación interna de la base de datos de la API pública
+- **Transformación de tipos**: Convierte `uuid` (string) a `id` para mantener consistencia en la API
+- **Campos computados**: Calcula automáticamente campos derivados como `edad` a partir de `fechaNacimiento`
+- **Type-safety**: Garantiza tipado correcto entre capas sin usar `$extends` de Prisma
+
+**Mappers implementados:**
+
+- `mapUser`: Transforma usuarios con scouts/familiares anidados
+- `mapScout` / `mapPartialScout`: Transforma scouts (completos o parciales) y calcula edad
+- `mapFamiliar`: Transforma familiares y calcula edad
+- `mapEquipo`: Transforma equipos/patrullas
+- `mapPago`: Transforma registros de pagos
+- `mapEntregaRealizada`: Transforma entregas de insignias
+- `mapDocumentoPresentado`: Transforma documentos presentados
+- `mapDocumentoDefinicion`: Transforma definiciones de documentos
+
+**Ventajas:**
+
+- ✅ Eliminación de `prisma.$extends` mejorando el rendimiento
+- ✅ Mayor control sobre la forma de los datos expuestos
+- ✅ Facilita testing y mocking de datos
+- ✅ Permite evolucionar el schema de BD sin romper contratos de API
+
+**Ejemplo de uso:**
+
+```typescript
+// En un servicio
+import { mapScout } from "../mappers";
+
+const scout = await prisma.scout.findUnique({ where: { uuid: id } });
+return mapScout(scout); // Transforma uuid a id y calcula edad
 ```
 
 ### Flujo de una Petición Típica
@@ -161,7 +280,9 @@ Tutores o padres/madres de los scouts:
     ↓
 11. Turso DB: SELECT * FROM scout WHERE uuid = ?
     ↓
-12. Response ← Service ← Controller
+12. Mapper: mapScout(scout) - Transforma uuid → id, calcula edad
+    ↓
+13. Response ← Service ← Controller
     ↓
 13. Middleware: cacheMiddleware.set (Guardar en Redis)
     ↓
@@ -223,9 +344,9 @@ Tutores o padres/madres de los scouts:
 
 ```typescript
 enum RolesType {
-  ADMIN = "ADMIN",        // Control total
+  ADMIN = "ADMIN", // Control total
   DIRIGENTE = "DIRIGENTE", // Gestión de scouts y actividades
-  EXTERNO = "EXTERNO"      // Solo lectura limitada
+  EXTERNO = "EXTERNO", // Solo lectura limitada
 }
 ```
 
@@ -252,11 +373,11 @@ const permissions = {
     entrega: ["GET", "POST"],
   },
   EXTERNO: {
-    scout: ["GET"],          // Solo ver sus propios datos
+    scout: ["GET"], // Solo ver sus propios datos
     documento: ["GET"],
     pago: ["GET"],
     familiar: ["GET"],
-  }
+  },
 };
 ```
 
@@ -268,17 +389,17 @@ const resource = req.baseUrl.split("api/")[1]; // "scout"
 const method = req.method; // "POST"
 const userRole = user.role; // "DIRIGENTE"
 
-const isAllowed = validatePermissions({ 
-  method, 
-  resource, 
-  userRole 
+const isAllowed = validatePermissions({
+  method,
+  resource,
+  userRole,
 });
 
 if (!isAllowed) {
   throw new AppError({
     name: "FORBIDDEN",
     description: "No tienes permisos para esta acción",
-    httpCode: 403
+    httpCode: 403,
   });
 }
 ```
@@ -313,7 +434,7 @@ Scout ──1:N──> DocumentoPresentado
             (Un scout puede tener un usuario)
 
 Documento ──1:N──> DocumentoPresentado
-           (Un tipo de documento puede estar 
+           (Un tipo de documento puede estar
             presentado por muchos scouts)
 
 Familiar ──N:M──> Scout (via FamiliarScout)
@@ -337,6 +458,7 @@ Familiar ──N:M──> Scout (via FamiliarScout)
 3. **Índices**:
    - Todos los foreign keys tienen índices
    - Índices compuestos en queries frecuentes
+
    ```prisma
    @@index([scoutId, documentoId])
    ```
@@ -364,11 +486,11 @@ const prisma = prismaClient.$extends({
       edad: {
         needs: { fechaNacimiento: true },
         compute(scout) {
-          return getAge(scout.fechaNacimiento)
+          return getAge(scout.fechaNacimiento);
         },
-      }
-    }
-  }
+      },
+    },
+  },
 });
 ```
 
@@ -383,7 +505,7 @@ const prisma = prismaClient.$extends({
 //    ↓
 // 2. cacheMiddleware.get("scout/123")
 //    ↓
-// 3. Si existe en Redis: 
+// 3. Si existe en Redis:
 //    → return cached data (HIT)
 //    ↓
 // 4. Si no existe:
@@ -412,7 +534,7 @@ const prisma = prismaClient.$extends({
 const DEFAULT_TTL = 60000; // 1 minuto
 
 cacheManager.set(cacheKey, data, {
-  expirationInMs: DEFAULT_TTL
+  expirationInMs: DEFAULT_TTL,
 });
 ```
 
@@ -489,7 +611,7 @@ class ScoutService {
   async getItem(uuid: string) {
     return await ScoutModel.findUnique({
       where: { uuid },
-      include: { equipo: true, documentosPresentados: true }
+      include: { equipo: true, documentosPresentados: true },
     });
   }
 }
@@ -506,6 +628,7 @@ const scoutController = new ScoutController({ scoutService });
 ```
 
 Beneficios:
+
 - Testeable: Se pueden inyectar mocks
 - Desacoplado: Controller no conoce implementación de Service
 - Reusable: Un servicio puede usarse en múltiples controllers
@@ -513,31 +636,91 @@ Beneficios:
 ### 3. Middleware Chain Pattern
 
 ```typescript
-router.get('/:id',
-  validate(GetScoutSchema),     // Validación
-  checkSession,                 // Autenticación
-  cacheMiddleware,              // Caché
-  scoutController.getItem       // Handler
+router.get(
+  "/:id",
+  validate(GetScoutSchema), // Validación
+  checkSession, // Autenticación
+  cacheMiddleware, // Caché
+  scoutController.getItem, // Handler
 );
 ```
 
 ### 4. Singleton Pattern
+
+**SecretsManager**: Gestión centralizada de secretos con Infisical
+
+```typescript
+// src/utils/classes/SecretsManager.ts
+export class SecretsManager {
+  private static instance: SecretsManager;
+  private secrets: InfisicalSecrets;
+
+  private constructor() {}
+
+  static getInstance(): SecretsManager {
+    if (!SecretsManager.instance) {
+      SecretsManager.instance = new SecretsManager();
+    }
+    return SecretsManager.instance;
+  }
+
+  async initialize() {
+    // Descarga secretos de Infisical
+    this.secrets = await fetchSecretsFromInfisical();
+  }
+
+  getJWTSecret() {
+    return this.secrets.JWT_SECRET;
+  }
+  getAWSSecrets() {
+    return this.secrets.AWS;
+  }
+  // ...
+}
+
+// Uso:
+await SecretsManager.getInstance().initialize();
+const jwtSecret = SecretsManager.getInstance().getJWTSecret();
+```
 
 **CacheManager**: Una sola instancia de cliente Redis
 
 ```typescript
 // src/utils/classes/CacheManager.ts
 export class CacheManager {
+  private static instance: CacheManager;
   private readonly client;
-  
-  constructor() {
+
+  private constructor() {
     this.client = createClient({...});
     this.client.connect();
+  }
+
+  static getInstance(): CacheManager {
+    if (!CacheManager.instance) {
+      CacheManager.instance = new CacheManager();
+    }
+    return CacheManager.instance;
   }
 }
 
 // Uso:
-const cacheManager = new CacheManager(); // Una sola instancia
+const cacheManager = CacheManager.getInstance(); // Singleton
+```
+
+**WhatsAppSession**: Sesión única de WhatsApp
+
+```typescript
+export class WhatsAppSession {
+  private static instance: WhatsAppSession;
+
+  static getInstance() {
+    if (!WhatsAppSession.instance) {
+      WhatsAppSession.instance = new WhatsAppSession();
+    }
+    return WhatsAppSession.instance;
+  }
+}
 ```
 
 **WhatsAppSbot**: Sesión única de WhatsApp
@@ -545,7 +728,7 @@ const cacheManager = new CacheManager(); // Una sola instancia
 ```typescript
 export class WhatsAppSbot {
   private static instance: WhatsAppSbot;
-  
+
   public static getInstance(): WhatsAppSbot {
     if (!WhatsAppSbot.instance) {
       WhatsAppSbot.instance = new WhatsAppSbot();
@@ -564,11 +747,11 @@ Creación dinámica de routers:
 export default function createScoutRouter(scoutService: ScoutService) {
   const router = Router();
   const scoutController = new ScoutController({ scoutService });
-  
-  router.get('/', scoutController.getItems);
-  router.post('/', scoutController.insertItem);
+
+  router.get("/", scoutController.getItems);
+  router.post("/", scoutController.insertItem);
   // ...
-  
+
   return router;
 }
 ```
@@ -582,7 +765,7 @@ class AppError extends Error {
   public readonly name: string;
   public readonly httpCode: HttpCode;
   public readonly isOperational: boolean;
-  
+
   constructor(args: {
     name: string;
     httpCode: HttpCode;
@@ -601,7 +784,7 @@ class AppError extends Error {
 throw new AppError({
   name: "SCOUT_NOT_FOUND",
   description: "Scout no encontrado",
-  httpCode: HttpCode.NOT_FOUND
+  httpCode: HttpCode.NOT_FOUND,
 });
 ```
 
@@ -611,11 +794,11 @@ throw new AppError({
 
 ```typescript
 // whatsapp/recordarCumpleaños.ts
-import cron from 'node-cron';
+import cron from "node-cron";
 
 export default function recordarCumpleaños() {
   // Todos los días a las 8:00 AM
-  cron.schedule('0 8 * * *', async () => {
+  cron.schedule("0 8 * * *", async () => {
     const scouts = await obtenerScoutsPorCumplirAños();
     // Enviar notificaciones...
   });
@@ -759,7 +942,7 @@ export default function recordarCumpleaños() {
 
 ```typescript
 // validators/scout.ts
-import { z } from 'zod';
+import { z } from "zod";
 
 export const PostScoutSchema = z.object({
   body: z.object({
@@ -767,16 +950,17 @@ export const PostScoutSchema = z.object({
     apellido: z.string().min(2).max(50),
     fechaNacimiento: z.string().datetime(),
     dni: z.string().regex(/^\d{7,8}$/),
-    sexo: z.enum(['MASCULINO', 'FEMENINO']),
+    sexo: z.enum(["MASCULINO", "FEMENINO"]),
     equipoId: z.string().uuid().optional(),
-    rama: z.enum(['MANADA', 'UNIDAD', 'CAMINANTES', 'PIONEROS']),
-  })
+    rama: z.enum(["MANADA", "UNIDAD", "CAMINANTES", "PIONEROS"]),
+  }),
 });
 
 // Uso en route:
-router.post('/', 
-  validate(PostScoutSchema),  // Middleware que valida
-  controller.insertItem
+router.post(
+  "/",
+  validate(PostScoutSchema), // Middleware que valida
+  controller.insertItem,
 );
 ```
 
@@ -812,7 +996,7 @@ export class AppError extends Error {
   public readonly name: string;
   public readonly httpCode: HttpCode;
   public readonly isOperational: boolean;
-  
+
   constructor(args: {...}) {
     super(args.description);
     // ...
@@ -833,7 +1017,7 @@ export const errorMiddleware = (
       message: err.message
     });
   }
-  
+
   // Error no controlado
   logger.error(`Uncaught error: ${err.message}`, { stack: err.stack });
   return res.status(500).json({
@@ -847,30 +1031,30 @@ export const errorMiddleware = (
 
 ```typescript
 // utils/lib/pdf-lib.ts
-import { PDFDocument } from 'pdf-lib';
-import fontkit from '@pdf-lib/fontkit';
+import { PDFDocument } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
 
 export async function completePDF(
   templatePath: string,
-  data: ScoutData
+  data: ScoutData,
 ): Promise<Buffer> {
   // 1. Cargar plantilla
   const existingPdfBytes = await fs.readFile(templatePath);
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
   pdfDoc.registerFontkit(fontkit);
-  
+
   // 2. Obtener formulario
   const form = pdfDoc.getForm();
-  
+
   // 3. Completar campos
-  form.getTextField('nombre').setText(data.nombre);
-  form.getTextField('apellido').setText(data.apellido);
-  form.getTextField('dni').setText(data.dni);
+  form.getTextField("nombre").setText(data.nombre);
+  form.getTextField("apellido").setText(data.apellido);
+  form.getTextField("dni").setText(data.dni);
   // ...
-  
+
   // 4. Aplanar (hacer no editable)
   form.flatten();
-  
+
   // 5. Retornar buffer
   return await pdfDoc.save();
 }
@@ -880,35 +1064,61 @@ export async function completePDF(
 
 ```typescript
 // bin/createAdminUser.ts
-import prompt from 'prompt-sync';
+import prompt from "prompt-sync";
 
 (async () => {
   const promptSync = prompt();
-  
-  const username = promptSync('Username: ');
-  const password = promptSync('Password: ', { echo: '*' });
-  const confirmPassword = promptSync('Confirm password: ', { echo: '*' });
-  
+
+  const username = promptSync("Username: ");
+  const password = promptSync("Password: ", { echo: "*" });
+  const confirmPassword = promptSync("Confirm password: ", { echo: "*" });
+
   if (password !== confirmPassword) {
-    console.error('Las contraseñas no coinciden');
+    console.error("Las contraseñas no coinciden");
     process.exit(1);
   }
-  
+
   const hashedPassword = await hashPassword(password);
-  
+
   await prisma.user.create({
     data: {
       uuid: nanoid(),
       username,
       password: hashedPassword,
-      role: 'ADMIN',
-      active: true
-    }
+      role: "ADMIN",
+      active: true,
+    },
   });
-  
-  console.log('✅ Usuario admin creado exitosamente');
+
+  console.log("✅ Usuario admin creado exitosamente");
 })();
 ```
+
+### 6. DBeaver - Explorador de Base de Datos
+
+**Propósito**: Herramienta gráfica para visualizar y administrar la base de datos Turso/SQLite.
+
+#### Configurar DBeaver para la base de datos local
+
+1. **Abrir DBeaver** y crear una nueva conexión
+2. **Seleccionar tipo de base de datos**:
+   - En el diálogo de nueva conexión, buscar y seleccionar **LibSQL**
+3. **Configurar la conexión**:
+   - **Conexión**: Seleccionar conexión por `Host`
+   - **Server URL**: Ingresar la URL `http://localhost:9000`
+   - Hacer clic en **Test Connection** para verificar
+4. **Guardar y conectar**
+
+> 💡 **Nota**: Los contenedores Docker deben estar corriendo (`npm run docker:init`) para que DBeaver pueda conectarse.
+
+**Ventajas de usar DBeaver:**
+
+- ✅ Visualización de tablas y relaciones
+- ✅ Ejecución de queries SQL personalizadas
+- ✅ Exploración de datos sin código
+- ✅ Exportación/importación de datos
+- ✅ Diagrama ER automático
+- ✅ Estadísticas de tablas
 
 ## 🤖 WhatsApp Bot
 
@@ -933,17 +1143,17 @@ WhatsAppSbot.getInstance()
 // whatsapp/useCases.ts
 
 const MENU_COMMANDS = {
-  'menu': 'Mostrar este menú',
-  'scouts': 'Listar todos los scouts activos',
-  'cumpleaños': 'Ver cumpleaños del mes',
-  'cumpleaños próximos': 'Próximos 7 días',
-  'documentos [dni]': 'Documentos faltantes de un scout',
-  'documentos scout [dni]': 'Documentos presentados',
-  'pagos': 'Pagos de la semana actual',
-  'pagos [semana]': 'Pagos de una semana específica',
-  'entregas [dni]': 'Entregas de un scout',
-  'familiar [dni]': 'Datos del familiar de un scout',
-  'familiares [dni]': 'Todos los familiares de un scout'
+  menu: "Mostrar este menú",
+  scouts: "Listar todos los scouts activos",
+  cumpleaños: "Ver cumpleaños del mes",
+  "cumpleaños próximos": "Próximos 7 días",
+  "documentos [dni]": "Documentos faltantes de un scout",
+  "documentos scout [dni]": "Documentos presentados",
+  pagos: "Pagos de la semana actual",
+  "pagos [semana]": "Pagos de una semana específica",
+  "entregas [dni]": "Entregas de un scout",
+  "familiar [dni]": "Datos del familiar de un scout",
+  "familiares [dni]": "Todos los familiares de un scout",
 };
 ```
 
@@ -955,28 +1165,28 @@ export async function obtenerDocumentosFaltantes(dni: string) {
   // 1. Buscar scout por DNI
   const scout = await ScoutService.getByDNI(dni);
   if (!scout) return "❌ Scout no encontrado";
-  
+
   // 2. Obtener todos los tipos de documentos
   const allDocumentos = await DocumentoService.getAll();
-  
+
   // 3. Obtener documentos presentados por el scout
   const presentados = await DocumentoPresentadoService.getByScout(scout.id);
-  
+
   // 4. Calcular faltantes
-  const faltantes = allDocumentos.filter(doc => 
-    !presentados.find(p => p.documentoId === doc.id)
+  const faltantes = allDocumentos.filter(
+    (doc) => !presentados.find((p) => p.documentoId === doc.id),
   );
-  
+
   // 5. Formatear respuesta
   if (faltantes.length === 0) {
     return `✅ ${scout.nombre} ${scout.apellido} tiene todos los documentos al día`;
   }
-  
+
   let mensaje = `📄 Documentos faltantes de ${scout.nombre} ${scout.apellido}:\n\n`;
-  faltantes.forEach(doc => {
+  faltantes.forEach((doc) => {
     mensaje += `- ${doc.nombre}\n`;
   });
-  
+
   return mensaje;
 }
 ```
@@ -985,21 +1195,21 @@ export async function obtenerDocumentosFaltantes(dni: string) {
 
 ```typescript
 // whatsapp/recordarCumpleaños.ts
-import cron from 'node-cron';
+import cron from "node-cron";
 
 export default function recordarCumpleaños() {
   // Ejecutar todos los días a las 8:00 AM
-  cron.schedule('0 8 * * *', async () => {
+  cron.schedule("0 8 * * *", async () => {
     const scouts = await obtenerScoutsPorCumplirAños();
-    
+
     if (scouts.length === 0) return;
-    
-    let mensaje = '🎂 ¡CUMPLEAÑOS HOY! 🎉\n\n';
-    scouts.forEach(scout => {
+
+    let mensaje = "🎂 ¡CUMPLEAÑOS HOY! 🎉\n\n";
+    scouts.forEach((scout) => {
       const edad = getAge(scout.fechaNacimiento);
       mensaje += `🎈 ${scout.nombre} ${scout.apellido} cumple ${edad} años\n`;
     });
-    
+
     const bot = WhatsAppSbot.getInstance();
     await bot.sendMessageToGroup(mensaje);
   });
@@ -1008,9 +1218,32 @@ export default function recordarCumpleaños() {
 
 ## 🚨 Decisiones de Diseño Importantes
 
-### 1. ¿Por qué Turso en lugar de PostgreSQL?
+### 1. ¿Por qué Infisical para gestión de secretos?
 
 **Razones**:
+
+- ✅ **Centralización**: Todos los secretos en un solo lugar seguro
+- ✅ **Zero-config local**: Desarrolladores solo necesitan 4 variables en `.env`
+- ✅ **Rotación fácil**: Admin cambia secretos sin tocar código
+- ✅ **Ambientes separados**: dev/staging/prod con secretos independientes
+- ✅ **Tipado TypeScript**: SecretsManager provee tipos para todos los secretos
+- ✅ **Sin secretos en Git**: `.env` solo contiene credenciales de acceso a Infisical
+
+**Implementación**:
+
+```typescript
+// Al inicio de la app
+await SecretsManager.getInstance().initialize();
+
+// En cualquier parte del código
+const jwtSecret = SecretsManager.getInstance().getJWTSecret();
+const awsKeys = SecretsManager.getInstance().getAWSSecrets();
+```
+
+### 2. ¿Por qué Turso en lugar de PostgreSQL?
+
+**Razones**:
+
 - ✅ **Serverless**: No requiere gestión de servidor
 - ✅ **SQLite compatible**: Desarrollo local sencillo
 - ✅ **Baja latencia**: Base de datos distribuida globalmente
@@ -1018,34 +1251,39 @@ export default function recordarCumpleaños() {
 - ✅ **Migración fácil**: Si crece, migrar a PostgreSQL es directo
 
 **Trade-offs**:
+
 - ❌ Funciones avanzadas de PostgreSQL no disponibles
 - ❌ Comunidad más pequeña que PostgreSQL
 
-### 2. ¿Por qué UUID en lugar de ID autoincremental expuesto?
+### 3. ¿Por qué UUID en lugar de ID autoincremental expuesto?
 
 **Razones**:
+
 - ✅ **Seguridad**: No expone cantidad total de registros
 - ✅ **Distribuibilidad**: Se pueden generar en cliente sin conflicto
 - ✅ **No predecibles**: Evita enumeration attacks
 - ✅ **Migración fácil**: Mover datos entre BDs sin conflicto
 
 **Implementación**:
+
 ```typescript
 // Se usa nanoid() en lugar de UUID v4 por ser más corto
-import { nanoid } from 'nanoid';
+import { nanoid } from "nanoid";
 
 const uuid = nanoid(); // "V1StGXR8_Z5jdHi6B-myT"
 ```
 
-### 3. ¿Por qué separar Controllers y Services?
+### 4. ¿Por qué separar Controllers y Services?
 
 **Razones**:
+
 - ✅ **Testabilidad**: Services se pueden testear sin HTTP
 - ✅ **Reusabilidad**: Un servicio puede usarse en API y Bot
 - ✅ **Separación de concerns**: Controller maneja HTTP, Service maneja lógica
 - ✅ **Mantenibilidad**: Cambios en lógica no afectan endpoints
 
 **Ejemplo**:
+
 ```typescript
 // ScoutService se usa en:
 // 1. API REST (scoutController)
@@ -1053,15 +1291,39 @@ const uuid = nanoid(); // "V1StGXR8_Z5jdHi6B-myT"
 // 3. Scripts CLI (loadScouts.ts)
 ```
 
+### 5. ¿Por qué crear una capa de Mappers en lugar de usar $extends de Prisma?
+
+**Razones**:
+
+- ✅ **Rendimiento**: Evita overhead de extensiones de Prisma
+- ✅ **Control explícito**: Transformaciones visibles y testeables
+- ✅ **Type-safety**: Tipos explícitos sin magia de Prisma
+- ✅ **Flexibilidad**: Fácil agregar lógica de transformación compleja
+- ✅ **Debugging**: Stack traces más limpios
+
+**Implementación**:
+
+```typescript
+// Antes (con $extends):
+const scout = await prisma.scout.findUnique({ where: { uuid } });
+// scout.id ya estaba mapeado automáticamente
+
+// Después (con mappers):
+const scout = await prisma.scout.findUnique({ where: { uuid } });
+return mapScout(scout); // Transformación explícita
+```
+
 ### 4. ¿Por qué Redis para caché y no in-memory?
 
 **Razones**:
+
 - ✅ **Persistencia**: Sobrevive a reinicios del servidor
 - ✅ **Escalabilidad**: Múltiples instancias comparten caché
 - ✅ **TTL automático**: Expiración de claves sin lógica adicional
 - ✅ **Estructuras de datos**: Listas, sets, hashes
 
 **Trade-off**:
+
 - ❌ Dependencia externa adicional
 
 ### 5. ¿Por qué no usar Prisma Migrate en desarrollo?
@@ -1069,6 +1331,7 @@ const uuid = nanoid(); // "V1StGXR8_Z5jdHi6B-myT"
 **Decisión**: Usar `prisma db push` en lugar de `prisma migrate dev`
 
 **Razones**:
+
 - ✅ **Rapidez**: No genera archivos de migración
 - ✅ **Flexibilidad**: Cambios rápidos en schema sin historial
 - ✅ **SQLite**: Menos crítico tener migraciones versionadas
@@ -1080,15 +1343,18 @@ const uuid = nanoid(); // "V1StGXR8_Z5jdHi6B-myT"
 **Decisión**: JWT de larga duración (7 días) sin refresh tokens
 
 **Razones**:
+
 - ✅ **Simplicidad**: No requiere almacenar tokens en BD
 - ✅ **Stateless**: Backend no mantiene estado de sesión
 - ✅ **Suficiente para el caso de uso**: Usuarios de confianza (dirigentes)
 
 **Trade-offs**:
+
 - ❌ No se puede revocar token antes de expiración
 - ❌ Si se compromete el token, es válido por 7 días
 
 **Mitigación**:
+
 - Rotación regular de JWT_SECRET
 - Monitoreo de actividad sospechosa
 - TTL corto en producción crítica
@@ -1129,6 +1395,7 @@ const uuid = nanoid(); // "V1StGXR8_Z5jdHi6B-myT"
 ### Cuando Agregues Features
 
 1. **Nuevos Endpoints**
+
    ```typescript
    // 1. Crear tipo en types/
    // 2. Crear validador en validators/
@@ -1140,6 +1407,7 @@ const uuid = nanoid(); // "V1StGXR8_Z5jdHi6B-myT"
    ```
 
 2. **Nuevos Modelos de BD**
+
    ```typescript
    // 1. Agregar modelo en schema.prisma
    // 2. Ejecutar prisma db push
@@ -1149,6 +1417,7 @@ const uuid = nanoid(); // "V1StGXR8_Z5jdHi6B-myT"
    ```
 
 3. **Nuevas Integraciones**
+
    ```typescript
    // 1. Agregar secretos a Infisical Dashboard (no a .env)
    // 2. Agregar tipos en src/types/secrets.ts
@@ -1156,7 +1425,7 @@ const uuid = nanoid(); // "V1StGXR8_Z5jdHi6B-myT"
    // 4. Crear wrapper en utils/lib/ que use SecretsManager
    // 5. Documentar en README.md sección de integraciones
    // 6. Manejar errores de conexión apropiadamente
-   
+
    // Ejemplo: Agregar integración con Stripe
    // a) En Infisical Dashboard: Crear folder STRIPE/ con STRIPE_API_KEY
    // b) En secrets.ts:
@@ -1164,7 +1433,7 @@ const uuid = nanoid(); // "V1StGXR8_Z5jdHi6B-myT"
      STRIPE_API_KEY: string;
      STRIPE_WEBHOOK_SECRET: string;
    }
-   
+
    // c) En SecretsManager.ts:
    static getStripeSecrets(): StripeSecrets {
      return {
@@ -1172,7 +1441,7 @@ const uuid = nanoid(); // "V1StGXR8_Z5jdHi6B-myT"
        STRIPE_WEBHOOK_SECRET: this.getSecret('STRIPE_WEBHOOK_SECRET', 'STRIPE')
      };
    }
-   
+
    // d) En utils/lib/stripe.util.ts:
    const { STRIPE_API_KEY } = SecretsManager.getStripeSecrets();
    ```
@@ -1194,6 +1463,7 @@ tests/
 ```
 
 **Librerías recomendadas**:
+
 - Jest: Framework de testing
 - Supertest: Testing de endpoints HTTP
 - Prismock: Mock de Prisma
@@ -1236,9 +1506,9 @@ FLUSHALL
 
 ```typescript
 // En checkSession middleware, agregar logs:
-logger.debug('Token recibido:', jwt);
-logger.debug('Usuario decodificado:', isUser);
-logger.debug('Permisos:', { method, resource, userRole });
+logger.debug("Token recibido:", jwt);
+logger.debug("Usuario decodificado:", isUser);
+logger.debug("Permisos:", { method, resource, userRole });
 ```
 
 ### 4. Problemas con WhatsApp Bot
@@ -1257,19 +1527,19 @@ db.sessions.deleteMany({})
 
 ```typescript
 // Verificar configuración desde Infisical
-import { SecretsManager } from './utils/classes/SecretsManager';
+import { SecretsManager } from "./utils/classes/SecretsManager";
 
 const awsSecrets = SecretsManager.getAWSSecrets();
-console.log('AWS Config:', {
+console.log("AWS Config:", {
   region: awsSecrets.region,
   bucket: awsSecrets.bucketName,
-  hasAccessKey: !!awsSecrets.accessKey
+  hasAccessKey: !!awsSecrets.accessKey,
 });
 
 // Test de upload
-import { uploadToS3 } from './utils/lib/s3.util';
-const testBuffer = Buffer.from('test');
-await uploadToS3(testBuffer, 'test/test.txt');
+import { uploadToS3 } from "./utils/lib/s3.util";
+const testBuffer = Buffer.from("test");
+await uploadToS3(testBuffer, "test/test.txt");
 ```
 
 ## 🎓 Glosario Scout
@@ -1346,7 +1616,7 @@ Todos los siguientes secretos se obtienen automáticamente desde Infisical al in
 await SecretsManager.initialize();
 
 // 2. En cualquier parte del código, obtén secretos de forma tipada
-import { SecretsManager } from './utils/classes/SecretsManager';
+import { SecretsManager } from "./utils/classes/SecretsManager";
 
 // Obtener secreto JWT
 const jwtSecret = SecretsManager.getJWTSecret();
@@ -1454,10 +1724,11 @@ export interface DatosGrupo {
    - Son credenciales específicas del ambiente (dev tiene su token, prod otro)
 
 2. **Configurar localmente**
+
    ```bash
    # Copiar ejemplo
    cp .env.example .env.development
-   
+
    # Pegar credenciales del admin
    INFISICAL_TOKEN=st.dev.xxxxx
    INFISICAL_PROJECT_ID=project-id
@@ -1465,16 +1736,18 @@ export interface DatosGrupo {
    ```
 
 3. **Ejecutar la aplicación**
+
    ```bash
    npm run dev
    # La app descarga automáticamente todos los secretos desde Infisical
    ```
 
 4. **Usar secretos en el código**
+
    ```typescript
    // ❌ NUNCA hacer esto
    const secret = process.env.JWT_SECRET;
-   
+
    // ✅ SIEMPRE hacer esto
    const secret = SecretsManager.getJWTSecret();
    ```

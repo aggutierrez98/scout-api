@@ -13,7 +13,6 @@ export interface IPagoData extends IPago {
     id: string;
     rendido: boolean;
     fechaCreacion: Date;
-    uuid: undefined;
 }
 
 export type PagoXLSX = {

@@ -3,7 +3,8 @@ import { IEquipo } from "../types";
 import { ScoutSchema } from "./scout";
 import { IdSchema } from "./generics";
 import { VALID_RAMAS } from "../utils";
-import { prismaClient } from "../utils/lib/prisma-client";
+import { initPrisma, prismaClient } from "../utils/lib/prisma-client";
+// import { getPrismaClient } from "../utils/lib/prisma-client";
 
 const validEquipoId = async (id: string) => {
 	const ParullaModel = prismaClient.equipo;

@@ -1,5 +1,4 @@
 import { createClient } from "redis";
-import logger from "./Logger";
 import { SecretsManager } from "./SecretsManager";
 type CacheValue = any | null;
 
@@ -8,15 +7,16 @@ const MAX_REDIS_CONNECTION_TIMEOUT_MS = 10000
 const REDIS_RETRY_TIME_MS = 500
 
 export class CacheManager {
+	private static instance: CacheManager;
 	private readonly client;
 
-	constructor() {
+	private constructor() {
 		this.client = createClient({
 			url: SecretsManager.getInstance().getRedisURI(),
 			socket: {
 				reconnectStrategy: function (retries) {
 					if (retries > MAX_REDIS_CONNECTION_RETRIES) {
-						logger.error("Too many attempts to reconnect. Redis connection was terminated");
+						console.error("Demasiados intentos de reconexión. La conexión del Cache Manager fue terminada");
 						return new Error("Too many retries.");
 					} else {
 						return retries * REDIS_RETRY_TIME_MS;
@@ -26,12 +26,22 @@ export class CacheManager {
 			}
 		});
 		this.client.on("connect", () => {
-			logger.info("Redis client connected");
+			console.info("✅ Cache Manager inicializado correctamente");
 		});
 		this.client.on("error", (error) => {
-			logger.error(`Redis client error: ${error}`);
+			console.error(`❌ Error del cliente de Cache Manager. ERROR: ${error}`);
 		});
-		this.client.connect();
+	}
+
+	async initialize(): Promise<void> {
+		await this.connectIfNecessary();
+	}
+
+	static getInstance(): CacheManager {
+		if (!CacheManager.instance) {
+			CacheManager.instance = new CacheManager();
+		}
+		return CacheManager.instance;
 	}
 
 	async connectIfNecessary(): Promise<void> {

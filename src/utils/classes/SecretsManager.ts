@@ -43,6 +43,7 @@ export class SecretsManager {
    * Inicializa el cliente y carga todos los secretos desde Infisical
    */
   public async initialize(): Promise<void> {
+
     if (this.isInitialized) {
       return;
     }
@@ -129,10 +130,11 @@ export class SecretsManager {
         },
       };
 
+      console.log('✅ Secrets Manager inicializado correctamente');
 
       this.isInitialized = true;
     } catch (error) {
-      throw new Error(`Error inicializando SecretsManager: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      throw new Error(`❌ Error inicializando SecretsManager: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
   }
 
@@ -216,6 +218,9 @@ export class SecretsManager {
     return this.isInitialized;
   }
 
+  get initialized() {
+    return this.isInitialized;
+  }
 
   public async listSecrets() {
     const response = await this.client.secrets().listSecrets({

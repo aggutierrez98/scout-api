@@ -1,36 +1,8 @@
 import { nanoid } from "nanoid";
 import { FuncionType, IEntrega, IEntregaData, ProgresionType, RamasType, TipoEntregaType } from "../types";
-import { getAge } from "../utils";
-import { ScoutModel } from "./scout";
 import { prismaClient } from "../utils/lib/prisma-client";
-
-const prisma = prismaClient.$extends({
-    result: {
-        entregaRealizada: {
-            id: {
-                compute: (data) => data.uuid,
-            },
-            uuid: {
-                compute: () => undefined,
-            },
-        },
-        scout: {
-            id: {
-                compute: (data) => data.uuid,
-            },
-            uuid: {
-                compute: () => undefined,
-            },
-            edad: {
-                needs: { fechaNacimiento: true },
-                compute(scout) {
-                    return getAge(scout.fechaNacimiento)
-                },
-            }
-        },
-    },
-});
-const EntregaModel = prisma.entregaRealizada;
+import { mapEntregaRealizada } from "../mappers/entrega";
+import { mapPartialScout } from "../mappers/scout";
 
 type queryParams = {
     limit?: number;
@@ -58,7 +30,7 @@ interface IEntregaService {
 
 export class EntregaService implements IEntregaService {
     insertEntrega = async (entrega: IEntrega) => {
-        const responseInsert = await EntregaModel.create({
+        const responseInsert = await prismaClient.entregaRealizada.create({
             data: {
                 uuid: nanoid(10),
                 ...entrega,
@@ -67,12 +39,12 @@ export class EntregaService implements IEntregaService {
                 scout: {
                     select: {
                         id: true,
+                        uuid: true,
                         nombre: true,
                         apellido: true,
                         dni: true,
                         funcion: true,
                         fechaNacimiento: true,
-                        edad: true,
                         sexo: true,
                         telefono: true,
                     },
@@ -83,7 +55,7 @@ export class EntregaService implements IEntregaService {
         if (entrega.tipoEntrega.includes("PROG")) {
             const progresion = entrega.tipoEntrega.split("PROG")[1] as ProgresionType
 
-            await ScoutModel.update({
+            await prismaClient.scout.update({
                 where: {
                     uuid: entrega.scoutId
                 },
@@ -93,7 +65,11 @@ export class EntregaService implements IEntregaService {
             })
         }
 
-        return responseInsert;
+        const { scout, ...entregaData } = responseInsert;
+        return {
+            ...mapEntregaRealizada(entregaData),
+            scout: mapPartialScout(scout)
+        } as any;
     };
 
     getEntregas = async ({ limit = 15, offset = 0, filters = {} }: queryParams) => {
@@ -109,7 +85,7 @@ export class EntregaService implements IEntregaService {
             ramas
         } = filters;
 
-        const responseItem = await EntregaModel.findMany({
+        const responseItem = await prismaClient.entregaRealizada.findMany({
             skip: offset,
             take: limit,
             orderBy: { fechaEntrega: "desc" },
@@ -153,26 +129,35 @@ export class EntregaService implements IEntregaService {
                 scout: {
                     select: {
                         id: true,
+                        uuid: true,
                         nombre: true,
                         apellido: true,
                         dni: true,
                         funcion: true,
                         sexo: true,
+                        fechaNacimiento: true,
                     },
                 },
             },
         });
-        return responseItem;
+        return responseItem.map(item => {
+            const { scout, ...entregaData } = item;
+            return {
+                ...mapEntregaRealizada(entregaData),
+                scout: mapPartialScout(scout)
+            } as any;
+        });
     };
 
     getEntrega = async (id: string) => {
         try {
-            const responseItem = await EntregaModel.findUnique({
+            const responseItem = await prismaClient.entregaRealizada.findUnique({
                 where: { uuid: id },
                 include: {
                     scout: {
                         select: {
                             id: true,
+                            uuid: true,
                             nombre: true,
                             apellido: true,
                             dni: true,
@@ -185,26 +170,81 @@ export class EntregaService implements IEntregaService {
                 },
             });
 
-            return responseItem;
+            if (!responseItem) return null;
+
+            const { scout, ...entregaData } = responseItem;
+            return {
+                ...mapEntregaRealizada(entregaData),
+                scout: mapPartialScout(scout)
+            } as any;
         } catch (error) {
             return null;
         }
     };
 
     updateEntrega = async (id: string, { scoutId, ...dataUpdated }: IEntrega) => {
-        const responseItem = await EntregaModel.update({
-            where: { uuid: id },
-            data: {
-                ...dataUpdated,
-                scoutId,
-            },
-        });
+        try {
+            const responseItem = await prismaClient.entregaRealizada.update({
+                where: { uuid: id },
+                data: {
+                    ...dataUpdated,
+                    scoutId,
+                },
+                include: {
+                    scout: {
+                        select: {
+                            id: true,
+                            uuid: true,
+                            nombre: true,
+                            apellido: true,
+                            dni: true,
+                            funcion: true,
+                            fechaNacimiento: true,
+                            sexo: true,
+                            telefono: true,
+                        },
+                    },
+                },
+            });
 
-        return responseItem;
+            const { scout, ...entregaData } = responseItem;
+            return {
+                ...mapEntregaRealizada(entregaData),
+                scout: mapPartialScout(scout)
+            } as any;
+        } catch (error) {
+            return null;
+        }
     };
 
-    deleteEntrega = async (id: string) => {
-        const responseItem = await EntregaModel.delete({ where: { uuid: id } });
-        return responseItem;
+    deleteEntrega = async (id: string): Promise<IEntregaData | null> => {
+        try {
+            const responseItem = await prismaClient.entregaRealizada.delete({
+                where: { uuid: id },
+                include: {
+                    scout: {
+                        select: {
+                            id: true,
+                            uuid: true,
+                            nombre: true,
+                            apellido: true,
+                            dni: true,
+                            funcion: true,
+                            fechaNacimiento: true,
+                            sexo: true,
+                            telefono: true,
+                        },
+                    },
+                },
+            });
+
+            const { scout, ...entregaData } = responseItem;
+            return {
+                ...mapEntregaRealizada(entregaData),
+                scout: mapPartialScout(scout)
+            } as any;
+        } catch (error) {
+            return null;
+        }
     };
 }

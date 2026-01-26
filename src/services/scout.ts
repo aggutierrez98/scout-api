@@ -16,59 +16,7 @@ import { readXlsxBuffer } from "../utils/lib/exceljs";
 import { Prisma } from "@prisma/client";
 import logger from "../utils/classes/Logger";
 import { mapXLSXScoutToScoutData } from "../utils/helpers/mapXLSXScoutToScoutData";
-
-const prisma = prismaClient.$extends({
-	result: {
-		scout: {
-			id: {
-				compute: (data) => data.uuid,
-			},
-			uuid: {
-				compute: () => undefined,
-			},
-			edad: {
-				needs: { fechaNacimiento: true },
-				compute(scout) {
-					return getAge(scout.fechaNacimiento)
-				},
-			}
-		},
-		documentoPresentado: {
-			id: {
-				compute: (data) => data.uuid,
-			},
-			uuid: {
-				compute: () => undefined,
-			},
-		},
-		entregaRealizada: {
-			id: {
-				compute: (data) => data.uuid,
-			},
-			uuid: {
-				compute: () => undefined,
-			},
-		},
-		equipo: {
-			id: {
-				compute: (data) => data.uuid,
-			},
-			uuid: {
-				compute: () => undefined,
-			},
-		},
-		familiar: {
-			id: {
-				compute: (data) => data.uuid,
-			},
-			uuid: {
-				compute: () => undefined,
-			},
-		},
-	},
-});
-
-export const ScoutModel = prisma.scout;
+import { mapScout } from "../mappers/scout";
 
 type queryParams = {
 	limit?: number;
@@ -104,7 +52,7 @@ export class ScoutService implements IScoutService {
 	insertScout = async (scout: IScout) => {
 		const uuid = nanoid(10);
 
-		const responseInsert = await ScoutModel.create({
+		const responseInsert = await prismaClient.scout.create({
 			data: {
 				...scout,
 				uuid,
@@ -118,7 +66,7 @@ export class ScoutService implements IScoutService {
 			},
 		});
 
-		return responseInsert;
+		return mapScout(responseInsert);
 	};
 	getScouts = async ({
 		limit = 15,
@@ -138,7 +86,7 @@ export class ScoutService implements IScoutService {
 			familiarId
 		} = filters;
 
-		const responseItem = await ScoutModel.findMany({
+		const responseItem = await prismaClient.scout.findMany({
 			skip: offset,
 			take: limit || undefined, // Si el limite === 0  →  no hay limite y se buscan todos
 			orderBy: { [orderBy]: "asc" },
@@ -182,13 +130,13 @@ export class ScoutService implements IScoutService {
 			select,
 		});
 
-		return responseItem;
+		return responseItem.map(scout => mapScout(scout));
 	};
 
 
 	getScout = async (id: string) => {
 		try {
-			const responseItem = await ScoutModel.findUnique({
+			const responseItem = await prismaClient.scout.findUnique({
 				where: { uuid: id },
 				include: {
 					entregasObtenidas: {
@@ -197,6 +145,7 @@ export class ScoutService implements IScoutService {
 						},
 						select: {
 							id: true,
+							uuid: true,
 							fechaEntrega: true,
 							tipoEntrega: true,
 						},
@@ -207,6 +156,7 @@ export class ScoutService implements IScoutService {
 						},
 						select: {
 							id: true,
+							uuid: true,
 							fechaPresentacion: true,
 							documento: {
 								select: {
@@ -228,6 +178,7 @@ export class ScoutService implements IScoutService {
 					equipo: {
 						select: {
 							id: true,
+							uuid: true,
 							nombre: true,
 							lema: true,
 						},
@@ -237,20 +188,30 @@ export class ScoutService implements IScoutService {
 
 			if (!responseItem) return null;
 
-			const { documentosPresentados, familiarScout, ...rest } = responseItem;
-			const response: IScoutData = { ...rest };
+			const { documentosPresentados, familiarScout, entregasObtenidas, equipo, ...rest } = responseItem;
+			const response: IScoutData = mapScout(rest) as IScoutData;
 
 			response.documentosPresentados = documentosPresentados.map(
-				({ documento, fechaPresentacion, id }) => ({
+				({ documento, fechaPresentacion, uuid }) => ({
 					...documento,
 					fechaPresentacion,
-					id,
+					id: uuid,
 				}),
 			);
 			response.familiares = familiarScout.map(({ familiar, relacion }) => ({
 				...familiar,
+				id: familiar.uuid,
+				edad: getAge(familiar.fechaNacimiento),
 				relacion,
 			}));
+			response.entregasObtenidas = entregasObtenidas.map(entrega => ({
+				...entrega,
+				id: entrega.uuid
+			}));
+			response.equipo = equipo ? {
+				...equipo,
+				id: equipo.uuid
+			} : null;
 
 			return response;
 		} catch (error) {
@@ -260,15 +221,15 @@ export class ScoutService implements IScoutService {
 	updateScout = async (id: string, dataUpdated: IScout) => {
 		const { direccion, localidad, funcion, mail, telefono, equipoId, religion, progresionActual, rama } = dataUpdated
 
-		const responseItem = await ScoutModel.update({
+		const responseItem = await prismaClient.scout.update({
 			where: { uuid: id },
 			data: { direccion, localidad, funcion, mail, telefono, equipoId, religion, progresionActual, rama },
 		});
-		return responseItem;
+		return mapScout(responseItem);
 	};
 	deleteScout = async (id: string) => {
-		const responseItem = await ScoutModel.delete({ where: { uuid: id } });
-		return responseItem;
+		const responseItem = await prismaClient.scout.delete({ where: { uuid: id } });
+		return mapScout(responseItem);
 	};
 
 	importScouts = async (nomina: fileUpload.UploadedFile) => {

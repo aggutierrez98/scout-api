@@ -8,7 +8,6 @@ export interface IEntrega {
 
 export interface IEntregaData extends IEntrega {
     id: string;
-    uuid: undefined;
     fechaCreacion: Date;
 }
 

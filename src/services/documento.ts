@@ -7,35 +7,14 @@ import {
 	RamasType,
 } from "../types";
 import { nanoid } from "nanoid";
-import { prismaClient } from "../utils/lib/prisma-client";
 import { AppError, HttpCode } from "../utils";
 import { getFileInS3 } from "../utils/lib/s3.util";
 import { PdfDocument } from '../utils/classes/documentos/PdfDocument';
 import logger from "../utils/classes/Logger";
 import { FillDocumentoData, PDFDocumentInstantiator } from "../utils/classes/documentos/DocumentoInstantiator";
+import { prismaClient } from "../utils/lib/prisma-client";
+import { mapDocumentoPresentado, mapDocumentoDefinicion } from "../mappers/documentoPresentado";
 
-const prisma = prismaClient.$extends({
-	result: {
-		documentoPresentado: {
-			id: {
-				compute: (data) => data.uuid,
-			},
-			uuid: {
-				compute: () => undefined,
-			},
-		},
-		documento: {
-			id: {
-				compute: (data) => data.uuid,
-			},
-			uuid: {
-				compute: () => undefined,
-			},
-		}
-	},
-});
-const DocumentoModel = prisma.documentoPresentado;
-const DocumentosDataModel = prisma.documento;
 
 type getQueryParams = {
 	limit?: number;
@@ -64,7 +43,7 @@ export class DocumentoService implements IDocumentoService {
 	insertDocumento = async ({ documentoId, fechaPresentacion, scoutId, uploadId }: IDocumento) => {
 
 		const uuid = nanoid(10);
-		const responseInsert = await DocumentoModel.create({
+		const responseInsert = await prismaClient.documentoPresentado.create({
 			data: {
 				uuid,
 				documentoId: documentoId,
@@ -96,7 +75,7 @@ export class DocumentoService implements IDocumentoService {
 		const fileName = `${scoutId}/${docName}_${uploadId}.pdf`
 		const fileInS3 = await getFileInS3(fileName)
 		return {
-			...responseInsert,
+			...mapDocumentoPresentado(responseInsert),
 			fileUrl: fileInS3
 		};
 	};
@@ -117,7 +96,7 @@ export class DocumentoService implements IDocumentoService {
 			scoutId,
 		} = filters;
 
-		const responseItem = await DocumentoModel.findMany({
+		const responseItem = await prismaClient.documentoPresentado.findMany({
 			skip: offset,
 			take: limit,
 			orderBy: { fechaPresentacion: "desc" },
@@ -190,15 +169,15 @@ export class DocumentoService implements IDocumentoService {
 			},
 		});
 
-		return responseItem;
+		return responseItem as any;
 	};
 	getDocumentosData = async () => {
-		const responseItem = await DocumentosDataModel.findMany();
-		return responseItem;
+		const responseItem = await prismaClient.documento.findMany();
+		return responseItem.map(doc => mapDocumentoDefinicion(doc));
 	};
 	getDocumento = async (id: string) => {
 		try {
-			const responseItem = await DocumentoModel.findUnique({
+			const responseItem = await prismaClient.documentoPresentado.findUnique({
 				where: { uuid: id },
 				include: {
 					documento: {
@@ -220,13 +199,13 @@ export class DocumentoService implements IDocumentoService {
 				},
 			});
 
-			return responseItem;
+			return responseItem ? mapDocumentoPresentado(responseItem) : null;
 		} catch (error) {
 			return null;
 		}
 	};
 	deleteDocumento = async (id: string) => {
-		const responseItem = await DocumentoModel.delete({
+		const responseItem = await prismaClient.documentoPresentado.delete({
 			where: { uuid: id },
 			include: {
 				documento: {
@@ -248,7 +227,7 @@ export class DocumentoService implements IDocumentoService {
 			},
 		});
 
-		return responseItem;
+		return mapDocumentoPresentado(responseItem) as any;
 	};
 
 	fillDocumento = async (data: FillDocumentoData) => {
@@ -272,26 +251,27 @@ export class DocumentoService implements IDocumentoService {
 				documentoFilled
 			} = data
 
-			const docData = (await DocumentosDataModel.findUnique({
+			const docData = (await prismaClient.documento.findUnique({
 				where: {
 					uuid: data.documentoId
 				}
 			}))!
 
-			if (!docData.fileUploadId || !docData.completable) throw new AppError({
+			const mappedDocData = mapDocumentoDefinicion(docData);
+
+			if (!mappedDocData.fileUploadId || !mappedDocData.completable) throw new AppError({
 				name: "BAD_REQUEST",
 				httpCode: HttpCode.BAD_REQUEST,
 				description: "El documento enviado no es completable"
 			})
 
-			if (!PDFDocumentInstantiator[docData.nombre as PDFDocumentsEnum]) throw new AppError({
+			if (!PDFDocumentInstantiator[mappedDocData.nombre as PDFDocumentsEnum]) throw new AppError({
 				name: "BAD_REQUEST",
 				httpCode: HttpCode.BAD_REQUEST,
 				description: "La complecion del documento no se encuentra implementada"
 			})
-
-			const pdfModel: (PdfDocument) = PDFDocumentInstantiator[docData.nombre as PDFDocumentsEnum]({
-				docData,
+			const pdfModel: (PdfDocument) = PDFDocumentInstantiator[mappedDocData.nombre as PDFDocumentsEnum]({
+				docData: mappedDocData,
 				scoutId,
 				signature,
 				theme,
@@ -339,7 +319,7 @@ export class DocumentoService implements IDocumentoService {
 
 	getFilledDocumento = async (id: string) => {
 		try {
-			const responseItem = await DocumentoModel.findUnique({
+			const responseItem = await prismaClient.documentoPresentado.findUnique({
 				where: { uuid: id },
 				include: {
 					documento: {

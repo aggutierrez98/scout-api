@@ -1,4 +1,4 @@
-# uScout API
+# Scout API
 
 API REST para gestión de grupos Scout con bot de WhatsApp integrado. Sistema completo de administración de scouts, familiares, documentos, pagos y entregas de insignias.
 
@@ -7,11 +7,14 @@ API REST para gestión de grupos Scout con bot de WhatsApp integrado. Sistema co
 - [Tecnologías Utilizadas](#-tecnologías-utilizadas)
 - [Arquitectura de la API](#-arquitectura-de-la-api)
 - [Estructura de Carpetas](#-estructura-de-carpetas)
-- [Requisitos Previos](#-requisitos-previos)
-- [Configuración del Entorno de Desarrollo](#-configuración-del-entorno-de-desarrollo)
+- [Configurar entorno de desarrollo](#-configurar-entorno-de-desarrollo)
+- [Flujo de Trabajo Diario de Desarrollo](#-flujo-de-trabajo-diario-de-desarrollo)
+- [Herramientas de Desarrollo](#️-herramientas-de-desarrollo)
 - [Integraciones de Terceros](#-integraciones-de-terceros)
 - [Scripts Disponibles](#-scripts-disponibles)
 - [Producción](#-producción)
+- [Soporte](#-soporte)
+- [Licencia](#-licencia)
 
 ## 🚀 Tecnologías Utilizadas
 
@@ -27,10 +30,9 @@ API REST para gestión de grupos Scout con bot de WhatsApp integrado. Sistema co
 - **Prisma ORM**: ORM moderno con generación de tipos automática
 - **@prisma/adapter-libsql**: Adaptador para conectar Prisma con Turso/LibSQL
 
-### Caché y Sesiones
+### Caché
 
 - **Redis**: Sistema de caché en memoria para optimizar consultas frecuentes
-- **MongoDB**: Almacenamiento de sesiones remotas de WhatsApp (vía wwebjs-mongo)
 
 ### Seguridad y Autenticación
 
@@ -47,7 +49,7 @@ API REST para gestión de grupos Scout con bot de WhatsApp integrado. Sistema co
 - **AWS S3**: Almacenamiento de documentos PDF en la nube
 - **Google Drive API**: Importación de datos desde Google Spreadsheets
 - **Google Sheets**: Fuente de datos para carga masiva
-- **WhatsApp Web.js**: Bot automatizado de WhatsApp
+- **Infisical**: Centralizacion de secretos
 
 ### Procesamiento de Archivos
 
@@ -124,6 +126,14 @@ La API sigue una **arquitectura en capas** (Layered Architecture) con separació
 └─────────────────────────────────────────────────┘
                        ↓
 ┌─────────────────────────────────────────────────┐
+│            Mappers (Data Mapping)               │
+│  • Transform Prisma models to DTOs              │
+│  • uuid → id conversion                         │
+│  • Computed fields (e.g., edad)                 │
+│  • Type-safe data transformation                │
+└─────────────────────────────────────────────────┘
+                       ↓
+┌─────────────────────────────────────────────────┐
 │         Models/Prisma (Data Access)             │
 │  • Database queries                             │
 │  • Data validation                              │
@@ -184,21 +194,52 @@ Roles: `ADMIN`, `DIRIGENTE`, `EXTERNO`
 - Validación por recurso y método HTTP
 - Implementado en `validatePermissions`
 
-## 📁 Estructura de Carpetasscout-api/├── src/
+#### 7. **Capa de Mappers**
+
+Sistema de transformación de datos entre la capa de persistencia (Prisma) y la capa de aplicación:
+
+**Propósito:**
+
+- **Abstracción de datos**: Separa la representación interna de la base de datos de la API pública
+- **Transformación de tipos**: Convierte `uuid` (string) a `id` para mantener consistencia en la API
+- **Campos computados**: Calcula automáticamente campos derivados como `edad` a partir de `fechaNacimiento`
+- **Type-safety**: Garantiza tipado correcto entre capas sin usar `$extends` de Prisma
+
+**Mappers implementados:**
+
+- `mapUser`: Transforma usuarios con scouts/familiares anidados
+- `mapScout` / `mapPartialScout`: Transforma scouts (completos o parciales) y calcula edad
+- `mapFamiliar`: Transforma familiares y calcula edad
+- `mapEquipo`: Transforma equipos/patrullas
+- `mapPago`: Transforma registros de pagos
+- `mapEntregaRealizada`: Transforma entregas de insignias
+- `mapDocumentoPresentado`: Transforma documentos presentados
+- `mapDocumentoDefinicion`: Transforma definiciones de documentos
+
+**Ventajas:**
+
+- ✅ Eliminación de `prisma.$extends` mejorando el rendimiento
+- ✅ Mayor control sobre la forma de los datos expuestos
+- ✅ Facilita testing y mocking de datos
+- ✅ Permite evolucionar el schema de BD sin romper contratos de API
+
+## 📁 Estructura de Carpetas
 
 ```
+scout-api/
+├── src/
 │   ├── bin/                          # Scripts de utilidad y comandos CLI
 │   │   ├── createAdminUser.ts        # Crear usuario administrador
-│   │   ├── deleteDBData.ts           # Limpiar base de datos
-│   │   ├── dumpData.sh               # Script bash para carga de datos
-│   │   ├── loadDocumentos.ts         # Importar documentos desde Sheets
-│   │   ├── loadEntregas.ts           # Importar entregas
-│   │   ├── loadEquipos.ts            # Importar equipos
-│   │   ├── loadFamiliares.ts         # Importar familiares
-│   │   ├── loadPagos.ts              # Importar pagos
-│   │   ├── loadScouts.ts             # Importar scouts
-│   │   ├── restoreData-prod.sh       # Restaurar datos en producción
-│   │   └── saveUsersData.ts          # Guardar datos de usuarios
+│   │   ├── seedDB.ts                 # Alimentar base de datos local (Desarrollo)
+│   │   ├── deleteDBData.ts           # Limpiar base de datos local (Desarrollo)
+│   │   ├── seed/                     # Scripts independientes para seedDB.ts
+│   │   │   ├── loadDocumentos.ts         # Importar documentos desde Sheets
+│   │   │   ├── loadEntregas.ts           # Importar entregas
+│   │   │   ├── loadEquipos.ts            # Importar equipos
+│   │   │   ├── loadFamiliares.ts         # Importar familiares
+│   │   │   ├── loadPagos.ts              # Importar pagos
+│   │   │   ├── loadScouts.ts             # Importar scouts
+│   │   │   └── saveUsersData.ts          # Guardar datos de usuarios
 │   │
 │   ├── controllers/                  # Controladores (Lógica HTTP)
 │   │   ├── auth.ts                   # Login, register, logout
@@ -225,6 +266,16 @@ Roles: `ADMIN`, `DIRIGENTE`, `EXTERNO`
 │   │   ├── session.ts                # Autenticación JWT
 │   │   ├── tooBusy.ts                # Protección contra sobrecarga
 │   │   └── validate.ts               # Validación con Zod
+│   │
+│   ├── mappers/                      # Transformadores de datos
+│   │   ├── auth.ts                   # Mapper de usuarios
+│   │   ├── scout.ts                  # Mapper de scouts (con edad)
+│   │   ├── familiar.ts               # Mapper de familiares (con edad)
+│   │   ├── equipo.ts                 # Mapper de equipos
+│   │   ├── pago.ts                   # Mapper de pagos
+│   │   ├── entrega.ts                # Mapper de entregas
+│   │   ├── documentoPresentado.ts    # Mapper de documentos
+│   │   └── index.ts                  # Exports centralizados
 │   │
 │   ├── models/                       # Modelos de datos
 │   │   └── scout.ts                  # Modelo Scout con extensiones
@@ -338,23 +389,20 @@ Roles: `ADMIN`, `DIRIGENTE`, `EXTERNO`
 - **Constantes**: UPPER_SNAKE_CASE (`MAX_RETRIES`, `JWT_SECRET`)
 - **Tipos/Interfaces**: PascalCase con prefijo `I` para interfaces (`IScout`, `ScoutType`)
 
-## ✅ Requisitos Previos
+## 🛠 Configurar entorno de desarrollo
+
+### Requisitos Previos
 
 Antes de comenzar, asegúrate de tener instalado:
 
-1. **Node.js** (v22.13.1 o superior)
+1. **Node.js y npm** (v22.13.1 o superior) ([aqui](https://nodejs.org/en/download#/) tienes el enlace para descargar e instalar)
 
    ```bash
-   node --version  # Verificar versión
+   node --version  # Verificar versión nodejs
+   npm --version  # Verificar versión npm
    ```
-2. **npm** (v9.5.0 o superior)
 
-   ```bash
-   npm --version
-   ```
-3. **Docker & Docker Compose** (requerido)
-
-   - **Obligatorio para desarrollo**: Ejecuta Turso (LibSQL) y Redis
+2. **Docker & Docker Compose** (requerido)
    - [Descargar Docker Desktop](https://www.docker.com/products/docker-desktop)
    - Verificar instalación:
 
@@ -362,41 +410,43 @@ Antes de comenzar, asegúrate de tener instalado:
    docker --version
    docker compose version
    ```
-4. **Credenciales de Infisical** (solicitar al administrador)
 
-   - **No necesitas crear cuenta en Infisical**
-   - El administrador del proyecto te proporcionará:
-     - `INFISICAL_SERVICE_TOKEN` - Service Token del ambiente de desarrollo
-     - `INFISICAL_PROJECT_ID` - ID del proyecto
-     - `INFISICAL_ENV` - Ambiente (ej: `dev`, `staging`, `prod`)
-     - `INFISICAL_SITE_URL` - URL del servidor (opcional)
-   - Estos valores te darán acceso a todos los secretos del ambiente configurado
-5. **Git**
+3. **DBeaver Community** (recomendado para visualizar la base de datos)
+   - [Descargar DBeaver](https://dbeaver.io/download/)
+   - Cliente universal de base de datos para explorar y administrar la BD Turso/SQLite
+
+4. **Git**
 
    ```bash
    git --version
    ```
 
-## 🛠 Configuración del Entorno de Desarrollo
+### Configurar y levantar el entorno
 
-### 1. Clonar el Repositorio
+#### 1. Clonar el Repositorio
 
 ```bash
 git clone https://github.com/aggutierrez98/scout-api.git
 cd scout-api
 ```
 
-### 2. Instalar Dependencias
+#### 2. Instalar Dependencias
 
 ```bash
 npm install
 ```
 
-### 3. Configurar Variables de Entorno e Infisical
+#### 3. Configurar Variables de Entorno e Infisical
 
-Este proyecto usa **Infisical** para gestionar secretos de forma centralizada y segura.
+#### a) Crear archivo .env.development copiado del archivo de ejemplo (.env.example)
 
-#### a) Solicitar Service Token de Infisical
+```bash
+cp .env.example .env.development
+```
+
+#### b) Solicitar Credenciales de Infisical
+
+Este proyecto usa [**Infisical**](https://infisical.com/) para gestionar secretos de forma centralizada y segura.
 
 **Solicita al administrador del proyecto** las siguientes credenciales para tu entorno:
 
@@ -406,12 +456,6 @@ Este proyecto usa **Infisical** para gestionar secretos de forma centralizada y 
 - `INFISICAL_SITE_URL` - URL del servidor Infisical (usualmente `https://app.infisical.com`)
 
 > 💡 **Nota**: El administrador generará un Service Token específico para el ambiente de desarrollo. Cada ambiente (dev/staging/prod) tiene su propio token con acceso solo a los secretos de ese ambiente. Todos los secretos (AWS, Google Drive, Turso, etc.) están configurados centralmente.
-
-#### b) Crear archivo .env.development
-
-```bash
-cp .env.example .env.development
-```
 
 Edita `.env.development` y completa con las credenciales proporcionadas:
 
@@ -423,90 +467,29 @@ PORT=8080
 INFISICAL_SERVICE_TOKEN=<service-token-del-admin>
 INFISICAL_PROJECT_ID=<project-id>
 INFISICAL_ENV=dev
-INFISICAL_SITE_URL=https://app.infisical.com
+INFISICAL_SITE_URL=<infisical-site-url>
 ```
-
-#### c) Secretos gestionados centralmente
-
-Los siguientes secretos están configurados en Infisical por el administrador (no necesitas configurarlos localmente):
-
-**Secretos principales:**
-
-- `DATABASE_URL` - Ruta local de SQLite (file:./src/prisma/scout.db)
-- `JWT_SECRET` - Clave para firmar tokens JWT
-- `REDIS_CONNECTION_URI` - URI de conexión a Redis
-- `DATOS_GRUPO` - JSON con datos del grupo: `{"numero":"58","nombre":"Madre Teresa","distrito":"2","zona":"9"}`
-
-**AWS S3 (almacenamiento de documentos):**
-
-- `S3_ACCESS_KEY` - Access Key ID de AWS
-- `S3_SECRET_ACCESS_KEY` - Secret Access Key
-- `S3_BUCKET_NAME` - Nombre del bucket
-- `S3_REGION` - Región del bucket (ej: us-east-1)
-
-**BetterStack (logs en producción):**
-
-- `BETTERSTACK_AUTH_TOKEN` - Token de autenticación
-- `BETTERSTACK_INGESTING_HOST` - Host de ingesta (in.logs.betterstack.com)
-
-**Google Drive (carga de datos):**
-
-- `GOOGLE_DRIVE_PRIVATE_KEY` - Private key del Service Account
-- `GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL` - Email del Service Account
-- `GOOGLE_DRIVE_SPREADSHEET_DATA_KEY` - ID de la hoja de datos
-
-**Turso (producción):**
-
-- `TURSO_AUTH_TOKEN` - Token de autenticación de Turso Cloud
-- `TURSO_DATABASE_URL` - URL de base de datos Turso (libsql://...)
-
-#### d) ¿Cómo funciona? (Arquitectura)
-
-Al iniciar la aplicación, el `SecretsManager` (singleton) se autentica con Infisical usando tus credenciales y descarga todos los secretos de forma segura:
-
-```
-Tu máquina                          Infisical Cloud
-─────────────                       ───────────────
-                                
-.env.development                    📦 Proyecto Scout API
-  ├─ CLIENT_ID      ────┐           ├─ JWT_SECRET
-  ├─ CLIENT_SECRET  ────┼──────────►├─ AWS Keys
-  └─ PROJECT_ID     ────┘   Auth    ├─ Google Drive Keys
-                                    ├─ Turso Credentials
-SecretsManager                      └─ Redis URI
-  └─ Descarga secretos tipados
-  
-Tu código usa:
-  • SecretsManager.getInstance().getJWTSecret()
-  • SecretsManager.getInstance().getAWSSecrets()
-  • etc. (todo tipado en TypeScript)
-```
-
-**Ventajas de este enfoque:**
-✅ **Cero configuración local** - Solo 4 variables en tu `.env`
-✅ **Secretos centralizados** - El admin actualiza, todos reciben los cambios
-✅ **Sin secretos en Git** - `.env.development` solo tiene credenciales de acceso
-✅ **Tipado completo** - TypeScript valida todos los secretos
-✅ **Rotación fácil** - El admin rota secretos sin tocar tu código
 
 ### 4. Inicializar Entorno Docker (Primera Vez)
 
 **⚠️ Este paso es obligatorio la primera vez que trabajas con el proyecto:**
+
+Primero asegurarse de tener libres los puertos 9000 y 6379.
+Luego correr el comando:
 
 ```bash
 # Inicializa Docker (Turso + Redis) y carga datos de desarrollo
 npm run docker:init-with-data
 ```
 
-Este comando realiza automáticamente:
-
-1. 🐳 Levanta contenedores Docker (Turso + Redis)
-2. 📦 Copia la base de datos `src/prisma/scout.db` al contenedor
-3. 🗑️ Limpia datos existentes en la base de datos
-4. 📥 Carga datos de desarrollo desde Google Sheets (scouts, familiares, equipos, etc.)
-5. 👤 Permite crear un usuario administrador
-
-**Tiempo estimado:** 2-3 minutos
+> Nota: Este comando realiza automáticamente:
+>
+> 1. 🐳 Levanta contenedores Docker (Turso + Redis)
+> 2. 📦 Copia la base de datos `data/scout.db` al contenedor
+> 3. 💻 Crea el cliente de prisma.
+> 4. 🗑️ Limpia datos existentes en la base de datos
+> 5. 📥 Carga datos de desarrollo desde Google Sheets (scouts, familiares, equipos, etc.).
+> 6. **Tiempo estimado:** 2-3 minutos
 
 Esto levanta:
 
@@ -523,7 +506,6 @@ Este script interactivo te pedirá:
 
 - Username
 - Password
-- Confirmación de password
 
 El usuario creado tendrá rol `ADMIN` con todos los permisos.
 
@@ -537,19 +519,23 @@ Una vez completada la inicialización Docker del paso 4, puedes trabajar normalm
 npm run dev
 ```
 
-El servidor iniciará en `http://localhost:3000` (o el puerto configurado en `.env.development`).
+El servidor iniciará en `http://localhost:8080` (o el puerto configurado en `.env.development`).
 
-## 🔄 Flujo de Trabajo Diario
+### 7. Verificar Instalación
 
-### Primera vez trabajando en el proyecto
+Una vez iniciado el servidor (`npm run dev`), verifica que todo funciona:
 
 ```bash
-npm run docker:init-with-data  # Inicia Docker + carga datos
-npm run create-admin:dev       # Crea usuario administrador
-npm run dev                     # Inicia servidor
+# Health check del API
+curl http://localhost:8080/health
+
+# Abrir documentación Swagger
+open http://localhost:8080/docs
 ```
 
-### Sesiones posteriores
+## 🔄 Flujo de Trabajo Diario de Desarrollo
+
+### Luego de haber configurado el proyecto una primera vez, cada vez que se quiera correr el proyecto se hara
 
 **Si los contenedores están detenidos:**
 
@@ -584,21 +570,6 @@ Este comando ejecuta automáticamente:
 2. Guardado de usuarios (`save-users`)
 3. Carga secuencial de: equipos → scouts → familiares → documentos → entregas → pagos
 
-### 7. Verificar Instalación
-
-Una vez iniciado el servidor (`npm run dev`), verifica que todo funciona:
-
-```bash
-# Health check del API
-curl http://localhost:8080/api/auth/health
-
-# Abrir documentación Swagger
-open http://localhost:8080/docs
-
-# Verificar estado de Docker
-npm run docker:status
-```
-
 El servidor ejecuta:
 
 - **Turso (LibSQL)**: Base de datos en puerto 9000 (contenedor Docker)
@@ -608,15 +579,22 @@ El servidor ejecuta:
 
 ## 🛠️ Herramientas de Desarrollo
 
-### Prisma Studio
+### DBeaver - Explorador de Base de Datos
 
-Interfaz gráfica para explorar y editar la base de datos:
+DBeaver permite visualizar y administrar la base de datos Turso/SQLite de forma gráfica.
 
-```bash
-npm run studio:dev
-```
+#### Configurar DBeaver para conectarse a la base de datos local
 
-Se abre en `http://localhost:5555`
+1. **Abrir DBeaver** y crear una nueva conexión
+2. **Seleccionar tipo de base de datos**:
+   - En el diálogo de nueva conexión, buscar y seleccionar **LibSQL**
+3. **Configurar la conexión**:
+   - **Conexion**: Seleccionar conexion por `Host`.
+   - **Server URL**: Ingresar la URL `http://localhost:9000`
+   - Hacer clic en **Test Connection** para verificar
+4. **Guardar y conectar**
+
+> 💡 **Nota**: Los contenedores Docker deben estar corriendo (`npm run docker:init`) para que DBeaver pueda conectarse.
 
 ### Logs del Sistema
 
@@ -648,47 +626,16 @@ npm run create-admin:dev    # Crear nuevo usuario admin
 
 **Propósito**: Importación masiva de datos desde hojas de cálculo.
 
-#### Configuración
-
-1. **Crear Proyecto en Google Cloud Console**
-
-   - Ir a [Google Cloud Console](https://console.cloud.google.com)
-   - Crear un nuevo proyecto o seleccionar uno existente
-2. **Habilitar APIs**
-
-   ```
-   Google Drive API
-   Google Sheets API
-   ```
-3. **Crear Service Account**
-
-   - Ir a `IAM & Admin` > `Service Accounts`
-   - Crear Service Account
-   - Generar clave JSON
-   - Extraer `client_email` y `private_key`
-4. **Compartir Spreadsheet**
-
-   - Abrir tu Google Sheet
-   - Compartir con el email del Service Account (client_email)
-   - Copiar el ID del Sheet (de la URL)
-5. **Configurar Variables**
-
-   ```dosini
-   GOOGLE_SERVICE_ACCOUNT_EMAIL=...@....iam.gserviceaccount.com
-   GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-   GOOGLE_SPREADSHEET_DATA_KEY=1ABC...xyz
-   ```
-
-#### Uso
+#### Uso de Google Drive API
 
 ```typescript
 // Leer datos de una hoja
-import { getSpreadSheetData } from './utils/helpers/googleDriveApi';
-const scouts = await getSpreadSheetData('scouts');
+import { getSpreadSheetData } from "./utils/helpers/googleDriveApi";
+const scouts = await getSpreadSheetData("scouts");
 
 // Escribir datos
-import { writeSpreadSheet } from './utils/helpers/googleDriveApi';
-await writeSpreadSheet('scouts', scoutsData);
+import { writeSpreadSheet } from "./utils/helpers/googleDriveApi";
+await writeSpreadSheet("scouts", scoutsData);
 ```
 
 #### Hojas Disponibles
@@ -705,56 +652,16 @@ await writeSpreadSheet('scouts', scoutsData);
 
 **Propósito**: Almacenamiento persistente de documentos PDF (fichas médicas, autorizaciones, etc.).
 
-#### Configuración
-
-1. **Crear Bucket S3**
-
-   - Ir a [AWS S3 Console](https://s3.console.aws.amazon.com)
-   - Crear nuevo bucket
-   - Configurar región (ej: `us-east-1`)
-2. **Configurar Políticas**
-
-   ```json
-   {
-     "Version": "2012-10-17",
-     "Statement": [
-       {
-         "Effect": "Allow",
-         "Action": [
-           "s3:PutObject",
-           "s3:GetObject",
-           "s3:DeleteObject"
-         ],
-         "Resource": "arn:aws:s3:::tu-bucket/*"
-       }
-     ]
-   }
-   ```
-3. **Crear Usuario IAM**
-
-   - Ir a `IAM` > `Users`
-   - Crear usuario con acceso programático
-   - Adjuntar política de S3
-   - Generar Access Keys
-4. **Configurar Variables**
-
-   ```dosini
-   AWS_S3_ACCESS_KEY=AKIA...
-   AWS_S3_SECRET_ACCESS_KEY=...
-   AWS_S3_BUCKET_NAME=scout-documentos
-   AWS_S3_REGION=us-east-1
-   ```
-
-#### Uso
+#### Uso de AWS
 
 ```typescript
 // Subir archivo
-import { uploadToS3 } from './utils/lib/s3.util';
-const etag = await uploadToS3(pdfBuffer, 'documentos/scout_123.pdf');
+import { uploadToS3 } from "./utils/lib/s3.util";
+const etag = await uploadToS3(pdfBuffer, "documentos/scout_123.pdf");
 
 // Obtener URL firmada (temporal)
-import { getFileInS3 } from './utils/lib/s3.util';
-const signedUrl = await getFileInS3('documentos/scout_123.pdf');
+import { getFileInS3 } from "./utils/lib/s3.util";
+const signedUrl = await getFileInS3("documentos/scout_123.pdf");
 // URL válida por 1 hora
 ```
 
@@ -762,44 +669,9 @@ const signedUrl = await getFileInS3('documentos/scout_123.pdf');
 
 **Propósito**: Base de datos distribuida SQLite con sincronización en la nube.
 
-#### Turso en Producción (Turso Cloud)
-
-1. **Crear cuenta** en [turso.tech](https://turso.tech)
-2. **Instalar CLI**
-
-   ```bash
-   brew install tursodatabase/tap/turso
-   # o
-   curl -sSfL https://get.tur.so/install.sh | bash
-   ```
-3. **Crear base de datos**
-
-   ```bash
-   turso db create scout-db
-   turso db show scout-db
-   ```
-4. **Obtener credenciales**
-
-   ```bash
-   turso db tokens create scout-db
-   turso db show scout-db --url
-   ```
-5. **Configurar variables**
-
-   ```dosini
-   TURSO_DATABASE_URL=libsql://scout-db-[user].turso.io
-   TURSO_AUTH_TOKEN=eyJhb...
-   ```
-
 ### 4. Redis
 
 **Propósito**: Caché de consultas frecuentes para optimizar rendimiento.
-
-#### Configuración
-
-```dosini
-REDIS_CONNECTION_URI=redis://localhost:6379
-```
 
 #### Uso Interno
 
@@ -807,14 +679,16 @@ El caché se gestiona automáticamente mediante middlewares:
 
 ```typescript
 // En routes
-router.get('/:id', 
-  cacheMiddleware,        // Cachea GET requests
-  controller.getItem
+router.get(
+  "/:id",
+  cacheMiddleware, // Cachea GET requests
+  controller.getItem,
 );
 
-router.put('/:id',
-  cleanCacheMiddleware,   // Invalida caché al modificar
-  controller.updateItem
+router.put(
+  "/:id",
+  cleanCacheMiddleware, // Invalida caché al modificar
+  controller.updateItem,
 );
 ```
 
@@ -823,66 +697,54 @@ router.put('/:id',
 ```typescript
 // En middlewares/cache.ts
 cacheManager.set(cacheKey, data, {
-  expirationInMs: 60000  // 1 minuto
+  expirationInMs: 60000, // 1 minuto
 });
 ```
 
-### 5. WhatsApp Web.js
-
-**Propósito**: Bot automatizado para notificaciones y consultas.
-
-#### Características
-
-- 📅 Recordatorios automáticos de cumpleaños
-- 📊 Consultas de información (scouts, pagos, documentos)
-- 🔔 Notificaciones de eventos
-
-#### Configuración
-
-1. **MongoDB para sesiones** (opcional, se puede usar LocalAuth)
-
-   ```dosini
-   MONGODB_URI=mongodb://localhost:27017/whatsapp
-   WHATSAPP_US_CHAT_ID=123456789@c.us
-   ```
-2. **Activar en código**
-
-   ```typescript
-   // En src/index.ts (actualmente comentado)
-   await serverInstance.connectWhatsapp();
-   ```
-3. **Escanear QR**
-
-   - Al iniciar, se mostrará un QR en la consola
-   - Escanear con WhatsApp Web en tu teléfono
-
-#### Comandos del Bot
-
-- `menu`: Mostrar comandos disponibles
-- `scouts`: Listar scouts activos
-- `cumpleaños`: Ver cumpleaños del mes
-- `documentos [dni]`: Documentos faltantes de un scout
-- `pagos [semana]`: Pagos de la semana
-
-### 6. Logtail
+### 5. Logtail
 
 **Propósito**: Logs centralizados en la nube para producción.
-
-#### Configuración
-
-1. **Crear cuenta** en [logtail.com](https://logtail.com)
-2. **Obtener token** del dashboard
-3. **Configurar variables**
-   ```dosini
-   LOGTAIL_TOKEN=tu_token_logtail
-   LOGTAIL_INGESTING_HOST=in.logtail.com
-   ```
 
 #### Logs Enviados
 
 - Errores críticos
 - Peticiones HTTP (en producción)
 - Eventos importantes (login, cambios de permisos, etc.)
+
+### 6. Infisical
+
+**Proposito**: Centralizar los secretos haciendo mas facil la mantenibilidad y configuracion.
+
+#### (Arquitectura)
+
+Al iniciar la aplicación, el ⁠ SecretsManager ⁠ (singleton) se autentica con Infisical usando tus credenciales y descarga todos los secretos de forma segura:
+
+```
+Tu máquina                          Infisical Cloud
+─────────────                       ───────────────
+
+.env.development                    📦 Proyecto Scout API
+  ├─ CLIENT_ID      ────┐           ├─ JWT_SECRET
+  ├─ CLIENT_SECRET  ────┼──────────►├─ AWS Keys
+  └─ PROJECT_ID     ────┘   Auth    ├─ Google Drive Keys
+                                    ├─ Turso Credentials
+SecretsManager                      └─ Redis URI
+  └─ Descarga secretos tipados
+```
+
+Tu código usa:
+
+```typescript
+SecretsManager.getInstance().getJWTSecret();
+SecretsManager.getInstance().getAWSSecrets();
+```
+
+**Ventajas de este enfoque:**
+✅ **Cero configuración local** - Solo 4 variables en tu `.env`
+✅ **Secretos centralizados** - El admin actualiza, todos reciben los cambios
+✅ **Sin secretos en Git** - `.env.development` solo tiene credenciales de acceso
+✅ **Tipado completo** - TypeScript valida todos los secretos
+✅ **Rotación fácil** - El admin rota secretos sin tocar tu código
 
 ## 📜 Scripts Disponibles
 
@@ -972,6 +834,7 @@ Crea `.env.production` con las credenciales reales:
 NODE_ENV=production
 PORT=3000
 
+// TODO: CAMBIAR por credenciales infisical
 # Base de datos Turso remota
 TURSO_DATABASE_URL=libsql://scout-db-[user].turso.io
 TURSO_AUTH_TOKEN=eyJhbG...
@@ -984,53 +847,6 @@ JWT_SECRET=...
 AWS_S3_ACCESS_KEY=...
 # etc.
 ```
-
-### Deployment Options
-
-#### 1. VPS (DigitalOcean, Linode, AWS EC2)
-
-```bash
-# Instalar Node.js y PM2
-npm install -g pm2
-
-# Iniciar con PM2
-pm2 start pm2.config.js
-
-# Ver logs
-pm2 logs
-
-# Monitoreo
-pm2 monit
-
-# Guardar configuración
-pm2 save
-pm2 startup
-```
-
-#### 2. Docker
-
-```dockerfile
-# Dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --production
-COPY dist ./dist
-COPY src/prisma ./src/prisma
-CMD ["npm", "start"]
-```
-
-```bash
-docker build -t scout-api .
-docker run -p 3000:3000 --env-file .env.production scout-api
-```
-
-#### 3. Plataformas Cloud
-
-- **Railway**: Conectar repo GitHub y configurar variables
-- **Render**: Deploy automático desde GitHub
-- **Fly.io**: `fly launch` y `fly deploy`
-- **Vercel**: Funciona con API Routes de Next.js (requiere adaptación)
 
 ### Consideraciones de Producción
 
@@ -1055,12 +871,6 @@ docker run -p 3000:3000 --env-file .env.production scout-api
 
 ### Notas Importantes
 
-**WhatsApp Web.js**:
-
-- Solo funciona correctamente con Node.js v18.14.2 y npm v9.5.0
-- Si usas otra versión, cambia a `LocalAuth` en lugar de `MongoStore`
-- Puppeteer requiere dependencias adicionales en Linux (librerías gráficas)
-
 **Docker**:
 
 - Los contenedores deben estar corriendo antes de iniciar el servidor
@@ -1072,6 +882,14 @@ docker run -p 3000:3000 --env-file .env.production scout-api
 - El esquema se gestiona mediante migraciones en Prisma (ver `src/prisma/migrations/`)
 - Nunca editar archivos en `@prisma/client` manualmente
 - Regenerar cliente: `npx prisma generate`
+
+**Evolución de la aplicación**:
+
+Cada vez que realices cambios en la base de datos que se reflejen en el esquema de Prisma, debes regenerar manualmente Prisma Client para actualizar el código generado en el directorio de salida:
+
+```bash
+npx prisma generate
+```
 
 ---
 

@@ -3,9 +3,11 @@ import { IDocumento } from "../types";
 import { validScoutID } from "./scout";
 import { ISODateStringReg, nanoIdRegex, numberReg } from "../utils/regex";
 import { IdSchema, QuerySearchSchema } from "./generics";
-import { prismaClient } from "../utils/lib/prisma-client";
+import { prismaClient, initPrisma } from "../utils/lib/prisma-client";
 import { validFamiliarID } from ".";
 import { VALID_TIPOS_EVENTO } from '../utils/constants';
+// import { prismaClient } from "../utils/lib/prisma-client";
+// import { getPrismaClient } from "../utils/lib/prisma-client";
 
 export const filesSchema = z.object({
 	signature: z.object({

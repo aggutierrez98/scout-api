@@ -1,4 +1,5 @@
 import { SecretsManager } from "../utils/classes/SecretsManager";
+import { initPrisma } from "../utils/lib/prisma-client";
 
 const deleteDBData = async () => {
     let prismaClient;
@@ -11,6 +12,7 @@ const deleteDBData = async () => {
 
         await SecretsManager.getInstance().initialize();
         prismaClient = (await import("../utils/lib/prisma-client")).prismaClient;
+        await initPrisma();
         if (!prismaClient) {
             throw new Error("Prisma Client no inicializado");
         }

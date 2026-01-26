@@ -5,14 +5,16 @@ import { encrypt } from "../utils/lib/bcrypt.util";
 import { RegisterSchema } from "../validators/auth";
 import { ROLES } from "../types";
 import { SecretsManager } from "../utils/classes/SecretsManager";
+import { initPrisma, prismaClient } from "../utils/lib/prisma-client"
 
-const createAdmin = async () => {
-
-    let prismaClient;
+export const createAdmin = async () => {
 
     try {
-        await SecretsManager.getInstance().initialize();
-        prismaClient = (await import("../utils/lib/prisma-client")).prismaClient;
+        await SecretsManager.getInstance().initialize().then(async () => {
+            console.log("Secretos cargados correctamente");
+        })
+
+        await initPrisma();
         if (!prismaClient) {
             throw new Error("Prisma Client no inicializado");
         }

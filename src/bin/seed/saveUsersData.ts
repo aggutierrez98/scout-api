@@ -1,5 +1,5 @@
-import { SecretsManager } from "../utils/classes/SecretsManager";
-import { writeSpreadSheet } from "../utils/helpers/googleDriveApi";
+import { SecretsManager } from "../../utils/classes/SecretsManager";
+import { writeSpreadSheet } from "../../utils/helpers/googleDriveApi";
 import { Scout } from '@prisma/client';
 
 export const saveUsers = async () => {
@@ -8,9 +8,8 @@ export const saveUsers = async () => {
     console.log("------------ INICIANDO SCRIPT PARA GUARDAR USUARIOS EN SPREASHEETS -------------\n");
 
     try {
-
         await SecretsManager.getInstance().initialize();
-        prismaClient = (await import("../utils/lib/prisma-client")).prismaClient;
+        prismaClient = (await import("../../utils/lib/prisma-client")).prismaClient;
         if (!prismaClient) {
             throw new Error("Prisma Client no inicializado");
         }

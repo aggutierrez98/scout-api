@@ -1,28 +1,8 @@
 import { nanoid } from "nanoid";
 import { FuncionType, IPago, IPagoData, MetodosPagoType, ProgresionType, RamasType } from "../types";
 import { prismaClient } from "../utils/lib/prisma-client";
-
-const prisma = prismaClient.$extends({
-	result: {
-		pago: {
-			id: {
-				compute: (data) => data.uuid,
-			},
-			uuid: {
-				compute: () => undefined,
-			},
-		},
-		scout: {
-			id: {
-				compute: (data) => data.uuid,
-			},
-			uuid: {
-				compute: () => undefined,
-			},
-		},
-	},
-});
-const PagoModel = prisma.pago;
+import { mapPago } from "../mappers/pago";
+import { mapPartialScout } from "../mappers/scout";
 
 type queryParams = {
 	limit?: number;
@@ -53,7 +33,7 @@ interface IPagoService {
 
 export class PagoService implements IPagoService {
 	insertPago = async (pago: IPago) => {
-		const responseInsert = await PagoModel.create({
+		const responseInsert = await prismaClient.pago.create({
 			data: {
 				...pago,
 				uuid: nanoid(10),
@@ -61,7 +41,7 @@ export class PagoService implements IPagoService {
 				scoutId: pago.scoutId,
 			},
 		});
-		return responseInsert;
+		return mapPago(responseInsert) as any;
 	};
 
 	getPagos = async ({ limit = 15, offset = 0, filters = {} }: queryParams) => {
@@ -79,7 +59,7 @@ export class PagoService implements IPagoService {
 			ramas
 		} = filters;
 
-		const responseItem = await PagoModel.findMany({
+		const responseItem = await prismaClient.pago.findMany({
 			skip: offset,
 			take: limit,
 			orderBy: { fechaPago: "desc" },
@@ -130,17 +110,16 @@ export class PagoService implements IPagoService {
 				],
 			},
 		});
-		return responseItem;
-	};
-
-	getPago = async (id: string) => {
+		return responseItem.map(pago => mapPago(pago));
+	}; getPago = async (id: string) => {
 		try {
-			const responseItem = await PagoModel.findUnique({
+			const responseItem = await prismaClient.pago.findUnique({
 				where: { uuid: id },
 				include: {
 					scout: {
 						select: {
 							id: true,
+							uuid: true,
 							nombre: true,
 							apellido: true,
 							dni: true,
@@ -153,14 +132,20 @@ export class PagoService implements IPagoService {
 				},
 			});
 
-			return responseItem;
+			if (!responseItem) return null;
+
+			const { scout, ...pago } = responseItem;
+			return {
+				...mapPago(pago),
+				scout: mapPartialScout(scout)
+			} as any;
 		} catch (error) {
 			return null;
 		}
 	};
 
 	updatePago = async (id: string, { scoutId, ...dataUpdated }: IPago) => {
-		const responseItem = await PagoModel.update({
+		const responseItem = await prismaClient.pago.update({
 			where: { uuid: id },
 			data: {
 				...dataUpdated,
@@ -168,11 +153,11 @@ export class PagoService implements IPagoService {
 			},
 		});
 
-		return responseItem;
+		return mapPago(responseItem) as any;
 	};
 
 	deletePago = async (id: string) => {
-		const responseItem = await PagoModel.delete({ where: { uuid: id } });
-		return responseItem;
+		const responseItem = await prismaClient.pago.delete({ where: { uuid: id } });
+		return mapPago(responseItem) as any;
 	};
 }

@@ -3,7 +3,8 @@ import { IUser } from "../types";
 import { lettersReg } from "../utils/regex";
 import { IdSchema, QuerySearchSchema } from "./generics";
 import { VALID_ROLES } from "../utils";
-import { prismaClient } from "../utils/lib/prisma-client";
+import { prismaClient, initPrisma } from "../utils/lib/prisma-client";
+// import { getPrismaClient } from "../utils/lib/prisma-client";
 import { validFamiliarID } from "./familiar";
 import { validScoutID } from "./scout";
 

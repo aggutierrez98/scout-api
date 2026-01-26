@@ -10,7 +10,8 @@ import {
 import { IScout } from "../types";
 import { directionReg, lettersReg, numberReg } from "../utils/regex";
 import { IdSchema, QuerySearchSchema } from "./generics";
-import { prismaClient } from "../utils/lib/prisma-client";
+import { initPrisma, prismaClient } from "../utils/lib/prisma-client";
+// import { getPrismaClient } from "../utils/lib/prisma-client";
 
 export const excelFileSchema = z.object({
 	nomina: z.object({

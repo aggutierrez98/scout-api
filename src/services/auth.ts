@@ -5,51 +5,7 @@ import { generateToken } from "../utils/lib/jwt.util";
 import { RolesType } from "../types";
 import { getAge } from "../utils";
 import { prismaClient } from "../utils/lib/prisma-client";
-
-const prisma = prismaClient.$extends({
-    result: {
-        user: {
-            id: {
-                compute: (data) => data.uuid,
-            },
-            uuid: {
-                compute: () => undefined,
-            },
-        },
-        scout: {
-            id: {
-                compute: (data) => data.uuid,
-            },
-            uuid: {
-                compute: () => undefined,
-            },
-            edad: {
-                needs: { fechaNacimiento: true },
-                compute(scout: IScout) {
-                    return getAge(scout.fechaNacimiento)
-                },
-            }
-        },
-        familiar: {
-            id: {
-                compute: (data) => data.uuid,
-            },
-            uuid: {
-                compute: () => undefined,
-            },
-            edad: {
-                needs: { fechaNacimiento: true },
-                compute(familiar: IFamiliar) {
-                    return getAge(familiar.fechaNacimiento)
-                },
-            }
-        }
-    },
-});
-
-
-const UserModel = prisma.user;
-
+import { mapUser } from '../mappers/auth';
 interface LoginParams {
     username: string;
     password: string
@@ -99,7 +55,7 @@ export class AuthService implements IAuthService {
     getUser = async ({ username, userId, hasLoggedIn = true }: GetUserParams) => {
         const hasLoggedInFilter = hasLoggedIn ? { password: { not: null } } : { password: { equals: null } }
 
-        const user = await UserModel.findUnique({
+        const user = await prismaClient.user.findUnique({
             where: {
                 OR: [{ username }, { uuid: userId }],
                 username,
@@ -114,12 +70,14 @@ export class AuthService implements IAuthService {
 
         if (!user) return null
 
+        const userScout = mapUser({
+            ...user,
+            scout: user.scout ?? undefined,
+            familiar: user.familiar ?? undefined
+        })
+
         return {
-            id: user.id,
-            username: user.username,
-            scout: user.scout,
-            familiar: user.familiar,
-            role: user.role,
+            ...userScout,
             active: user.active
         }
     }
@@ -134,7 +92,7 @@ export class AuthService implements IAuthService {
             username = ""
         } = filters;
 
-        const response = await UserModel.findMany({
+        const response = await prismaClient.user.findMany({
             skip: offset,
             take: limit,
             orderBy: { username: "asc" },
@@ -171,17 +129,24 @@ export class AuthService implements IAuthService {
             },
         });
 
-        return response.map(user => ({
-            id: user.id,
-            username: user.username,
-            role: user.role,
-            active: user.active
-        }))
+        return response.map(user => {
+
+            const userScout = mapUser({
+                ...user,
+            })
+
+            return {
+                id: userScout.id,
+                username: userScout.username,
+                role: userScout.role,
+                active: userScout.active
+            }
+        })
     }
 
     loginUser = async ({ password, username }: LoginParams) => {
 
-        const user = await UserModel.findUnique({
+        const user = await prismaClient.user.findUnique({
             where: {
                 username
             },
@@ -195,14 +160,15 @@ export class AuthService implements IAuthService {
         const validPass = await verified(password, user.password)
         if (!validPass) return null
 
-        const token = generateToken(user.id)
+        const userScout = mapUser({
+            ...user,
+            scout: user.scout ?? undefined,
+            familiar: user.familiar ?? undefined
+        })
+        const token = generateToken(userScout.id)
         return {
-            id: user.id,
-            username: user.username,
-            scout: user.scout as IScoutData,
-            familiar: user.familiar as IFamiliar,
-            role: user.role as RolesType,
-            token,
+            ...userScout,
+            token
         }
     };
 
@@ -210,7 +176,7 @@ export class AuthService implements IAuthService {
         const uuid = nanoid(10);
         const newPassword = password ? await encrypt(password) : undefined
 
-        const user = await UserModel.create({
+        const user = await prismaClient.user.create({
             data: {
                 uuid,
                 username,
@@ -225,12 +191,15 @@ export class AuthService implements IAuthService {
             }
         });
 
+        const userScout = mapUser({
+            ...user,
+            scout: user.scout ?? undefined,
+            familiar: user.familiar ?? undefined
+        })
+
         return {
-            id: user.id,
-            scout: user.scout as IScoutData,
-            familiar: user.familiar as IFamiliar,
-            username: user.username,
-            role: user.role as RolesType,
+            ...userScout,
+            role: userScout.role as RolesType,
         }
     }
 
@@ -238,7 +207,7 @@ export class AuthService implements IAuthService {
         const uuid = nanoid(10);
         const passHash = await encrypt(password)
 
-        const user = await UserModel.create({
+        const user = await prismaClient.user.create({
             data: {
                 uuid,
                 username,
@@ -251,7 +220,12 @@ export class AuthService implements IAuthService {
             }
         });
 
-        const token = generateToken(user.id)
+        const userScout = mapUser({
+            ...user,
+            scout: user.scout ?? undefined,
+        })
+
+        const token = generateToken(userScout.id)
         return {
             id: user.id,
             scout: user.scout,
@@ -265,7 +239,7 @@ export class AuthService implements IAuthService {
 
         const modifiedPassword = password ? await encrypt(password) : undefined
 
-        const user = await UserModel.update({
+        const user = await prismaClient.user.update({
             data: {
                 active,
                 role,
@@ -280,12 +254,14 @@ export class AuthService implements IAuthService {
             }
         })
 
+        const userScout = mapUser({
+            ...user,
+            scout: user.scout ?? undefined,
+            familiar: user.familiar ?? undefined
+        })
+
         return {
-            id: user.id,
-            scout: user.scout,
-            familiar: user.familiar,
-            username: user.username,
-            role: user.role,
+            ...userScout,
             active: user.active
         }
     }

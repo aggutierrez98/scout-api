@@ -1,8 +1,8 @@
 import { Prisma } from "@prisma/client";
 import ProgressBar from "progress";
 import { nanoid } from "nanoid";
-import { getSpreadSheetData } from "../utils/helpers/googleDriveApi";
-import { SecretsManager } from "../utils/classes/SecretsManager";
+import { getSpreadSheetData } from "../../utils/helpers/googleDriveApi";
+import { SecretsManager } from "../../utils/classes/SecretsManager";
 
 export const loadEquipos = async () => {
 
@@ -15,7 +15,7 @@ export const loadEquipos = async () => {
         );
 
         await SecretsManager.getInstance().initialize();
-        prismaClient = (await import("../utils/lib/prisma-client")).prismaClient;
+        prismaClient = (await import("../../utils/lib/prisma-client")).prismaClient;
         if (!prismaClient) {
             throw new Error("Prisma Client no inicializado");
         }

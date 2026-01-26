@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { CacheManager } from "../utils/classes/CacheManager";
 import { AppError, HttpCode } from "../utils/classes/AppError";
 
-const cacheManager = new CacheManager();
+const cacheManager = CacheManager.getInstance();
 
 const cleanCacheMiddleware = async (
 	req: Request,

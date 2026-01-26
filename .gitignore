@@ -9,10 +9,8 @@ dist
 **-ssh.pem
 **.zip
 backup.sql
-**/prisma/**.db
-**/prisma/**.db-wal
-**/prisma/**.db-shm
+# **/prisma/**.db
+# **/prisma/**.db-wal
+# **/prisma/**.db-shm
 **/prisma/migrations/**
-
-# Ignore mount volumes
-data/*
+*.DS_Store

@@ -1,28 +1,41 @@
-import { PrismaClient } from '@prisma/client'
-import { PrismaLibSql } from '@prisma/adapter-libsql'
-import logger from '../classes/Logger';
-import { SecretsManager } from '../classes/SecretsManager';
+import { PrismaClient } from "@prisma/client";
+import { PrismaLibSql } from "@prisma/adapter-libsql";
+import { SecretsManager } from "../classes/SecretsManager";
 
-// if(SecretsManager.getInstance().isInitialized() === false) {
-//     await SecretsManager.getInstance().initialize()
-// }
+let prisma: PrismaClient | null = null;
 
-const tursoSecrets = SecretsManager.getInstance().getTursoSecrets();
-const dbUrl = tursoSecrets.DATABASE_URL;
-const dbToken = tursoSecrets.AUTH_TOKEN;
+export const initPrisma = async () => {
+    if (prisma) return prisma;
 
-logger.info(`Conexion a DB: ${dbUrl}`);
+    if (!SecretsManager.getInstance().initialized) {
+        throw new Error("SecretsManager no inicializado");
+    }
 
-// const libsql = createClient({
-//     url: dbUrl,
-//     authToken: dbToken,
-// })
+    const { DATABASE_URL, AUTH_TOKEN } =
+        SecretsManager.getInstance().getTursoSecrets();
 
-const adapter = new PrismaLibSql({
-    url: dbUrl,
-    authToken: dbToken,
-})
+    const adapter = new PrismaLibSql({
+        url: DATABASE_URL,
+        authToken: AUTH_TOKEN,
+    });
 
-// const adapter = new PrismaLibSQL(libsql)
-export const prismaClient = new PrismaClient({ adapter })
+    prisma = new PrismaClient({ adapter });
+    return prisma;
+};
 
+export const prismaClient = new Proxy(
+    {} as PrismaClient,
+    {
+        get(_target, prop) {
+            if (!prisma) {
+                // throw new Error(
+                //     "PrismaClient no inicializado. Llamá a initPrisma() antes de usarlo."
+                // );
+                initPrisma();
+            }
+
+            const value = (prisma as any)[prop];
+            return typeof value === "function" ? value.bind(prisma) : value;
+        },
+    }
+);

@@ -1,52 +1,9 @@
 import { nanoid } from "nanoid";
 import { IFamiliar, IFamiliarScoutData, RelacionFamiliarType } from "../types";
-import { getAge } from "../utils";
-import { prismaClient } from "../utils/lib/prisma-client";
 import { Prisma } from "@prisma/client";
-
-const prisma = prismaClient.$extends({
-	result: {
-		familiar: {
-			id: {
-				compute: (data) => data.uuid,
-			},
-			uuid: {
-				compute: () => undefined,
-			},
-			edad: {
-				needs: { fechaNacimiento: true },
-				compute(scout) {
-					return getAge(scout.fechaNacimiento)
-				},
-			},
-		},
-		scout: {
-			id: {
-				compute: (data) => data.uuid,
-			},
-			uuid: {
-				compute: () => undefined,
-			},
-			edad: {
-				needs: { fechaNacimiento: true },
-				compute(scout) {
-					return getAge(scout.fechaNacimiento)
-				},
-			},
-		},
-		user: {
-			id: {
-				compute: (data) => data.uuid,
-			},
-			uuid: {
-				compute: () => undefined,
-			},
-		}
-	},
-});
-const FamiliarModel = prisma.familiar;
-const FamiliarScoutModel = prisma.familiarScout;
-
+import { prismaClient } from "../utils/lib/prisma-client";
+import { mapFamiliar } from "../mappers/familiar";
+import { mapPartialScout } from "../mappers/scout";
 
 interface queryParams {
 	limit?: number;
@@ -82,7 +39,7 @@ export class FamiliarService implements IFamiliarService {
 	insertFamiliar = async (familiar: Omit<IFamiliar, "id">) => {
 		const uuid = nanoid(10);
 
-		const familiarRespInsert = await FamiliarModel.create({
+		const familiarRespInsert = await prismaClient.familiar.create({
 			data: {
 				...familiar,
 				uuid,
@@ -91,7 +48,7 @@ export class FamiliarService implements IFamiliarService {
 				telefono: familiar.telefono?.toLocaleUpperCase(),
 			},
 		});
-		return familiarRespInsert;
+		return mapFamiliar(familiarRespInsert);
 	};
 
 	relateScoutToFamiliar = async (
@@ -99,7 +56,7 @@ export class FamiliarService implements IFamiliarService {
 		scoutId: string,
 		relacionInput: RelacionFamiliarType,
 	) => {
-		const response = await FamiliarScoutModel.create({
+		const response = await prismaClient.familiarScout.create({
 			data: {
 				scoutId: scoutId,
 				familiarId: familiarId,
@@ -117,7 +74,6 @@ export class FamiliarService implements IFamiliarService {
 										nombre: true,
 										apellido: true,
 										fechaNacimiento: true,
-										edad: true,
 										sexo: true,
 									},
 								}
@@ -128,14 +84,14 @@ export class FamiliarService implements IFamiliarService {
 			},
 		});
 
-		const { familiar: { padreScout, ...data } } = response
-		const scoutFamiliares = padreScout.map((scout) => scout.scout);
-		return { ...data, scoutFamiliares };
+		const { familiar: { padreScout, ...data } } = response;
+		const scoutFamiliares = padreScout.map((scout: any) => mapPartialScout(scout.scout));
+		return { ...mapFamiliar(data), scoutFamiliares } as any;
 	};
 
 	unrelateScoutToFamiliar = async (familiarId: string, scoutId: string) => {
 
-		const resp = await FamiliarScoutModel.deleteMany({
+		const resp = await prismaClient.familiarScout.deleteMany({
 			where: {
 				familiarId: familiarId,
 				scoutId: scoutId,
@@ -146,7 +102,7 @@ export class FamiliarService implements IFamiliarService {
 			return null;
 		}
 
-		const responseItem = await FamiliarModel.findUnique({
+		const responseItem = await prismaClient.familiar.findUnique({
 			where: { uuid: familiarId },
 			include: {
 				padreScout: {
@@ -161,7 +117,6 @@ export class FamiliarService implements IFamiliarService {
 								nombre: true,
 								apellido: true,
 								fechaNacimiento: true,
-								edad: true,
 								sexo: true,
 							},
 						},
@@ -173,13 +128,13 @@ export class FamiliarService implements IFamiliarService {
 		if (!responseItem) return null
 
 		const { padreScout, ...data } = responseItem;
-		const scoutFamiliares = padreScout.map((scout) => ({ ...scout.scout, relacion: scout.relacion }));
-		return { ...data, scoutFamiliares };
+		const scoutFamiliares = padreScout.map((scout: any) => ({ ...mapPartialScout(scout.scout), relacion: scout.relacion }));
+		return { ...mapFamiliar(data), scoutFamiliares } as any;
 	};
 
 	getFamiliar = async (id: string) => {
 		try {
-			const responseItem = await FamiliarModel.findUnique({
+			const responseItem = await prismaClient.familiar.findUnique({
 				where: { uuid: id },
 				include: {
 					padreScout: {
@@ -194,7 +149,6 @@ export class FamiliarService implements IFamiliarService {
 									nombre: true,
 									apellido: true,
 									fechaNacimiento: true,
-									edad: true,
 									sexo: true,
 								},
 							},
@@ -205,8 +159,8 @@ export class FamiliarService implements IFamiliarService {
 
 			if (responseItem) {
 				const { padreScout, ...data } = responseItem;
-				const scoutFamiliares = padreScout.map((scout) => ({ ...scout.scout, relacion: scout.relacion }));
-				return { ...data, scoutFamiliares };
+				const scoutFamiliares = padreScout.map((scout: any) => ({ ...mapPartialScout(scout.scout), relacion: scout.relacion }));
+				return { ...mapFamiliar(data), scoutFamiliares } as any;
 			}
 			return null;
 		} catch (error) {
@@ -221,7 +175,7 @@ export class FamiliarService implements IFamiliarService {
 			existingUser
 		} = filters;
 
-		const responses = await FamiliarModel.findMany({
+		const responses = await prismaClient.familiar.findMany({
 			skip: offset,
 			take: limit,
 			orderBy: { nombre: "asc" },
@@ -286,12 +240,12 @@ export class FamiliarService implements IFamiliarService {
 			select
 		});
 
-		return responses;
+		return responses.map(familiar => mapFamiliar(familiar));
 
 	};
 
 	updateFamiliar = async (id: string, dataUpdated: Omit<IFamiliar, "id">) => {
-		const { padreScout, ...data } = await FamiliarModel.update({
+		const { padreScout, ...data } = await prismaClient.familiar.update({
 			where: { uuid: id },
 			data: dataUpdated,
 			include: {
@@ -307,7 +261,6 @@ export class FamiliarService implements IFamiliarService {
 								nombre: true,
 								apellido: true,
 								fechaNacimiento: true,
-								edad: true,
 								sexo: true,
 							},
 						},
@@ -315,21 +268,21 @@ export class FamiliarService implements IFamiliarService {
 				},
 			},
 		});
-		const scoutFamiliares = padreScout.map((scout) => scout.scout);
-		return { ...data, scoutFamiliares };
+		const scoutFamiliares = padreScout.map((scout: any) => mapPartialScout(scout.scout));
+		return { ...mapFamiliar(data), scoutFamiliares } as any;
 	};
 
 	deleteFamiliar = async (id: string) => {
-		const responseItem = await FamiliarModel.delete({
+		const responseItem = await prismaClient.familiar.delete({
 			where: { uuid: id },
 		});
 
-		await FamiliarScoutModel.deleteMany({
+		await prismaClient.familiarScout.deleteMany({
 			where: {
 				familiarId: id,
 			},
 		});
 
-		return responseItem;
+		return mapFamiliar(responseItem);
 	};
 }

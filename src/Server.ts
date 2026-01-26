@@ -24,7 +24,7 @@ import { AuthService } from "./services/auth";
 import createAuthRouter from "./routes/auth";
 import { EntregaService } from "./services/entrega";
 import createEntregaRouter from "./routes/entrega";
-import recordarCumpleaños from "./whatsapp/recordarCumpleaños";
+// import recordarCumpleaños from "./whatsapp/recordarCumpleaños";
 import swaggerSpecJSON from "./docs/spec.json";
 // import { WhatsAppSbot } from "./whatsapp/WhatsappSession";
 import logger from "./utils/classes/Logger";
@@ -95,6 +95,7 @@ export default class Server {
 			this.app.use(tooBusy);
 		}
 		this.app.use(morganMiddleware);
+		this.app.use("/health", (_, res) => { res.send("OK") });
 		this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpecJSON));
 		this.app.use("/api", this.loadRoutes());
 		this.app.use(errorMiddleware);
@@ -134,7 +135,7 @@ export default class Server {
 	}
 
 	loadCrons() {
-		recordarCumpleaños()
+		// recordarCumpleaños()
 	}
 
 	listen() {

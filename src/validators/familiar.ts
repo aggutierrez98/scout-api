@@ -4,7 +4,8 @@ import { IFamiliar } from "../types";
 import { directionReg, lettersReg, nameRegex, numberReg } from "../utils/regex";
 import { validScoutID } from ".";
 import { IdSchema, QuerySearchSchema } from "./generics";
-import { prismaClient } from "../utils/lib/prisma-client";
+import { initPrisma, prismaClient } from "../utils/lib/prisma-client";
+// import { getPrismaClient } from "../utils/lib/prisma-client";
 
 export const validFamiliarID = async (id: string) => {
 	const FamiliarModel = prismaClient.familiar;
@@ -15,7 +16,7 @@ export const validFamiliarID = async (id: string) => {
 };
 
 // export const idIsNotFamily = async (id: string) => {
-// 	const FamiliarScoutModel = prismaClient.familiarScout;
+// 	const FamiliarScoutModel = (await getPrismaClient()).familiarScout;
 // 	const respItem = await FamiliarScoutModel.findUnique({
 // 		where: { scoutId: id,  },
 // 	});

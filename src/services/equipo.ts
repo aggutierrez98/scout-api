@@ -1,20 +1,7 @@
 import { nanoid } from "nanoid";
 import { IEquipo, IEquipoData } from "../types";
 import { prismaClient } from "../utils/lib/prisma-client";
-
-const prisma = prismaClient.$extends({
-	result: {
-		equipo: {
-			id: {
-				compute: (data) => data.uuid,
-			},
-			uuid: {
-				compute: () => undefined,
-			},
-		},
-	},
-});
-const EquipoModel = prisma.equipo;
+import { mapEquipo } from "../mappers/equipo";
 
 interface IEquipoService {
 	insertEquipo: (equipo: IEquipo) => Promise<IEquipoData | null>;
@@ -31,7 +18,7 @@ export class EquipoService implements IEquipoService {
 	insertEquipo = async (equipo: IEquipo) => {
 		const uuid = nanoid(10);
 
-		const responseInsert = await EquipoModel.create({
+		const responseInsert = await prismaClient.equipo.create({
 			data: {
 				...equipo,
 				uuid,
@@ -40,34 +27,34 @@ export class EquipoService implements IEquipoService {
 				lema: equipo.lema?.toLocaleUpperCase(),
 			},
 		});
-		return responseInsert;
+		return mapEquipo(responseInsert);
 	};
 	getEquipos = async () => {
-		const responseItem = await EquipoModel.findMany();
-		return responseItem;
+		const responseItem = await prismaClient.equipo.findMany();
+		return responseItem.map(equipo => mapEquipo(equipo));
 	};
 	getEquipo = async (id: string) => {
 		try {
-			const responseItem = await EquipoModel.findUnique({
+			const responseItem = await prismaClient.equipo.findUnique({
 				where: { uuid: id },
 			});
 
-			return responseItem;
+			return responseItem ? mapEquipo(responseItem) : null;
 		} catch (error) {
 			return null;
 		}
 	};
 	updateEquipo = async (id: string, dataUpdated: IEquipo) => {
-		const responseItem = await EquipoModel.update({
+		const responseItem = await prismaClient.equipo.update({
 			where: { uuid: id },
 			data: dataUpdated,
 		});
-		return responseItem;
+		return mapEquipo(responseItem);
 	};
 	deleteEquipo = async (id: string) => {
-		const responseItem = await EquipoModel.delete({
+		const responseItem = await prismaClient.equipo.delete({
 			where: { uuid: id },
 		});
-		return responseItem;
+		return mapEquipo(responseItem);
 	};
 }

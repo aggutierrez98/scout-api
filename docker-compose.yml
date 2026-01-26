@@ -11,9 +11,9 @@ services:
       # Volumen persistente que contendrá la copia de scout.db
       - turso_data:/var/lib/sqld
       # Montar el archivo original como solo lectura en /tmp
-      - ./src/prisma/scout.db:/tmp/source-scout.db:ro
-      
-      - ./src/bin/init-turso.sh:/usr/local/bin/init-turso.sh:ro # Script de seed de datos
+      - ./data/scout.db:/tmp/source-scout.db:ro
+      # Script de seed de datos
+      - ./src/bin/init-turso.sh:/usr/local/bin/init-turso.sh:ro
     environment:
       # Ruta a la base de datos (LibSQL maneja internamente)
       SQLD_DB_PATH: "/var/lib/sqld/scout.db"

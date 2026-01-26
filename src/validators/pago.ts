@@ -4,7 +4,9 @@ import { validScoutID } from "./scout";
 import { VALID_METODOS_PAGO } from "../utils";
 import { ISODateStringReg, } from "../utils/regex";
 import { IdSchema, QuerySearchSchema } from "./generics";
-import { prismaClient } from "../utils/lib/prisma-client";
+// import { prismaClient } from "../utils/lib/prisma-client";
+import { initPrisma, prismaClient } from "../utils/lib/prisma-client";
+
 const validPagoId = async (id: string) => {
 	const PagoModel = prismaClient.pago;
 	const respItem = await PagoModel.findUnique({ where: { uuid: id } });
