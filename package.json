@@ -103,10 +103,10 @@
     "docker:init": "docker compose up -d",
     "docker:load-data": "npm run delete-data:dev && npm run seed-db:dev",
     "docker:init-with-data": "npm run docker:init && echo '📦 Cargando datos de desarrollo...' && npm run prisma:generate-client:dev && npm run docker:load-data && echo '✅ Base de datos inicializada con datos'",
-    "prisma:migrate:dev": "dotenv -e .env.development -- prisma migrate dev",
+    "prisma:migrate:dev": "dotenv -e .env.development -- prisma migrate dev --name auto-$(date +%s) --create-only",
+    "prisma:apply-migrations:dev": "dotenv -e .env.development -- ts-node src/bin/applyMigrations.ts",
+    "prisma:apply-migrations:prod": "dotenv -e .env.production -- ts-node src/bin/applyMigrations.ts",
     "prisma:generate-client:dev": "dotenv -e .env.development -- prisma generate",
-    "prisma:push:dev": "dotenv -e .env.development -- prisma db push",
-    "prisma:push:prod": "dotenv -e .env.production -- prisma db push",
     "fill-pdf:dev": "dotenv -e .env.development -- ts-node src/bin/completePdf.ts",
     "test": "npm run test"
   },

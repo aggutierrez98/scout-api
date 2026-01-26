@@ -848,27 +848,6 @@ AWS_S3_ACCESS_KEY=...
 # etc.
 ```
 
-### Consideraciones de Producción
-
-✅ **Hacer**:
-
-- Usar `NODE_ENV=production`
-- Habilitar rate limiting (`express-rate-limit`)
-- Configurar CORS con dominios específicos
-- Usar HTTPS (certificado SSL)
-- Configurar logs en Logtail
-- Hacer backups regulares de la BD
-- Usar Redis externo (no contenedor local)
-- Configurar monitoreo (PM2, DataDog, etc.)
-
-❌ **No hacer**:
-
-- Exponer variables de entorno en el código
-- Usar base de datos local de Turso
-- Deshabilitar autenticación JWT
-- Permitir CORS desde cualquier origen (`*`)
-- Ignorar logs de errores
-
 ### Notas Importantes
 
 **Docker**:
@@ -881,25 +860,31 @@ AWS_S3_ACCESS_KEY=...
 
 - El esquema se gestiona mediante migraciones en Prisma (ver `src/prisma/migrations/`)
 - Nunca editar archivos en `@prisma/client` manualmente
-- Regenerar cliente: `npx prisma generate`
 
-**Evolución de la aplicación**:
+**Gestión de Cambios en la Base de Datos (Desarrollo)**:
 
-Cada vez que realices cambios en la base de datos que se reflejen en el esquema de Prisma, debes regenerar manualmente Prisma Client para actualizar el código generado en el directorio de salida:
+Cada vez que realices cambios en la estructura de la base de datos (`src/prisma/schema.prisma`), debes aplicar estos cambios tanto al cliente de Prisma como a la base de datos local:
 
-```bash
-npx prisma generate
-```
+1. **Regenerar el cliente de Prisma** (actualiza los tipos TypeScript):
+
+   ```bash
+   npm run prisma:generate-client:dev
+   ```
+
+2. **Crear migración** (genera archivo SQL con los cambios):
+
+   ```bash
+   npm run prisma:migrate:dev
+   ```
+
+3. **Aplicar migración a la base de datos local**:
+
+   ```bash
+   npm run prisma:apply-migrations:dev
+   ```
+
+> 💡 **Nota**: Estos comandos afectan solo tu entorno de desarrollo local. Para aplicar cambios a producción (Turso), usa los comandos de producción documentados más abajo.
 
 ---
 
 ## 📞 Soporte
-
-Para reportar issues o contribuir:
-
-- **GitHub Issues**: [scout-api/issues](https://github.com/aggutierrez98/scout-api/issues)
-- **Repository**: [github.com/aggutierrez98/scout-api](https://github.com/aggutierrez98/scout-api)
-
-## 📄 Licencia
-
-ISC License - Ver `LICENSE` para más detalles.
