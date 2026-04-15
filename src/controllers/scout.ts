@@ -107,6 +107,28 @@ export class ScoutController {
 		}
 	};
 
+	getByDni = async (
+		{ params }: Request,
+		res: Response,
+		next: NextFunction,
+	) => {
+		try {
+			const { dni } = params;
+			const response = await this.scoutService.findByDni(dni);
+
+			if (!response) {
+				throw new AppError({
+					name: "NOT_FOUND",
+					httpCode: HttpCode.NOT_FOUND,
+				});
+			}
+
+			res.send(response);
+		} catch (e) {
+			next(e);
+		}
+	};
+
 	importItems = async (
 		{ files }: Request,
 		res: Response,

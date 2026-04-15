@@ -232,6 +232,14 @@ export class ScoutService implements IScoutService {
 		return mapScout(responseItem);
 	};
 
+	findByDni = async (dni: string) => {
+		const responseItem = await prismaClient.scout.findFirst({
+			where: { dni },
+		});
+		if (!responseItem) return null;
+		return mapScout(responseItem);
+	};
+
 	importScouts = async (nomina: fileUpload.UploadedFile) => {
 		const scoutsData = readXlsxBuffer(nomina.data) as Partial<ScoutXLSX>[]
 

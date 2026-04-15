@@ -28,9 +28,10 @@ export const FamiliarSchema = z.object({
 	apellido: z.string().max(100).regex(lettersReg),
 	fechaNacimiento: z.date(),
 	dni: z.string().max(10).regex(numberReg),
-	sexo: z.enum(VALID_SEX),
+	sexo: z.enum(VALID_SEX).optional().nullable(),
 	localidad: z.string().max(100).regex(lettersReg),
 	direccion: z.string().max(100).regex(directionReg),
+	codigoPostal: z.string().max(20).optional().nullable(),
 	provincia: z.string().max(100).regex(lettersReg),
 	nacionalidad: z.string().max(100).regex(lettersReg),
 	telefono: z.string().max(15).regex(numberReg).nullable(),
@@ -50,7 +51,7 @@ export const UnrelateFamiliarSchema = z.object({
 export const RelateFamiliarParams = z.object({
 	body: z.object({
 		scoutId: IdSchema.refine(validScoutID),
-		relation: z.enum(VALID_RELATIONSHIPS).optional(),
+		relacion: z.enum(VALID_RELATIONSHIPS),
 	}),
 	params: z.object({
 		id: IdSchema.refine(validFamiliarID),

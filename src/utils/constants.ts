@@ -25,6 +25,7 @@ export const VALID_FUNCTIONS = [
 	"SUBJEFE_GRUPO",
 	"JEFE_GRUPO",
 	"PADRE_REPRESENTANTE",
+	"FAMILIAR",
 ] as const;
 export const VALID_GET_SCOUTS_FILTERS = [
 	"apellido",
@@ -172,6 +173,18 @@ export const VALID_TIPOS_EVENTO = [
 	"CAMPAMENTO"
 ] as const
 
+export const VALID_TIPOS_AVISO = [
+	"CUMPLEAÑOS",
+	"PAGO_PENDIENTE",
+	"EVENTO",
+	"CUSTOM",
+] as const;
+
+export const VALID_REFERENCIA_TIPOS = [
+	"scout",
+	"pago",
+	"evento",
+] as const;
 
 export const VALID_ESTADOS = [
 	"ACTIVO",

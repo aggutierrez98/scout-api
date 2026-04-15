@@ -7,7 +7,7 @@ export * from "./documento";
 export * from "./entrega";
 export * from "./pago";
 export * from "./familiar";
-export * from "./constantTypes";
+export * from "./notificacion";
 
 
 export interface IInsignaObt {

@@ -2,13 +2,15 @@ import { Request, Response, NextFunction } from "express";
 import { AppError, HttpCode } from "../utils/classes/AppError";
 import { AuthService } from "../services/auth";
 import { generateToken, verifyToken } from "../utils/lib/jwt.util";
-import { NotifactionsResponse, Notification } from "../types";
+import { NotificacionService } from "../services/notificacion";
 
 export class AuthController {
     public authService;
+    public notificacionService;
 
     constructor({ authService }: { authService: AuthService }) {
         this.authService = authService;
+        this.notificacionService = new NotificacionService();
     }
 
     login = async (req: Request, res: Response, next: NextFunction) => {
@@ -139,14 +141,6 @@ export class AuthController {
         try {
             const user = res.locals.currentUser
 
-            const { offset, limit, orderBy } = req.query;
-
-            // const response = await this.authService.getNotifications({
-            //     limit: limit ? Number(limit) : undefined,
-            //     offset: offset ? Number(offset) : undefined,
-            //     // orderBy
-            // });
-
             if (!user) {
                 throw new AppError({
                     name: "NOT_VALID_USER",
@@ -155,13 +149,21 @@ export class AuthController {
                 });
             }
 
-            const notifications: Notification[] = [
-                // { id: "1", message: "Tuvieja", read: false },
-                // { id: "2", message: "Hola", read: false },
-            ]
-            const unreadCount = notifications.filter(notification => !notification.read).length
+            const { offset, limit, ...filters } = req.query;
+            const response = await this.notificacionService.getNotificaciones(
+                user.uuid,
+                {
+                    limit: limit ? Number(limit) : undefined,
+                    offset: offset ? Number(offset) : undefined,
+                    filters,
+                },
+            );
 
-            res.json({ notifications, unreadCount })
+            // Mantener compatibilidad con el formato que espera la app
+            res.json({
+                notifications: response.notificaciones,
+                unreadCount: response.totalNoLeidas
+            })
         } catch (e) {
             next(e)
         }

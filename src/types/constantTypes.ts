@@ -11,7 +11,9 @@ import {
 	VALID_ESTADO_CIVIL,
 	VALID_ESTADOS,
 	VALID_RAMAS,
-	VALID_TIPOS_EVENTO
+	VALID_TIPOS_EVENTO,
+	VALID_TIPOS_AVISO,
+	VALID_REFERENCIA_TIPOS
 } from "../utils";
 
 // ENTITIES Types
@@ -27,6 +29,8 @@ export type MetodosPagoType = typeof VALID_METODOS_PAGO[number];
 export type RolesType = typeof VALID_ROLES[number];
 export type RamasType = typeof VALID_RAMAS[number];
 export type TipoEventoType = typeof VALID_TIPOS_EVENTO[number];
+export type TipoAvisoType = typeof VALID_TIPOS_AVISO[number];
+export type ReferenciaTipoType = typeof VALID_REFERENCIA_TIPOS[number];
 
 // PARAMS Types
 export type OrderToGetScouts = typeof VALID_GET_SCOUTS_FILTERS[number];

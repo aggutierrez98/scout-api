@@ -10,16 +10,17 @@ datasource db {
 }
 
 model User {
-  id         Int       @id @default(autoincrement())
-  uuid       String    @unique
-  username   String    @unique
-  password   String?
-  role       String    @default("EXTERNO")
-  active     Boolean   @default(true)
-  scout      Scout?    @relation(fields: [scoutId], references: [uuid])
-  scoutId    String?   @unique
-  familiar   Familiar? @relation(fields: [familiarId], references: [uuid])
-  familiarId String?   @unique
+  id             Int            @id @default(autoincrement())
+  uuid           String         @unique
+  username       String         @unique
+  password       String?
+  role           String         @default("EXTERNO")
+  active         Boolean        @default(true)
+  scout          Scout?         @relation(fields: [scoutId], references: [uuid])
+  scoutId        String?        @unique
+  familiar       Familiar?      @relation(fields: [familiarId], references: [uuid])
+  familiarId     String?        @unique
+  notificaciones Notificacion[]
 }
 
 model Scout {
@@ -29,9 +30,11 @@ model Scout {
   apellido              String
   fechaNacimiento       DateTime
   dni                   String                @unique
-  sexo                  String
+  sexo                  String?
   localidad             String
   direccion             String
+  codigoPostal          String?
+  afiliado              Boolean               @default(true)
   telefono              String?
   nacionalidad          String?
   provincia             String?
@@ -103,9 +106,10 @@ model Familiar {
   apellido           String
   fechaNacimiento    DateTime
   dni                String
-  sexo               String
+  sexo               String?
   localidad          String
   direccion          String
+  codigoPostal       String?
   mail               String?
   telefono           String?
   nacionalidad       String?
@@ -150,4 +154,32 @@ model EntregaRealizada {
   fechaCreacion DateTime @default(now())
 
   @@index([scoutId])
+}
+
+model Aviso {
+  id             Int            @id @default(autoincrement())
+  uuid           String         @unique
+  titulo         String
+  mensaje        String
+  tipo           String
+  referenciaId   String?
+  referenciaTipo String?
+  fechaCreacion  DateTime       @default(now())
+  notificaciones Notificacion[]
+}
+
+model Notificacion {
+  id            Int       @id @default(autoincrement())
+  uuid          String    @unique
+  aviso         Aviso     @relation(fields: [avisoId], references: [uuid])
+  avisoId       String
+  user          User      @relation(fields: [userId], references: [uuid])
+  userId        String
+  leida         Boolean   @default(false)
+  fechaCreacion DateTime  @default(now())
+  fechaLectura  DateTime?
+
+  @@unique([avisoId, userId])
+  @@index([userId])
+  @@index([avisoId])
 }

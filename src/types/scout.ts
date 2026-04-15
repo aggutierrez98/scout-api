@@ -3,9 +3,11 @@ export interface IScout {
     apellido: string;
     fechaNacimiento: Date;
     dni: string;
-    sexo: string;
+    sexo?: string | null;
     localidad: string;
     direccion: string;
+    codigoPostal?: string | null;
+    afiliado?: boolean;
     telefono: string | null;
     mail: string | null;
     equipoId: string | null;
@@ -33,7 +35,7 @@ export interface IScoutData extends IScout {
     familiares?: {
         nombre: string;
         apellido: string;
-        sexo: string;
+        sexo: string | null;
         dni: string;
         fechaNacimiento: Date;
         localidad: string;

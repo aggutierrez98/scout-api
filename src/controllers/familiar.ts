@@ -135,6 +135,28 @@ export class FamiliarController {
 		}
 	};
 
+	getByDni = async (
+		{ params }: Request,
+		res: Response,
+		next: NextFunction,
+	) => {
+		try {
+			const { dni } = params;
+			const response = await this.familiarService.findByDni(dni);
+
+			if (!response) {
+				throw new AppError({
+					name: "NOT_FOUND",
+					httpCode: HttpCode.NOT_FOUND,
+				});
+			}
+
+			res.send(response);
+		} catch (e) {
+			next(e);
+		}
+	};
+
 	deleteItem = async (
 		{ params }: Request,
 		res: Response,

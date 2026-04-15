@@ -10,11 +10,12 @@ export interface IFamiliar {
     id: string,
     nombre: string;
     apellido: string;
-    sexo: string;
+    sexo?: string | null;
     dni: string;
     fechaNacimiento: Date;
     localidad: string;
     direccion: string
+    codigoPostal?: string | null;
     nacionalidad: string | null;
     provincia: string | null;
     mail?: string | null

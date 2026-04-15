@@ -29,6 +29,11 @@ export default function createPagoRouter(pagoService: PagoService) {
 		validate(PostPagoSchema),
 		pagoController.insertItem
 	);
+	router.post(
+		"/import",
+		cleanCacheMiddleware,
+		pagoController.importItems,
+	);
 	router.put(
 		"/:id",
 		validate(PutPagoSchema),

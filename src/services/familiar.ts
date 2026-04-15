@@ -272,6 +272,14 @@ export class FamiliarService implements IFamiliarService {
 		return { ...mapFamiliar(data), scoutFamiliares } as any;
 	};
 
+	findByDni = async (dni: string) => {
+		const responseItem = await prismaClient.familiar.findFirst({
+			where: { dni },
+		});
+		if (!responseItem) return null;
+		return mapFamiliar(responseItem);
+	};
+
 	deleteFamiliar = async (id: string) => {
 		const responseItem = await prismaClient.familiar.delete({
 			where: { uuid: id },

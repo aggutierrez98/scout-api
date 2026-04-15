@@ -24,11 +24,18 @@ import { AuthService } from "./services/auth";
 import createAuthRouter from "./routes/auth";
 import { EntregaService } from "./services/entrega";
 import createEntregaRouter from "./routes/entrega";
+import { WebhookService } from "./services/webhook";
+import createWebhookRouter from "./routes/webhook";
+import { NominaService } from "./services/nomina";
+import createNominaRouter, { createNominaSyncRouter } from "./routes/nomina";
+import { NotificacionService } from "./services/notificacion";
+import createNotificacionRouter from "./routes/notificacion";
 // import recordarCumpleaños from "./whatsapp/recordarCumpleaños";
 import swaggerSpecJSON from "./docs/spec.json";
 // import { WhatsAppSbot } from "./whatsapp/WhatsappSession";
 import logger from "./utils/classes/Logger";
 import fileUpload from 'express-fileupload';
+import cron from "node-cron";
 
 // // import expressSession from 'express-session';
 
@@ -111,7 +118,8 @@ export default class Server {
 		router.use("/equipo", checkSession, createEquipoRouter(equipoService));
 
 		const scoutService = new ScoutService();
-		router.use("/scout", checkSession, createScoutRouter(scoutService));
+		// La autenticación se aplica por-ruta dentro del router (JWT, service-key o dual).
+		router.use("/scout", createScoutRouter(scoutService));
 
 		const documentoService = new DocumentoService();
 		router.use("/documento", checkSession, createDocumentoRouter(documentoService));
@@ -120,10 +128,23 @@ export default class Server {
 		router.use("/pago", checkSession, createPagoRouter(pagoService));
 
 		const familiarService = new FamiliarService();
-		router.use("/familiar", checkSession, createFamiliarRouter(familiarService));
+		// La autenticación se aplica por-ruta dentro del router (JWT, service-key o dual).
+		router.use("/familiar", createFamiliarRouter(familiarService));
 
 		const entregaService = new EntregaService();
 		router.use("/entrega", checkSession, createEntregaRouter(entregaService));
+
+		const webhookService = new WebhookService();
+		router.use("/webhook", createWebhookRouter(webhookService));
+
+		const nominaService = new NominaService();
+		// Forma 2: webhook push desde cruz-del-sur (sin checkSession, auth propia)
+		router.use("/webhook", createNominaRouter(nominaService));
+		// Forma 1: pull on-demand (requiere checkSession, montado en /api/nomina)
+		router.use("/nomina", checkSession, createNominaSyncRouter(nominaService));
+
+		const notificacionService = new NotificacionService();
+		router.use("/notificacion", checkSession, createNotificacionRouter(notificacionService));
 
 		// TODO: Crear modelo de eventos
 
@@ -136,6 +157,20 @@ export default class Server {
 
 	loadCrons() {
 		// recordarCumpleaños()
+
+		// Forma 3 — Sync programado diario con cruz-del-sur.
+		// Corre a las 7:00 AM (Argentina, UTC-3 = 10:00 UTC) todos los días,
+		// una hora después del export diario de cruz-del-sur (6:00 AM).
+		cron.schedule("0 10 * * *", async () => {
+			logger.info("[Cron] Iniciando sync diario de nómina con cruz-del-sur");
+			try {
+				const nominaService = new NominaService();
+				const result = await nominaService.pullAndSync();
+				logger.info(`[Cron] Sync diario de nómina completado: ${JSON.stringify(result)}`);
+			} catch (err) {
+				logger.error(`[Cron] Error en sync diario de nómina ${(err as Error).message}`)
+			}
+		}, { timezone: "UTC" });
 	}
 
 	listen() {

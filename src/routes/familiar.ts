@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { cacheMiddleware, checkSession, cleanCacheMiddleware } from "../middlewares";
+import { cacheMiddleware, checkSession, cleanCacheMiddleware, serviceAuth, authOrService } from "../middlewares";
 import { FamiliarController } from "../controllers/familiar";
 import { FamiliarService } from "../services/familiar";
 import { validate } from "../middlewares/validate";
@@ -18,6 +18,13 @@ export default function createFamiliarRouter(familiarService: FamiliarService) {
 	const router = Router();
 	const familiarController = new FamiliarController({ familiarService });
 
+	// Endpoint service-to-service: autenticación por x-api-key únicamente.
+	// Se registra antes de "/:id" para evitar ser capturado por esa ruta.
+	router.get(
+		"/by-dni/:dni",
+		serviceAuth,
+		familiarController.getByDni,
+	);
 	router.get(
 		"/",
 		checkSession,
@@ -33,15 +40,17 @@ export default function createFamiliarRouter(familiarService: FamiliarService) {
 		familiarController.getItem,
 	);
 
+	// POST familiar acepta JWT o x-api-key (flujo user + importación cruz-del-sur).
 	router.post("/",
-		checkSession,
+		authOrService,
 		validate(PostFamiliarSchema),
 		familiarController.insertItem
 	);
 
+	// relate acepta JWT o x-api-key por el mismo motivo.
 	router.put(
 		"/relate/:id",
-		checkSession,
+		authOrService,
 		validate(RelateFamiliarParams),
 		familiarController.relateItem,
 	);
