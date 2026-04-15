@@ -1,11 +1,16 @@
 # Scout API
 
-API REST para gestión de grupos Scout con bot de WhatsApp integrado. Sistema completo de administración de scouts, familiares, documentos, pagos y entregas de insignias.
+API REST para gestión de grupos Scout. Sistema completo de administración de scouts, familiares, documentos, pagos, entregas de insignias e integración webhook con procesamiento automático de comprobantes de pago vía WhatsApp.
 
 ## 📋 Tabla de Contenidos
 
+- [Dominio del Negocio](#-dominio-del-negocio)
 - [Tecnologías Utilizadas](#-tecnologías-utilizadas)
 - [Arquitectura de la API](#-arquitectura-de-la-api)
+- [Modelos de datos](#-modelos-de-datos)
+- [Autenticación y RBAC](#-autenticación-y-rbac)
+- [Rutas HTTP](#-rutas-http)
+- [Webhook — whatsapp-comprobantes](#-webhook--whatsapp-comprobantes)
 - [Estructura de Carpetas](#-estructura-de-carpetas)
 - [Configurar entorno de desarrollo](#-configurar-entorno-de-desarrollo)
 - [Flujo de Trabajo Diario de Desarrollo](#-flujo-de-trabajo-diario-de-desarrollo)
@@ -13,789 +18,822 @@ API REST para gestión de grupos Scout con bot de WhatsApp integrado. Sistema co
 - [Integraciones de Terceros](#-integraciones-de-terceros)
 - [Scripts Disponibles](#-scripts-disponibles)
 - [Producción](#-producción)
-- [Soporte](#-soporte)
-- [Licencia](#-licencia)
+
+---
+
+## 🎯 Dominio del Negocio
+
+### Conceptos Clave del Movimiento Scout
+
+#### Scouts
+
+Niños y jóvenes que participan en el grupo Scout. Cada scout pertenece a una **rama** según su edad:
+
+- **Manada** (6–10 años): Lobatos / Lobeznas
+- **Unidad** (10–14 años): Scouts
+- **Caminantes** (14–17 años): Rovers
+- **Pioneros** (17–21 años): Dirigentes en formación
+
+Cada scout tiene:
+
+- **Progresión**: Nivel de avance en su formación (Huella, Senda, Travesía)
+- **Función**: Rol dentro de su equipo (Guía, Subguía, Tesorero, etc.)
+- **Estado**: `ACTIVO`, `INACTIVO`, `EGRESADO`
+
+#### Equipos / Patrullas
+
+Grupos pequeños de scouts (5–8 integrantes) dentro de una rama. Tienen nombre (generalmente de animales), lema y rama.
+
+#### Documentos
+
+Papeles administrativos requeridos por scout:
+
+- Ficha médica, autorizaciones, DNI, certificado médico, ficha de inscripción
+
+Propiedades relevantes:
+- `vence`: si tiene fecha de vencimiento
+- `completable`: si se puede generar automáticamente desde la API
+- `requiereFamiliar`: si necesita datos del familiar
+- `requiereFirma`: si necesita firma escaneada
+
+#### Entregas
+
+Insignias o reconocimientos: especialidades (Primeros Auxilios, Campismo), progresión de nivel, y méritos especiales.
+
+#### Pagos
+
+Cuotas mensuales o pagos por actividades. Campos clave: `concepto`, `monto`, `metodoPago` (`EFECTIVO`, `TRANSFERENCIA`, `OTRO`), `rendido`.
+
+Los pagos pueden crearse manualmente vía la API o **automáticamente** a través del webhook de comprobantes.
+
+#### Familiares
+
+Tutores, padres o madres de scouts. Relación `PADRE`, `MADRE`, `TUTOR`, `OTRO`. Un scout puede tener múltiples familiares (relación N:M vía `FamiliarScout`).
+
+---
 
 ## 🚀 Tecnologías Utilizadas
 
-### Backend Core
+| Capa | Tecnología |
+|------|-----------|
+| Lenguaje | TypeScript 5.9 |
+| Runtime | Node.js v22.13.1+ |
+| Framework HTTP | Express.js 4.21.2 |
+| ORM | Prisma 7 |
+| Base de datos | Turso (LibSQL / SQLite distribuida) |
+| Caché | Redis |
+| Autenticación | JWT + bcryptjs |
+| Validación | Zod |
+| Logging | Winston + Logtail + Morgan |
+| Almacenamiento archivos | AWS S3 |
+| Integraciones externas | Google Sheets / Drive API |
+| Gestión de secretos | Infisical |
+| Generación PDF | pdf-lib |
+| Protección HTTP | helmet, express-rate-limit, cors |
+| Tareas programadas | node-cron |
 
-- **Node.js** (v18.14.2+): Entorno de ejecución JavaScript
-- **Express.js**: Framework web minimalista y flexible
-- **TypeScript**: Superset tipado de JavaScript para mayor seguridad de tipos
-
-### Base de Datos
-
-- **Turso (LibSQL)**: Base de datos SQLite distribuida y serverless
-- **Prisma ORM**: ORM moderno con generación de tipos automática
-- **@prisma/adapter-libsql**: Adaptador para conectar Prisma con Turso/LibSQL
-
-### Caché
-
-- **Redis**: Sistema de caché en memoria para optimizar consultas frecuentes
-
-### Seguridad y Autenticación
-
-- **Infisical SDK**: Gestión centralizada y segura de secretos y variables de entorno
-- **JWT (jsonwebtoken)**: Autenticación basada en tokens
-- **bcryptjs**: Hash seguro de contraseñas
-- **helmet**: Protección de headers HTTP
-- **express-rate-limit**: Limitación de peticiones para prevenir ataques
-- **tiny-csrf**: Protección contra ataques CSRF
-- **cors**: Configuración de políticas CORS
-
-### Integraciones Externas
-
-- **AWS S3**: Almacenamiento de documentos PDF en la nube
-- **Google Drive API**: Importación de datos desde Google Spreadsheets
-- **Google Sheets**: Fuente de datos para carga masiva
-- **Infisical**: Centralizacion de secretos
-
-### Procesamiento de Archivos
-
-- **pdf-lib**: Generación y manipulación de PDFs
-- **xlsx**: Procesamiento de archivos Excel
-- **sharp**: Procesamiento y optimización de imágenes
-- **express-fileupload**: Manejo de uploads de archivos
-
-### Validación y Documentación
-
-- **Zod**: Validación de esquemas y tipos en runtime
-- **Swagger (swagger-jsdoc, swagger-ui-express)**: Documentación automática de API
-
-### Logging y Monitoreo
-
-- **Winston**: Sistema de logging estructurado
-- **Logtail**: Servicio de logs en la nube
-- **Morgan**: Logger de peticiones HTTP
-
-### Automatización
-
-- **node-cron**: Tareas programadas (recordatorios de cumpleaños, etc.)
-- **puppeteer**: Automatización de navegador para WhatsApp Web
-
-### Herramientas de Desarrollo
-
-- **ts-node & ts-node-dev**: Ejecución de TypeScript en desarrollo
-- **nodemon**: Recarga automática del servidor
-- **concurrently**: Ejecución paralela de comandos
-- **dotenv**: Gestión de variables de entorno
+---
 
 ## 🏗 Arquitectura de la API
 
-La API sigue una **arquitectura en capas** (Layered Architecture) con separación clara de responsabilidades:
+La API sigue una **arquitectura en capas** con separación clara de responsabilidades:
 
 ```
-┌─────────────────────────────────────────────────┐
-│              Client (Frontend/Bot)              │
-└─────────────────────────────────────────────────┘
-                       ↓
-┌─────────────────────────────────────────────────┐
-│           Middlewares (Seguridad/Cache)         │
-│  • Authentication (JWT)                         │
-│  • Authorization (RBAC)                         │
-│  • Rate Limiting                                │
-│  • Cache (Redis)                                │
-│  • Validation (Zod)                             │
-│  • Error Handling                               │
-└─────────────────────────────────────────────────┘
-                       ↓
-┌─────────────────────────────────────────────────┐
-│              Routes (Endpoints)                 │
-│  • /api/auth                                    │
-│  • /api/scout                                   │
-│  • /api/documento                               │
-│  • /api/pago                                    │
-│  • /api/familiar                                │
-│  • /api/equipo                                  │
-│  • /api/entrega                                 │
-└─────────────────────────────────────────────────┘
-                       ↓
-┌─────────────────────────────────────────────────┐
-│            Controllers (HTTP Logic)             │
-│  • Request handling                             │
-│  • Response formatting                          │
-│  • HTTP status codes                            │
-└─────────────────────────────────────────────────┘
-                       ↓
-┌─────────────────────────────────────────────────┐
-│          Services (Business Logic)              │
-│  • Domain operations                            │
-│  • Data transformation                          │
-│  • Business rules                               │
-└─────────────────────────────────────────────────┘
-                       ↓
-┌─────────────────────────────────────────────────┐
-│            Mappers (Data Mapping)               │
-│  • Transform Prisma models to DTOs              │
-│  • uuid → id conversion                         │
-│  • Computed fields (e.g., edad)                 │
-│  • Type-safe data transformation                │
-└─────────────────────────────────────────────────┘
-                       ↓
-┌─────────────────────────────────────────────────┐
-│         Models/Prisma (Data Access)             │
-│  • Database queries                             │
-│  • Data validation                              │
-│  • Relationships                                │
-└─────────────────────────────────────────────────┘
-                       ↓
-┌─────────────────────────────────────────────────┐
-│           Database (Turso/LibSQL)               │
-└─────────────────────────────────────────────────┘
+HTTP Request
+    ↓
+Express Router
+    ↓
+checkSession (verifica JWT y evalúa RBAC)
+    ↓
+validate (valida body/params con esquema Zod)
+    ↓
+Controller (extrae datos del request)
+    ↓
+Service (lógica de negocio)
+    ↓
+Prisma (acceso a base de datos)
+    ↓
+Mapper (entidad → DTO, uuid → id público)
+    ↓
+HTTP Response
 ```
+
+Los errores en cualquier capa se propagan vía `AppError` y son capturados por el middleware global de errores.
 
 ### Características Arquitectónicas
 
-#### 1. **Patrón MVC Modificado**
+#### 1. Patrón MVC Modificado
 
 - **Routes**: Definen endpoints y aplican middlewares
 - **Controllers**: Manejan lógica HTTP (request/response)
 - **Services**: Contienen lógica de negocio pura
 - **Models**: Definición de esquemas (Prisma)
 
-#### 2. **Inyección de Dependencias**
+#### 2. Capa de Mappers
 
-Los controladores reciben servicios como parámetros:
+Sistema de transformación de datos entre Prisma y la capa de aplicación. Evita exponer `uuid` internos convirtiendo al campo público `id`.
+
+Mappers implementados: `mapScout`, `mapPartialScout`, `mapFamiliar`, `mapEquipo`, `mapPago`, `mapEntregaRealizada`, `mapDocumentoPresentado`, `mapDocumentoDefinicion`, `mapUser`.
+
+```typescript
+const scout = await prisma.scout.findUnique({ where: { uuid: id } });
+return mapScout(scout); // transforma uuid → id, calcula edad
+```
+
+#### 3. Convenciones de IDs
+
+- `id`: autoincremental (INT) solo para uso interno en BD
+- `uuid`: nanoid, usado siempre en la API — **nunca se expone `id` directamente**
+
+#### 4. Inyección de Dependencias
+
+Los servicios se instancian en `Server.ts` y se pasan como parámetros a los routers y controllers:
 
 ```typescript
 const scoutService = new ScoutService();
-const scoutController = new ScoutController({ scoutService });
+router.use("/scout", checkSession, createScoutRouter(scoutService));
 ```
 
-#### 3. **Middleware Pipeline**
+#### 5. Singletons
 
-Cada petición pasa por una cadena de middlewares:
+- `SecretsManager`: descarga secretos desde Infisical al iniciar
+- `CacheManager`: única instancia del cliente Redis
 
-- Logging (Morgan)
-- Security (Helmet, Rate Limiting)
-- Authentication (JWT verification)
-- Authorization (RBAC)
-- Validation (Zod schemas)
-- Cache (Redis)
-- Error handling
+#### 6. Caché (Cache-Aside / Lazy Loading)
 
-#### 4. **Sistema de Caché Inteligente**
+- `cacheMiddleware`: cachea respuestas GET en Redis (TTL: 60 segundos)
+- `cleanCacheMiddleware`: invalida caché en operaciones de escritura
+- Clave de caché: `{recurso}/{params}` (e.g. `scout/123`, `pago?scoutId=abc`)
 
-- `cacheMiddleware`: Almacena respuestas en Redis
-- `cleanCacheMiddleware`: Invalida caché al modificar datos
-- TTL configurable por endpoint
+---
 
-#### 5. **Manejo Centralizado de Errores**
+## 💾 Modelos de datos
 
-- Clase `AppError` personalizada
-- Middleware `errorMiddleware` global
-- Logging estructurado con Winston
+### Scout
 
-#### 6. **Sistema de Permisos RBAC**
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `uuid` | String (PK) | Identificador interno (nunca expuesto) |
+| `nombre` | String | — |
+| `apellido` | String | — |
+| `dni` | String | Único |
+| `sexo` | Enum | — |
+| `fechaNacimiento` | DateTime | — |
+| `localidad` | String | — |
+| `direccion` | String | — |
+| `telefono` | String | Usado para matching de comprobantes webhook |
+| `mail` | String | — |
+| `rama` | Enum | Manada, Unidad, Caminantes, Pioneros |
+| `funcion` | Enum | Guía, Subguía, Tesorero, etc. |
+| `equipoId` | String (FK) | Patrulla a la que pertenece |
+| `estado` | Enum | `ACTIVO`, `INACTIVO`, `EGRESADO` |
+| `progresionActual` | String | Etapa de progresión vigente |
 
-Roles: `ADMIN`, `DIRIGENTE`, `EXTERNO`
+### Pago
 
-- Validación por recurso y método HTTP
-- Implementado en `validatePermissions`
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `uuid` | String (PK) | — |
+| `concepto` | String | Descripción del pago |
+| `monto` | Float | Importe |
+| `rendido` | Boolean | Si fue rendido en tesorería |
+| `metodoPago` | Enum | `EFECTIVO`, `TRANSFERENCIA`, `OTRO` |
+| `scoutId` | String (FK) | — |
+| `fechaPago` | DateTime | Fecha del comprobante o ingreso |
 
-#### 7. **Capa de Mappers**
+### Familiar
 
-Sistema de transformación de datos entre la capa de persistencia (Prisma) y la capa de aplicación:
+Datos del familiar: `uuid`, `nombre`, `apellido`, `dni`, `sexo`, `telefono`, `mail`.
 
-**Propósito:**
+### FamiliarScout (N:M)
 
-- **Abstracción de datos**: Separa la representación interna de la base de datos de la API pública
-- **Transformación de tipos**: Convierte `uuid` (string) a `id` para mantener consistencia en la API
-- **Campos computados**: Calcula automáticamente campos derivados como `edad` a partir de `fechaNacimiento`
-- **Type-safety**: Garantiza tipado correcto entre capas sin usar `$extends` de Prisma
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `familiarId` | String (FK) | — |
+| `scoutId` | String (FK) | — |
+| `relacion` | Enum | `PADRE`, `MADRE`, `TUTOR`, etc. |
 
-**Mappers implementados:**
+### Equipo
 
-- `mapUser`: Transforma usuarios con scouts/familiares anidados
-- `mapScout` / `mapPartialScout`: Transforma scouts (completos o parciales) y calcula edad
-- `mapFamiliar`: Transforma familiares y calcula edad
-- `mapEquipo`: Transforma equipos/patrullas
-- `mapPago`: Transforma registros de pagos
-- `mapEntregaRealizada`: Transforma entregas de insignias
-- `mapDocumentoPresentado`: Transforma documentos presentados
-- `mapDocumentoDefinicion`: Transforma definiciones de documentos
+`uuid`, `nombre`, `lema`, `rama`.
 
-**Ventajas:**
+### Documento / DocumentoPresentado / EntregaRealizada
 
-- ✅ Eliminación de `prisma.$extends` mejorando el rendimiento
-- ✅ Mayor control sobre la forma de los datos expuestos
-- ✅ Facilita testing y mocking de datos
-- ✅ Permite evolucionar el schema de BD sin romper contratos de API
+- `Documento`: catálogo de tipos de documentos requeridos por la organización
+- `DocumentoPresentado`: instancia de documento presentado por un scout; referencia al archivo en S3
+- `EntregaRealizada`: registro de insignias y hitos de progresión completados
+
+---
+
+## 🔐 Autenticación y RBAC
+
+### JWT
+
+- Expiración: **2 horas**
+- Middleware `checkSession`: valida el token en cada request protegido y adjunta el usuario al contexto
+
+### Jerarquía de Roles
+
+```
+EXTERNO < COLABORADOR < EDUCADOR < JEFE_RAMA < ADMINISTRADOR
+```
+
+Cada rol incluye todos los permisos del rol anterior. Existen también roles especiales: `JOVEN`, `ACOMPAÑANTE`, `AYUDANTE_RAMA`, `SUBJEFE_RAMA`, `SUBJEFE_GRUPO`, `JEFE_GRUPO`, `PADRE_REPRESENTANTE`.
+
+### Formato de Permisos
+
+```
+{accion}_{recurso}
+```
+
+Ejemplos: `create_pago`, `read_scout`, `delete_documento`, `modify_entrega`.
+
+### Permisos por Rol
+
+| Rol | Permisos clave |
+|---|---|
+| `EXTERNO` | `read_*` en todas las entidades + `create_documento` |
+| `COLABORADOR` | Todo EXTERNO + `create_pago`, `modify_pago`, `modify_documento` |
+| `EDUCADOR` | Todo COLABORADOR + `create_scout/equipo/familiar/entrega`, `modify_entrega/equipo/familiar`, `delete_equipo/documento/pago` |
+| `JEFE_RAMA` | Todo EDUCADOR + `modify_scout`, `delete_scout/familiar/entrega` |
+| `ADMINISTRADOR` | Todo JEFE_RAMA + `create_auth`, `modify_auth` |
+
+---
+
+## 🗺 Rutas HTTP
+
+| Método | Path | Descripción |
+|---|---|---|
+| `POST` / `GET` | `/api/auth` | Login y validación JWT |
+| `GET` / `POST` / `PUT` / `DELETE` | `/api/scout` | CRUD de scouts |
+| `GET` / `POST` / `PUT` / `DELETE` | `/api/pago` | CRUD de pagos de cuotas |
+| `GET` / `POST` / `PUT` / `DELETE` | `/api/documento` | Gestión documental + subida a S3 |
+| `GET` / `POST` / `PUT` / `DELETE` | `/api/entrega` | Insignias y progresiones |
+| `GET` / `POST` / `PUT` / `DELETE` | `/api/familiar` | Gestión de familiares |
+| `GET` / `POST` / `PUT` / `DELETE` | `/api/equipo` | Patrullas / unidades |
+| `POST` | `/api/webhook/comprobante` | Recepción de comprobantes vía webhook (whatsapp-comprobantes) |
+| `POST` | `/api/webhook/nomina` | Recepción de nómina diaria vía webhook (cruz-del-sur) |
+| `POST` | `/api/nomina/sync` | Pull on-demand de nómina desde cruz-del-sur (requiere ADMINISTRADOR) |
+| — | `/health` | Health check |
+| — | `/docs` | Documentación Swagger |
+
+---
+
+## 🔔 Webhook — whatsapp-comprobantes
+
+El sistema **whatsapp-comprobantes** es un servicio externo que escucha mensajes de WhatsApp con imágenes o PDFs de comprobantes bancarios, los procesa mediante OCR (Gemini 2.0 Flash) y envía el resultado estructurado a este endpoint. scout-api identifica al scout correspondiente y registra el pago automáticamente.
+
+### Archivos
+
+```
+src/
+├── routes/webhook.ts           — Ruta POST /api/webhook/comprobante
+├── controllers/webhook.ts      — Extrae datos y delega en el service
+├── services/webhook.ts         — Lógica de matching y creación del pago
+├── validators/webhook.ts       — Schema Zod del payload
+├── middlewares/webhookAuth.ts  — Autenticación HMAC-SHA256
+└── types/webhook.ts            — Interfaces TypeScript
+```
+
+### Autenticación
+
+Esta ruta **NO usa `checkSession`**. La autenticación es exclusivamente por HMAC-SHA256:
+
+```
+X-Webhook-Secret: <HMAC-SHA256(body, WEBHOOK_SECRET)>
+```
+
+Si la firma no coincide → `HTTP 401`.
+
+### Payload entrante
+
+```json
+{
+  "evento": "comprobante_recibido",
+  "timestamp": "2026-04-11T14:32:45.123Z",
+  "datos": {
+    "es_comprobante": true,
+    "monto": 15000.50,
+    "fecha": "2026-04-11",
+    "hora": "14:32",
+    "cbu_alias_destino": "juan.perez",
+    "banco_emisor": "Mercado Pago",
+    "cuit_emisor": "20-12345678-9",
+    "nombre_emisor": "Juan Carlos Pérez",
+    "numero_comprobante": "TXN-12345678-ABC",
+    "concepto": "cuota scout",
+    "whatsapp_remitente": "5491123456789",
+    "whatsapp_chat_id": "5491123456789@s.whatsapp.net",
+    "whatsapp_mensaje_texto": "Acá el comprobante",
+    "whatsapp_timestamp": "2026-04-11T14:31:30.000Z"
+  }
+}
+```
+
+### Lógica de matching (en orden de prioridad)
+
+1. **Por teléfono**: compara `datos.whatsapp_remitente` contra `scout.telefono` con normalización de prefijo internacional
+2. **Por nombre**: compara `datos.nombre_emisor` contra `scout.nombre + apellido` de forma case-insensitive, sin tildes
+3. **Sin match**: retorna `HTTP 422` sin registrar el pago
+
+### Transformación a Pago
+
+| Campo webhook | Campo Pago | Notas |
+|---|---|---|
+| `datos.monto` | `monto` | — |
+| `datos.fecha` | `fechaPago` | Si es null, se usa la fecha actual |
+| `datos.concepto` | `concepto` | Fallback: `TRANSFERENCIA {banco_emisor}`. Máx 50 chars, MAYÚSCULAS |
+| _(fijo)_ `"TRANSFERENCIA"` | `metodoPago` | Siempre transferencia |
+| scout encontrado `.uuid` | `scoutId` | — |
+| _(fijo)_ `false` | `rendido` | Siempre queda pendiente de rendición |
+
+### Respuestas HTTP
+
+| Código | Situación |
+|---|---|
+| `201 Created` | Pago registrado correctamente |
+| `400 Bad Request` | Payload inválido (Zod) |
+| `401 Unauthorized` | Firma HMAC incorrecta o ausente |
+| `422 Unprocessable Entity` | No se encontró scout coincidente |
+| `500 Internal Server Error` | Error inesperado |
+
+### Variable de entorno requerida
+
+```env
+WEBHOOK_SECRET=<valor-compartido-con-whatsapp-comprobantes>
+```
+
+> Generar con: `openssl rand -hex 32`. Debe coincidir exactamente entre ambos sistemas.
+
+---
+
+## 📋 Integración con cruz-del-sur — Nómina
+
+La integración con **cruz-del-sur** mantiene sincronizados los scouts del sistema con la nómina oficial de Scouts de Argentina. Un scout con DNI presente en la nómina queda como `ACTIVO`; si no aparece, pasa a `INACTIVO`.
+
+### Las 3 formas de comunicación
+
+| Forma | Endpoint | Cuándo usarla |
+|---|---|---|
+| **1. On-demand pull** | `POST /api/nomina/sync` | Sincronización manual desde un cliente autenticado |
+| **2. Webhook push** | `POST /api/webhook/nomina` | Cruz-del-sur envía la nómina diaria automáticamente |
+| **3. Cron programado** | _(interno)_ | Sync automático diario a las 7:00 AM (Argentina) |
+
+### Forma 1 — On-demand pull
+
+```http
+POST /api/nomina/sync
+Authorization: Bearer <jwt-de-administrador>
+```
+
+Scout-api llama internamente a `GET {CRUZ_DEL_SUR_API_URL}/members` y sincroniza. Solo accesible con rol `ADMINISTRADOR` (permiso `create_nomina`).
+
+**Respuesta:**
+
+```json
+{
+  "procesados": 120,
+  "actualizados": 115,
+  "desactivados": 3,
+  "noEncontrados": 5,
+  "errores": 0,
+  "timestamp": "2026-04-12T10:00:00.000Z"
+}
+```
+
+### Forma 2 — Webhook push desde cruz-del-sur
+
+```http
+POST /api/webhook/nomina
+X-Webhook-Source: cruz-del-sur
+X-Webhook-Secret: <HMAC-SHA256(body, NOMINA_WEBHOOK_SECRET)>
+Content-Type: application/json
+```
+
+Cruz-del-sur envía la nómina completa cuando la exporta. Scout-api valida la firma HMAC y sincroniza.
+
+**Payload esperado:**
+
+```json
+{
+  "event": "members.exported",
+  "timestamp": "2026-04-12T09:00:00.000Z",
+  "total": 120,
+  "trigger": "scheduled",
+  "data": [
+    {
+      "documento": "12345678",
+      "nombre": "Juan",
+      "apellido": "Pérez",
+      "sexo": "Masculino",
+      "fechaNacimiento": "15/05/2010",
+      "rama": "Scouts",
+      "funcion": "Scout",
+      "telefono": "1123456789",
+      "email": "juan@example.com",
+      "localidad": "Buenos Aires",
+      "calle": "Av. Siempre Viva 123"
+    }
+  ]
+}
+```
+
+### Forma 3 — Cron programado
+
+Scout-api ejecuta automáticamente un pull de la nómina todos los días a las **10:00 UTC (7:00 AM Argentina)**, una hora después del export diario de cruz-del-sur (6:00 AM).
+
+### Lógica de sincronización
+
+1. Para cada miembro de la nómina: buscar scout por `dni` (coincidencia exacta)
+2. Si existe → actualizar campos + `estado = "ACTIVO"`
+3. Si no existe → log de no encontrado, NO se crea automáticamente
+4. Scouts activos en nuestro sistema cuyo DNI no está en la nómina → `estado = "INACTIVO"`
+
+### Mapeo de campos
+
+| Campo cruz-del-sur | Campo Scout | Transformación |
+|---|---|---|
+| `documento` | `dni` | Clave de matching |
+| `nombre` | `nombre` | Directo |
+| `apellido` | `apellido` | Directo |
+| `sexo` | `sexo` | "Masculino"/"masculino"/"m" → "M"; "Femenino"/"femenino"/"f" → "F" |
+| `fechaNacimiento` | `fechaNacimiento` | "DD/MM/YYYY" o "YYYY-MM-DD" → `Date` |
+| `rama` | `rama` | "Scouts" → "SCOUTS", "Lobatos y Lobeznas" → "MANADA", etc. (`RAMAS_MAP`) |
+| `funcion` | `funcion` | "Jefe de Manada" → "JEFE_RAMA", "Scout" → "JOVEN", etc. (`FUNCIONES_MAP`) |
+| `telefono` | `telefono` | Directo |
+| `email` | `mail` | Directo |
+| `localidad` | `localidad` | Directo |
+| `calle` | `direccion` | Directo |
+| `provincia` | `provincia` | Directo |
+| `nacionalidad` | `nacionalidad` | Directo |
+| `religion` | `religion` | Directo |
+
+### Variables de entorno
+
+```env
+# Credenciales para llamar a la API de cruz-del-sur (formas 1 y 3)
+CRUZ_DEL_SUR_API_URL=http://localhost:3000
+CRUZ_DEL_SUR_API_KEY=<api-key-de-cruz-del-sur>
+
+# Secreto compartido para validar webhooks entrantes de cruz-del-sur (forma 2)
+NOMINA_WEBHOOK_SECRET=<generar-con-openssl-rand-hex-32>
+```
+
+### Archivos involucrados
+
+```
+src/
+├── types/nomina.ts                  — Interfaces CruzDelSurMember, NominaWebhookPayload, NominaSyncResult
+├── validators/nomina.ts             — Schema Zod del payload webhook
+├── middlewares/nominaWebhookAuth.ts — Auth HMAC-SHA256 para webhook
+├── services/nomina.ts               — pullNomina, syncNomina, pullAndSync
+├── controllers/nomina.ts            — syncOnDemand, recibirWebhook
+└── routes/nomina.ts                 — createNominaRouter (webhook), createNominaSyncRouter (on-demand)
+```
+
+---
 
 ## 📁 Estructura de Carpetas
 
 ```
 scout-api/
 ├── src/
-│   ├── bin/                          # Scripts de utilidad y comandos CLI
-│   │   ├── createAdminUser.ts        # Crear usuario administrador
-│   │   ├── seedDB.ts                 # Alimentar base de datos local (Desarrollo)
-│   │   ├── deleteDBData.ts           # Limpiar base de datos local (Desarrollo)
-│   │   ├── seed/                     # Scripts independientes para seedDB.ts
-│   │   │   ├── loadDocumentos.ts         # Importar documentos desde Sheets
-│   │   │   ├── loadEntregas.ts           # Importar entregas
-│   │   │   ├── loadEquipos.ts            # Importar equipos
-│   │   │   ├── loadFamiliares.ts         # Importar familiares
-│   │   │   ├── loadPagos.ts              # Importar pagos
-│   │   │   ├── loadScouts.ts             # Importar scouts
-│   │   │   └── saveUsersData.ts          # Guardar datos de usuarios
+│   ├── bin/                          # Scripts CLI
+│   │   ├── createAdminUser.ts
+│   │   ├── seedDB.ts
+│   │   ├── deleteDBData.ts
+│   │   └── seed/                     # Scripts individuales de seedDB
+│   │       ├── loadScouts.ts
+│   │       ├── loadFamiliares.ts
+│   │       ├── loadEquipos.ts
+│   │       ├── loadDocumentos.ts
+│   │       ├── loadEntregas.ts
+│   │       ├── loadPagos.ts
+│   │       └── saveUsersData.ts
 │   │
-│   ├── controllers/                  # Controladores (Lógica HTTP)
-│   │   ├── auth.ts                   # Login, register, logout
-│   │   ├── documento.ts              # CRUD documentos
-│   │   ├── entrega.ts                # CRUD entregas de insignias
-│   │   ├── equipo.ts                 # CRUD equipos/patrullas
-│   │   ├── familiar.ts               # CRUD familiares
-│   │   ├── pago.ts                   # CRUD pagos/cuotas
-│   │   └── scout.ts                  # CRUD scouts
+│   ├── controllers/                  # Lógica HTTP (request/response)
+│   │   ├── auth.ts
+│   │   ├── documento.ts
+│   │   ├── entrega.ts
+│   │   ├── equipo.ts
+│   │   ├── familiar.ts
+│   │   ├── pago.ts
+│   │   ├── scout.ts
+│   │   └── webhook.ts
 │   │
-│   ├── docs/                         # Documentación Swagger
-│   │   ├── spec.json                 # Especificación OpenAPI
-│   │   ├── spec_v3.json              # Versión 3 de la spec
-│   │   └── swagger-ts/               # Definiciones TypeScript Swagger
-│   │       ├── swagger.ts
-│   │       ├── resources/
-│   │       └── schemas/
+│   ├── docs/                         # Swagger
+│   │   ├── spec.json
+│   │   └── swagger-ts/
 │   │
-│   ├── middlewares/                  # Middlewares Express
-│   │   ├── cache.ts                  # Cache con Redis
+│   ├── middlewares/
+│   │   ├── cache.ts                  # Cache-Aside con Redis
 │   │   ├── error.ts                  # Manejo global de errores
-│   │   ├── httpLog.ts                # Logging de peticiones HTTP
-│   │   ├── index.ts                  # Exports centralizados
-│   │   ├── session.ts                # Autenticación JWT
+│   │   ├── httpLog.ts                # Morgan logger
+│   │   ├── session.ts                # JWT + RBAC
 │   │   ├── tooBusy.ts                # Protección contra sobrecarga
-│   │   └── validate.ts               # Validación con Zod
+│   │   ├── validate.ts               # Validación Zod
+│   │   └── webhookAuth.ts            # HMAC-SHA256 para webhook
 │   │
-│   ├── mappers/                      # Transformadores de datos
-│   │   ├── auth.ts                   # Mapper de usuarios
-│   │   ├── scout.ts                  # Mapper de scouts (con edad)
-│   │   ├── familiar.ts               # Mapper de familiares (con edad)
-│   │   ├── equipo.ts                 # Mapper de equipos
-│   │   ├── pago.ts                   # Mapper de pagos
-│   │   ├── entrega.ts                # Mapper de entregas
-│   │   ├── documentoPresentado.ts    # Mapper de documentos
-│   │   └── index.ts                  # Exports centralizados
+│   ├── mappers/                      # Entidad → DTO (uuid → id)
+│   │   ├── auth.ts, scout.ts, familiar.ts, equipo.ts
+│   │   ├── pago.ts, entrega.ts, documentoPresentado.ts
+│   │   └── index.ts
 │   │
-│   ├── models/                       # Modelos de datos
-│   │   └── scout.ts                  # Modelo Scout con extensiones
+│   ├── models/
+│   │   └── scout.ts
 │   │
-│   ├── prisma/                       # Configuración Prisma
-│   │   ├── schema.prisma             # Esquema de base de datos
-│   │   └── migrations/               # Historial de migraciones
+│   ├── prisma/
+│   │   ├── schema.prisma
+│   │   └── migrations/
 │   │
-│   ├── routes/                       # Definición de rutas
-│   │   ├── auth.ts                   # Rutas de autenticación
-│   │   ├── documento.ts              # Rutas de documentos
-│   │   ├── entrega.ts                # Rutas de entregas
-│   │   ├── equipo.ts                 # Rutas de equipos
-│   │   ├── familiar.ts               # Rutas de familiares
-│   │   ├── index.ts                  # Router principal
-│   │   ├── pago.ts                   # Rutas de pagos
-│   │   └── scout.ts                  # Rutas de scouts
+│   ├── routes/
+│   │   ├── auth.ts, scout.ts, documento.ts, pago.ts
+│   │   ├── familiar.ts, equipo.ts, entrega.ts
+│   │   ├── webhook.ts
+│   │   └── index.ts
 │   │
-│   ├── services/                     # Lógica de negocio
-│   │   ├── auth.ts                   # Autenticación y autorización
-│   │   ├── documento.ts              # Gestión de documentos
-│   │   ├── entrega.ts                # Gestión de entregas
-│   │   ├── equipo.ts                 # Gestión de equipos
-│   │   ├── familiar.ts               # Gestión de familiares
-│   │   ├── pago.ts                   # Gestión de pagos
-│   │   └── scout.ts                  # Gestión de scouts
+│   ├── services/                     # Lógica de negocio pura
+│   │   ├── auth.ts, scout.ts, documento.ts, pago.ts
+│   │   ├── familiar.ts, equipo.ts, entrega.ts
+│   │   └── webhook.ts
 │   │
-│   ├── types/                        # Definiciones TypeScript
-│   │   ├── constantTypes.ts          # Tipos de constantes
-│   │   ├── documento.ts              # Tipos de documentos
-│   │   ├── entrega.ts                # Tipos de entregas
-│   │   ├── equipo.ts                 # Tipos de equipos
-│   │   ├── familiar.ts               # Tipos de familiares
-│   │   ├── index.ts                  # Exports centralizados
-│   │   ├── pago.ts                   # Tipos de pagos
-│   │   ├── scout.ts                  # Tipos de scouts
-│   │   ├── user.ts                   # Tipos de usuarios
-│   │   └── XLSXTypes.ts              # Tipos para importación Excel
+│   ├── types/
+│   │   ├── constantTypes.ts          # Enums (ROLES, ramas, etc.)
+│   │   ├── scout.ts, familiar.ts, pago.ts, documento.ts
+│   │   ├── entrega.ts, equipo.ts, user.ts, webhook.ts
+│   │   └── XLSXTypes.ts
 │   │
-│   ├── utils/                        # Utilidades y helpers
-│   │   ├── classes/                  # Clases utilitarias
-│   │   │   ├── AppError.ts           # Error personalizado
-│   │   │   ├── CacheManager.ts       # Gestor de Redis
-│   │   │   ├── ErrorHandler.ts       # Manejador de errores
+│   ├── utils/
+│   │   ├── classes/
+│   │   │   ├── AppError.ts           # Error personalizado con HttpCode
+│   │   │   ├── CacheManager.ts       # Singleton Redis
+│   │   │   ├── Logger.ts             # Singleton Winston + Logtail
+│   │   │   ├── ErrorHandler.ts
 │   │   │   ├── ExitHandler.ts        # Graceful shutdown
-│   │   │   ├── Logger.ts             # Logger Winston
-│   │   │   └── documentos/           # Procesadores de documentos PDF
-│   │   │
-│   │   ├── helpers/                  # Funciones helper
-│   │   │   ├── getDireccionData.ts
-│   │   │   ├── getFuncion.ts
-│   │   │   ├── googleDriveApi.ts     # Cliente Google Drive/Sheets
-│   │   │   ├── helpers.ts            # Helpers generales
-│   │   │   ├── hexToRgb.ts
-│   │   │   ├── mapXLSXScoutToScoutData.ts
-│   │   │   └── validatePermissions.ts # RBAC
-│   │   │
-│   │   ├── lib/                      # Wrappers de librerías
-│   │   │   ├── bcrypt.util.ts        # Hash de contraseñas
-│   │   │   ├── exceljs.ts            # Procesamiento Excel
-│   │   │   ├── jwt.util.ts           # Generación JWT
-│   │   │   ├── pdf-lib.ts            # Generación PDF
-│   │   │   ├── prisma-client.ts      # Cliente Prisma
-│   │   │   ├── s3.util.ts            # Cliente AWS S3
-│   │   │   ├── winston.util.ts       # Configuración Winston
-│   │   │   └── zod.util.ts           # Utilidades Zod
-│   │   │
-│   │   ├── constants.ts              # Constantes globales
-│   │   ├── index.ts                  # Exports centralizados
-│   │   ├── permissions.ts            # Definición de permisos
-│   │   └── regex.ts                  # Expresiones regulares
+│   │   │   └── documentos/           # Generadores PDF por tipo
+│   │   ├── helpers/
+│   │   │   ├── googleDriveApi.ts     # Cliente Google Sheets/Drive
+│   │   │   ├── validatePermissions.ts # RBAC check
+│   │   │   └── helpers.ts
+│   │   ├── lib/
+│   │   │   ├── prisma-client.ts
+│   │   │   ├── jwt.util.ts
+│   │   │   ├── s3.util.ts
+│   │   │   ├── bcrypt.util.ts
+│   │   │   ├── pdf-lib.ts
+│   │   │   └── winston.util.ts
+│   │   ├── permissions.ts            # Constantes de permisos por rol
+│   │   └── constants.ts
 │   │
-│   ├── validators/                   # Esquemas Zod
-│   │   ├── auth.ts                   # Validadores de auth
-│   │   ├── documento.ts              # Validadores de documentos
-│   │   ├── entrega.ts                # Validadores de entregas
-│   │   ├── equipo.ts                 # Validadores de equipos
-│   │   ├── familiar.ts               # Validadores de familiares
-│   │   ├── generics.ts               # Validadores genéricos
-│   │   ├── index.ts                  # Exports centralizados
-│   │   ├── pago.ts                   # Validadores de pagos
-│   │   └── scout.ts                  # Validadores de scouts
+│   ├── validators/                   # Schemas Zod por entidad
+│   │   ├── auth.ts, scout.ts, familiar.ts, equipo.ts
+│   │   ├── pago.ts, documento.ts, entrega.ts
+│   │   ├── webhook.ts
+│   │   └── generics.ts
 │   │
-│   ├── whatsapp/                     # Bot de WhatsApp
-│   │   ├── clientConfig.ts           # Configuración cliente WA
-│   │   ├── options.ts                # Opciones del bot
-│   │   ├── recordarCumpleaños.ts     # Cron de cumpleaños
-│   │   ├── useCases.ts               # Casos de uso del bot
-│   │   └── WhatsappSession.ts        # Sesión principal (Singleton)
+│   ├── whatsapp/                     # Bot WhatsApp (actualmente desactivado)
+│   │   ├── WhatsappSession.ts        # Singleton (comentado en Server.ts)
+│   │   ├── useCases.ts
+│   │   ├── recordarCumpleaños.ts     # Cron (comentado en Server.ts)
+│   │   └── clientConfig.ts
 │   │
-│   ├── index.ts                      # Punto de entrada
-│   └── Server.ts                     # Clase principal del servidor
+│   ├── Server.ts                     # Express config + registro de rutas
+│   └── index.ts                      # Punto de entrada
 │
-├── prisma/                           # Prisma root (alternativo)
-│   └── migrations/
-│
-├── .env.example                      # Variables de entorno ejemplo
-├── docker-compose.yml                # Compose para Redis
-├── package.json                      # Dependencias y scripts
-├── pm2.config.js                     # Configuración PM2
-├── tsconfig.json                     # Configuración TypeScript
-├── README.md                         # Este archivo
-└── Todo.md                           # Lista de tareas pendientes
+├── data/
+│   └── scout.db                      # BD SQLite local para desarrollo
+├── docker-compose.yml                # Turso (LibSQL) + Redis
+├── .env.example
+├── package.json
+├── tsconfig.json
+└── pm2.config.js
 ```
 
 ### Convenciones de Nomenclatura
 
-- **Archivos**: camelCase para TypeScript (`scoutService.ts`)
+- **Archivos**: camelCase (`scoutService.ts`)
 - **Clases**: PascalCase (`ScoutService`, `CacheManager`)
 - **Funciones**: camelCase (`getScout`, `validatePermissions`)
-- **Constantes**: UPPER_SNAKE_CASE (`MAX_RETRIES`, `JWT_SECRET`)
-- **Tipos/Interfaces**: PascalCase con prefijo `I` para interfaces (`IScout`, `ScoutType`)
+- **Constantes**: UPPER_SNAKE_CASE (`JWT_SECRET`)
+- **Tipos/Interfaces**: PascalCase, interfaces con prefijo `I` (`IScout`)
+
+---
 
 ## 🛠 Configurar entorno de desarrollo
 
 ### Requisitos Previos
 
-Antes de comenzar, asegúrate de tener instalado:
+1. **Node.js** v22.13.1+ con npm
+2. **Docker & Docker Compose**
+3. **DBeaver Community** (recomendado para explorar la BD)
 
-1. **Node.js y npm** (v22.13.1 o superior) ([aqui](https://nodejs.org/en/download#/) tienes el enlace para descargar e instalar)
+### Pasos
 
-   ```bash
-   node --version  # Verificar versión nodejs
-   npm --version  # Verificar versión npm
-   ```
-
-2. **Docker & Docker Compose** (requerido)
-   - [Descargar Docker Desktop](https://www.docker.com/products/docker-desktop)
-   - Verificar instalación:
-
-   ```bash
-   docker --version
-   docker compose version
-   ```
-
-3. **DBeaver Community** (recomendado para visualizar la base de datos)
-   - [Descargar DBeaver](https://dbeaver.io/download/)
-   - Cliente universal de base de datos para explorar y administrar la BD Turso/SQLite
-
-4. **Git**
-
-   ```bash
-   git --version
-   ```
-
-### Configurar y levantar el entorno
-
-#### 1. Clonar el Repositorio
+#### 1. Clonar e instalar
 
 ```bash
 git clone https://github.com/aggutierrez98/scout-api.git
 cd scout-api
-```
-
-#### 2. Instalar Dependencias
-
-```bash
 npm install
 ```
 
-#### 3. Configurar Variables de Entorno e Infisical
-
-#### a) Crear archivo .env.development copiado del archivo de ejemplo (.env.example)
+#### 2. Configurar variables de entorno
 
 ```bash
 cp .env.example .env.development
 ```
 
-#### b) Solicitar Credenciales de Infisical
+Editar `.env.development`:
 
-Este proyecto usa [**Infisical**](https://infisical.com/) para gestionar secretos de forma centralizada y segura.
-
-**Solicita al administrador del proyecto** las siguientes credenciales para tu entorno:
-
-- `INFISICAL_SERVICE_TOKEN` - Service Token para el ambiente de desarrollo
-- `INFISICAL_PROJECT_ID` - ID del proyecto en Infisical
-- `INFISICAL_ENV` - Ambiente de Infisical (ej: `dev`, `staging`, `prod`)
-- `INFISICAL_SITE_URL` - URL del servidor Infisical (usualmente `https://app.infisical.com`)
-
-> 💡 **Nota**: El administrador generará un Service Token específico para el ambiente de desarrollo. Cada ambiente (dev/staging/prod) tiene su propio token con acceso solo a los secretos de ese ambiente. Todos los secretos (AWS, Google Drive, Turso, etc.) están configurados centralmente.
-
-Edita `.env.development` y completa con las credenciales proporcionadas:
-
-```dosini
+```env
 NODE_ENV=development
 PORT=8080
 
-# Credenciales proporcionadas por el administrador
 INFISICAL_SERVICE_TOKEN=<service-token-del-admin>
 INFISICAL_PROJECT_ID=<project-id>
 INFISICAL_ENV=dev
-INFISICAL_SITE_URL=<infisical-site-url>
+INFISICAL_SITE_URL=https://app.infisical.com
+
+WEBHOOK_SECRET=<valor-compartido-con-whatsapp-comprobantes>
 ```
 
-### 4. Inicializar Entorno Docker (Primera Vez)
+> El resto de secretos (AWS, Google Drive, Turso, JWT, etc.) se obtienen automáticamente desde **Infisical** al arrancar el servidor.
 
-**⚠️ Este paso es obligatorio la primera vez que trabajas con el proyecto:**
+#### 3. Inicializar Docker (primera vez)
 
-Primero asegurarse de tener libres los puertos 9000 y 6379.
-Luego correr el comando:
+Asegurarse de tener libres los puertos **9000** (Turso) y **6379** (Redis).
 
 ```bash
-# Inicializa Docker (Turso + Redis) y carga datos de desarrollo
 npm run docker:init-with-data
 ```
 
-> Nota: Este comando realiza automáticamente:
->
-> 1. 🐳 Levanta contenedores Docker (Turso + Redis)
-> 2. 📦 Copia la base de datos `data/scout.db` al contenedor
-> 3. 💻 Crea el cliente de prisma.
-> 4. 🗑️ Limpia datos existentes en la base de datos
-> 5. 📥 Carga datos de desarrollo desde Google Sheets (scouts, familiares, equipos, etc.).
-> 6. **Tiempo estimado:** 2-3 minutos
+Este comando:
+1. Levanta contenedores Docker (Turso + Redis)
+2. Copia `data/scout.db` al contenedor
+3. Genera el cliente Prisma
+4. Limpia datos existentes
+5. Carga datos desde Google Sheets (equipos → scouts → familiares → documentos → entregas → pagos)
 
-Esto levanta:
-
-- **Turso (LibSQL)**: Puerto 9000 - Base de datos SQLite con datos de desarrollo
-- **Redis**: Puerto 6379 - Sistema de caché en memoria
-
-### 5. Crear Usuario Administrador
+#### 4. Crear usuario administrador
 
 ```bash
 npm run create-admin:dev
 ```
 
-Este script interactivo te pedirá:
-
-- Username
-- Password
-
-El usuario creado tendrá rol `ADMIN` con todos los permisos.
-
-> **Nota:** Este paso requiere que los contenedores Docker estén corriendo.
-
-### 6. Iniciar Servidor de Desarrollo
-
-Una vez completada la inicialización Docker del paso 4, puedes trabajar normalmente:
+#### 5. Iniciar servidor
 
 ```bash
 npm run dev
 ```
 
-El servidor iniciará en `http://localhost:8080` (o el puerto configurado en `.env.development`).
+Servidor disponible en `http://localhost:8080`. Swagger en `http://localhost:8080/docs`.
 
-### 7. Verificar Instalación
-
-Una vez iniciado el servidor (`npm run dev`), verifica que todo funciona:
-
-```bash
-# Health check del API
-curl http://localhost:8080/health
-
-# Abrir documentación Swagger
-open http://localhost:8080/docs
-```
+---
 
 ## 🔄 Flujo de Trabajo Diario de Desarrollo
-
-### Luego de haber configurado el proyecto una primera vez, cada vez que se quiera correr el proyecto se hara
 
 **Si los contenedores están detenidos:**
 
 ```bash
-npm run docker:init  # Solo inicia contenedores
-npm run dev          # Inicia servidor
+npm run docker:init
+npm run dev
 ```
 
-**Si los contenedores ya están corriendo:**
+**Si ya están corriendo:**
 
 ```bash
-npm run dev  # Solo inicia el servidor
+npm run dev
 ```
 
-**Verificar estado de contenedores:**
+**Verificar estado:**
 
 ```bash
 npm run docker:status
 ```
 
-### Recargar datos de desarrollo
-
-Si necesitas refrescar los datos desde Google Sheets:
+**Recargar datos desde Google Sheets:**
 
 ```bash
 npm run docker:load-data
 ```
 
-Este comando ejecuta automáticamente:
+### Gestión de cambios en el schema de Prisma
 
-1. Limpieza de datos existentes (`deleteDBData`)
-2. Guardado de usuarios (`save-users`)
-3. Carga secuencial de: equipos → scouts → familiares → documentos → entregas → pagos
+```bash
+# 1. Regenerar cliente Prisma (tipos TypeScript)
+npm run prisma:generate-client:dev
 
-El servidor ejecuta:
+# 2. Crear migración
+npm run prisma:migrate:dev
 
-- **Turso (LibSQL)**: Base de datos en puerto 9000 (contenedor Docker)
-- **Redis**: Caché en puerto 6379 (contenedor Docker)
-- **Express API**: En el puerto configurado en `.env.development` (default: 8080)
-- **Nodemon**: Hot reload automático al detectar cambios
+# 3. Aplicar migración a la BD local
+npm run prisma:apply-migrations:dev
+```
+
+---
 
 ## 🛠️ Herramientas de Desarrollo
 
-### DBeaver - Explorador de Base de Datos
+### DBeaver — Explorar la base de datos
 
-DBeaver permite visualizar y administrar la base de datos Turso/SQLite de forma gráfica.
-
-#### Configurar DBeaver para conectarse a la base de datos local
-
-1. **Abrir DBeaver** y crear una nueva conexión
-2. **Seleccionar tipo de base de datos**:
-   - En el diálogo de nueva conexión, buscar y seleccionar **LibSQL**
-3. **Configurar la conexión**:
-   - **Conexion**: Seleccionar conexion por `Host`.
-   - **Server URL**: Ingresar la URL `http://localhost:9000`
-   - Hacer clic en **Test Connection** para verificar
-4. **Guardar y conectar**
-
-> 💡 **Nota**: Los contenedores Docker deben estar corriendo (`npm run docker:init`) para que DBeaver pueda conectarse.
+1. Nueva conexión → tipo **LibSQL**
+2. Conexión por **Host**, Server URL: `http://localhost:9000`
+3. Los contenedores Docker deben estar corriendo
 
 ### Logs del Sistema
-
-El servidor muestra logs con colores según severidad:
 
 - 🟢 **INFO**: Operaciones normales
 - 🟡 **WARN**: Advertencias
 - 🔴 **ERROR**: Errores críticos
 - 🟣 **HTTP**: Peticiones HTTP entrantes
-- ⚪ **DEBUG**: Información de depuración detallada
+- ⚪ **DEBUG**: Debug detallado
 
-### Hot Reload
-
-Nodemon detecta cambios en archivos `.ts` y reinicia el servidor automáticamente.
-
-### Reiniciar Base de Datos
-
-Si necesitas limpiar y recargar la base de datos completamente:
-
-```bash
-npm run deleteDBData:dev    # Borrar todos los datos
-npm run docker:load-data    # Recargar desde Google Sheets
-npm run create-admin:dev    # Crear nuevo usuario admin
-```
+---
 
 ## 🔌 Integraciones de Terceros
 
-### 1. Google Drive API / Google Sheets
+### 1. Google Drive / Google Sheets
 
-**Propósito**: Importación masiva de datos desde hojas de cálculo.
-
-#### Uso de Google Drive API
-
-```typescript
-// Leer datos de una hoja
-import { getSpreadSheetData } from "./utils/helpers/googleDriveApi";
-const scouts = await getSpreadSheetData("scouts");
-
-// Escribir datos
-import { writeSpreadSheet } from "./utils/helpers/googleDriveApi";
-await writeSpreadSheet("scouts", scoutsData);
-```
-
-#### Hojas Disponibles
-
-- `scouts`: Datos de scouts
-- `familiares`: Datos de familiares
-- `equipos`: Equipos/patrullas
-- `documentos`: Tipos de documentos
-- `entregas`: Entregas de insignias
-- `pagos`: Pagos/cuotas
-- `usuarios`: Usuarios del sistema
+Importación masiva de datos desde hojas de cálculo. Hojas disponibles: `scouts`, `familiares`, `equipos`, `documentos`, `entregas`, `pagos`, `usuarios`.
 
 ### 2. AWS S3
 
-**Propósito**: Almacenamiento persistente de documentos PDF (fichas médicas, autorizaciones, etc.).
-
-#### Uso de AWS
-
-```typescript
-// Subir archivo
-import { uploadToS3 } from "./utils/lib/s3.util";
-const etag = await uploadToS3(pdfBuffer, "documentos/scout_123.pdf");
-
-// Obtener URL firmada (temporal)
-import { getFileInS3 } from "./utils/lib/s3.util";
-const signedUrl = await getFileInS3("documentos/scout_123.pdf");
-// URL válida por 1 hora
-```
-
-### 3. Turso (LibSQL)
-
-**Propósito**: Base de datos distribuida SQLite con sincronización en la nube.
-
-### 4. Redis
-
-**Propósito**: Caché de consultas frecuentes para optimizar rendimiento.
-
-#### Uso Interno
-
-El caché se gestiona automáticamente mediante middlewares:
-
-```typescript
-// En routes
-router.get(
-  "/:id",
-  cacheMiddleware, // Cachea GET requests
-  controller.getItem,
-);
-
-router.put(
-  "/:id",
-  cleanCacheMiddleware, // Invalida caché al modificar
-  controller.updateItem,
-);
-```
-
-#### TTL y Configuración
-
-```typescript
-// En middlewares/cache.ts
-cacheManager.set(cacheKey, data, {
-  expirationInMs: 60000, // 1 minuto
-});
-```
-
-### 5. Logtail
-
-**Propósito**: Logs centralizados en la nube para producción.
-
-#### Logs Enviados
-
-- Errores críticos
-- Peticiones HTTP (en producción)
-- Eventos importantes (login, cambios de permisos, etc.)
-
-### 6. Infisical
-
-**Proposito**: Centralizar los secretos haciendo mas facil la mantenibilidad y configuracion.
-
-#### (Arquitectura)
-
-Al iniciar la aplicación, el ⁠ SecretsManager ⁠ (singleton) se autentica con Infisical usando tus credenciales y descarga todos los secretos de forma segura:
+Almacenamiento de documentos PDF. Estructura del bucket:
 
 ```
-Tu máquina                          Infisical Cloud
-─────────────                       ───────────────
-
-.env.development                    📦 Proyecto Scout API
-  ├─ CLIENT_ID      ────┐           ├─ JWT_SECRET
-  ├─ CLIENT_SECRET  ────┼──────────►├─ AWS Keys
-  └─ PROJECT_ID     ────┘   Auth    ├─ Google Drive Keys
-                                    ├─ Turso Credentials
-SecretsManager                      └─ Redis URI
-  └─ Descarga secretos tipados
+s3://scout-documentos/
+└── documentos/
+    └── scout_{uuid}/
+        ├── ficha_medica.pdf
+        └── ...
 ```
 
-Tu código usa:
+URLs de descarga firmadas con expiración de 1 hora.
 
-```typescript
-SecretsManager.getInstance().getJWTSecret();
-SecretsManager.getInstance().getAWSSecrets();
-```
+### 3. Infisical
 
-**Ventajas de este enfoque:**
-✅ **Cero configuración local** - Solo 4 variables en tu `.env`
-✅ **Secretos centralizados** - El admin actualiza, todos reciben los cambios
-✅ **Sin secretos en Git** - `.env.development` solo tiene credenciales de acceso
-✅ **Tipado completo** - TypeScript valida todos los secretos
-✅ **Rotación fácil** - El admin rota secretos sin tocar tu código
+Gestión centralizada de secretos. Al iniciar, `SecretsManager` (singleton) se autentica con Infisical y descarga todos los secretos. Solo 4 variables necesarias en `.env`.
+
+### 4. Turso (LibSQL)
+
+Base de datos SQLite distribuida. En desarrollo: contenedor Docker en puerto 9000. En producción: instancia Turso cloud.
+
+### 5. Redis
+
+Caché de consultas frecuentes. TTL por defecto: 60 segundos.
+
+### 6. Logtail
+
+Logs centralizados en la nube (solo en producción).
+
+---
 
 ## 📜 Scripts Disponibles
 
-### Docker (Entorno de Desarrollo)
+### Docker
 
 ```bash
 npm run docker:init              # Iniciar Docker (Turso + Redis)
-npm run docker:init-with-data    # Iniciar Docker + cargar datos de desarrollo
-npm run docker:load-data         # Solo cargar datos (Docker debe estar corriendo)
+npm run docker:init-with-data    # Iniciar Docker + cargar datos
+npm run docker:load-data         # Solo cargar datos
 npm run docker:up                # Levantar contenedores
 npm run docker:down              # Detener contenedores
 npm run docker:restart           # Reiniciar contenedores
-npm run docker:logs              # Ver logs de contenedores
-npm run docker:status            # Ver estado de contenedores
+npm run docker:logs              # Ver logs
+npm run docker:status            # Ver estado
 ```
 
 ### Desarrollo
 
 ```bash
-npm run dev                  # Iniciar servidor de desarrollo con hot-reload
-npm run dev:docker           # Iniciar Docker + servidor en un comando
-npm run studio:dev           # Abrir Prisma Studio (GUI de base de datos)
+npm run dev                  # Servidor con hot-reload
+npm run dev:docker           # Docker + servidor en un comando
+npm run studio:dev           # Prisma Studio (GUI de BD)
 ```
 
 ### Producción
 
 ```bash
-npm run build                # Compilar TypeScript a JavaScript
-npm start                    # Iniciar servidor en producción
+npm run build                # Compilar TypeScript
+npm start                    # Iniciar en producción
 npm run studio               # Prisma Studio en producción
 ```
 
 ### Gestión de Datos
 
 ```bash
-# Cargar datos desde Google Sheets (desarrollo)
+# Desarrollo
 npm run load-scouts:dev
 npm run load-familiares:dev
 npm run load-equipos:dev
 npm run load-documentos:dev
 npm run load-entregas:dev
 npm run load-pagos:dev
+npm run deleteDBData:dev
 
-# Cargar datos en producción
+# Producción (equivalentes sin :dev)
 npm run load-scouts
-npm run load-familiares
-# ... (equivalentes sin :dev)
-
-# Eliminar todos los datos
-npm run deleteDBData:dev     # Desarrollo
-npm run deleteDBData         # Producción
+npm run deleteDBData
 ```
 
 ### Usuarios
@@ -803,88 +841,49 @@ npm run deleteDBData         # Producción
 ```bash
 npm run create-admin:dev     # Crear admin en desarrollo
 npm run createAdmin          # Crear admin en producción
-npm run save-users:dev       # Exportar usuarios a Sheets (dev)
-npm run save-users           # Exportar usuarios a Sheets (prod)
+npm run save-users:dev       # Exportar usuarios a Sheets
 ```
 
-### Utilidades
-
-```bash
-npm run fill-pdf             # Completar PDFs con datos (testing)
-npm test                     # Ejecutar tests (pendiente implementar)
-```
+---
 
 ## 🚀 Producción
 
-### Compilar para Producción
+### Variables de entorno
 
-```bash
-# 1. Compilar TypeScript
-npm run build
-
-# 2. Verificar carpeta dist/
-ls -la dist/
-```
-
-### Variables de Entorno de Producción
-
-Crea `.env.production` con las credenciales reales:
-
-```dosini
+```env
 NODE_ENV=production
 PORT=3000
 
-// TODO: CAMBIAR por credenciales infisical
-# Base de datos Turso remota
-TURSO_DATABASE_URL=libsql://scout-db-[user].turso.io
-TURSO_AUTH_TOKEN=eyJhbG...
+INFISICAL_SITE_URL=https://app.infisical.com
+INFISICAL_PROJECT_ID=<id-del-proyecto>
+INFISICAL_ENV=production
+INFISICAL_SERVICE_TOKEN=<token-de-servicio>
 
-# Redis (puede ser Redis Cloud, AWS ElastiCache, etc.)
-REDIS_CONNECTION_URI=redis://usuario:password@redis-host:6379
-
-# Resto de variables con credenciales de producción
-JWT_SECRET=...
-AWS_S3_ACCESS_KEY=...
-# etc.
+WEBHOOK_SECRET=<mismo-valor-que-en-whatsapp-comprobantes>
 ```
 
-### Notas Importantes
+> El `SecretsManager` se inicializa antes de que Express comience a escuchar, garantizando que todos los secretos estén disponibles antes del primer request.
 
-**Docker**:
+### Compilar y arrancar
 
-- Los contenedores deben estar corriendo antes de iniciar el servidor
-- Usar `npm run docker:status` para verificar estado de contenedores
-- Si los contenedores están detenidos, ejecutar `npm run docker:init`
+```bash
+npm run build
+npm start
+```
 
-**Prisma**:
+### Prisma en producción
 
-- El esquema se gestiona mediante migraciones en Prisma (ver `src/prisma/migrations/`)
-- Nunca editar archivos en `@prisma/client` manualmente
+```bash
+npm run prisma:generate-client
+npm run prisma:apply-migrations
+```
 
-**Gestión de Cambios en la Base de Datos (Desarrollo)**:
+### PM2
 
-Cada vez que realices cambios en la estructura de la base de datos (`src/prisma/schema.prisma`), debes aplicar estos cambios tanto al cliente de Prisma como a la base de datos local:
-
-1. **Regenerar el cliente de Prisma** (actualiza los tipos TypeScript):
-
-   ```bash
-   npm run prisma:generate-client:dev
-   ```
-
-2. **Crear migración** (genera archivo SQL con los cambios):
-
-   ```bash
-   npm run prisma:migrate:dev
-   ```
-
-3. **Aplicar migración a la base de datos local**:
-
-   ```bash
-   npm run prisma:apply-migrations:dev
-   ```
-
-> 💡 **Nota**: Estos comandos afectan solo tu entorno de desarrollo local. Para aplicar cambios a producción (Turso), usa los comandos de producción documentados más abajo.
+El archivo `pm2.config.js` está configurado para gestionar el proceso en producción.
 
 ---
 
 ## 📞 Soporte
+
+Para dudas o problemas, contactar al administrador del proyecto.
