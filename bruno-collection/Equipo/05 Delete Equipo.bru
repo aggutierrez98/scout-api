@@ -1,0 +1,19 @@
+meta {
+  name: Delete Equipo
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{base_url}}/api/equipo/:id
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: equipo-uuid-aqui
+}

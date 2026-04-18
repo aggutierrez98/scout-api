@@ -1,0 +1,26 @@
+meta {
+  name: Update Equipo
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{base_url}}/api/equipo/:id
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: equipo-uuid-aqui
+}
+
+body:json {
+  {
+    "nombre": "Patrulla Águila",
+    "lema": "Nuevo lema"
+  }
+}

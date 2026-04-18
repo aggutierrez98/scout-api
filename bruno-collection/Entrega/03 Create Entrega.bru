@@ -1,0 +1,23 @@
+meta {
+  name: Create Entrega
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/api/entrega
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "tipoEntrega": "PROMESA",
+    "scoutId": "scout-uuid-aqui",
+    "fechaEntrega": "2026-04-15T00:00:00.000Z"
+  }
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Get Notificaciones
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/notificacion
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:query {
+  ~limit: 20
+  ~offset: 0
+  ~leida: false
+}

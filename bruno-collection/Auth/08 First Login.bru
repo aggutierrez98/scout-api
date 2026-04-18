@@ -1,0 +1,18 @@
+meta {
+  name: First Login
+  type: http
+  seq: 8
+}
+
+put {
+  url: {{base_url}}/api/auth/firstLogin
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "nuevoUsuario",
+    "password": "NuevaPassword1"
+  }
+}

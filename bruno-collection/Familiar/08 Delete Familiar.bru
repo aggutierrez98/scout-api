@@ -1,0 +1,19 @@
+meta {
+  name: Delete Familiar
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{base_url}}/api/familiar/:id
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: familiar-uuid-aqui
+}

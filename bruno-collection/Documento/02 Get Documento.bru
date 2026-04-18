@@ -1,0 +1,19 @@
+meta {
+  name: Get Documento
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/documento/:id
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: documento-uuid-aqui
+}

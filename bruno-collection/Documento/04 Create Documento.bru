@@ -1,0 +1,24 @@
+meta {
+  name: Create Documento
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/api/documento
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "scoutId": "scout-uuid-aqui",
+    "documentoId": "documento-tipo-uuid-aqui",
+    "requiereFamiliar": false,
+    "requiereFirma": false
+  }
+}

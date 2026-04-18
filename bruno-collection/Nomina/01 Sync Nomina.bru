@@ -1,0 +1,15 @@
+meta {
+  name: Sync Nómina
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/nomina/sync
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}

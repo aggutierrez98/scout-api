@@ -18,13 +18,13 @@ triggers:
 
 **Toda vez que agregues, modifiques o elimines un endpoint** (route, controller, validator, o body/params/query), DEBÉS actualizar el archivo `.bru` correspondiente ANTES de considerar el trabajo terminado.
 
-La colección Bruno vive en: `scouts/bruno/scout-api/`
+La colección Bruno vive en: `bruno-collection/` (raíz del repo)
 
 ---
 
 ## Mapeo Endpoint → Archivo Bruno
 
-### Auth — `scouts/bruno/scout-api/Auth/`
+### Auth — `bruno-collection/Auth/`
 
 | Endpoint | Archivo |
 |----------|---------|
@@ -38,7 +38,7 @@ La colección Bruno vive en: `scouts/bruno/scout-api/`
 | `PUT /api/auth/firstLogin` | `08 First Login.bru` |
 | `PUT /api/auth/:id` | `09 Modify User.bru` |
 
-### Scout — `scouts/bruno/scout-api/Scout/`
+### Scout — `bruno-collection/Scout/`
 
 | Endpoint | Archivo |
 |----------|---------|
@@ -50,7 +50,7 @@ La colección Bruno vive en: `scouts/bruno/scout-api/`
 | `PUT /api/scout/:id` | `06 Update Scout.bru` |
 | `DELETE /api/scout/:id` | `07 Delete Scout.bru` |
 
-### Familiar — `scouts/bruno/scout-api/Familiar/`
+### Familiar — `bruno-collection/Familiar/`
 
 | Endpoint | Archivo |
 |----------|---------|
@@ -63,7 +63,7 @@ La colección Bruno vive en: `scouts/bruno/scout-api/`
 | `PUT /api/familiar/:id` | `07 Update Familiar.bru` |
 | `DELETE /api/familiar/:id` | `08 Delete Familiar.bru` |
 
-### Equipo — `scouts/bruno/scout-api/Equipo/`
+### Equipo — `bruno-collection/Equipo/`
 
 | Endpoint | Archivo |
 |----------|---------|
@@ -73,7 +73,7 @@ La colección Bruno vive en: `scouts/bruno/scout-api/`
 | `PUT /api/equipo/:id` | `04 Update Equipo.bru` |
 | `DELETE /api/equipo/:id` | `05 Delete Equipo.bru` |
 
-### Entrega — `scouts/bruno/scout-api/Entrega/`
+### Entrega — `bruno-collection/Entrega/`
 
 | Endpoint | Archivo |
 |----------|---------|
@@ -83,7 +83,7 @@ La colección Bruno vive en: `scouts/bruno/scout-api/`
 | `PUT /api/entrega/:id` | `04 Update Entrega.bru` |
 | `DELETE /api/entrega/:id` | `05 Delete Entrega.bru` |
 
-### Documento — `scouts/bruno/scout-api/Documento/`
+### Documento — `bruno-collection/Documento/`
 
 | Endpoint | Archivo |
 |----------|---------|
@@ -95,8 +95,10 @@ La colección Bruno vive en: `scouts/bruno/scout-api/`
 | `POST /api/documento/sign` | `06 Sign Document.bru` |
 | `POST /api/documento/upload` | `07 Upload Document.bru` |
 | `DELETE /api/documento/:id` | `08 Delete Documento.bru` |
+| `POST /api/documento/scan` | `09 Scan Document.bru` |
+| `POST /api/documento/scan/confirm` | `10 Confirm Scan Document.bru` |
 
-### Pago — `scouts/bruno/scout-api/Pago/`
+### Pago — `bruno-collection/Pago/`
 
 | Endpoint | Archivo |
 |----------|---------|
@@ -107,19 +109,22 @@ La colección Bruno vive en: `scouts/bruno/scout-api/`
 | `PUT /api/pago/:id` | `05 Update Pago.bru` |
 | `DELETE /api/pago/:id` | `06 Delete Pago.bru` |
 
-### Nómina — `scouts/bruno/scout-api/Nomina/`
+### Nómina — `bruno-collection/Nomina/`
 
 | Endpoint | Archivo |
 |----------|---------|
 | `POST /api/nomina/sync` | `01 Sync Nomina.bru` |
 
-### Notificacion — `scouts/bruno/scout-api/Notificacion/`
+### Notificacion — `bruno-collection/Notificacion/`
 
 | Endpoint | Archivo |
 |----------|---------|
 | `GET /api/notificacion` | `01 Get Notificaciones.bru` |
+| `POST /api/notificacion/aviso` | `02 Create Aviso.bru` |
+| `PUT /api/notificacion/:id/read` | `03 Mark Read.bru` |
+| `PUT /api/notificacion/read-all` | `04 Mark All Read.bru` |
 
-### Webhook — `scouts/bruno/scout-api/Webhook/`
+### Webhook — `bruno-collection/Webhook/`
 
 | Endpoint | Archivo |
 |----------|---------|

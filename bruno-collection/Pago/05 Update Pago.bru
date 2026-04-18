@@ -1,0 +1,27 @@
+meta {
+  name: Update Pago
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{base_url}}/api/pago/:id
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: pago-uuid-aqui
+}
+
+body:json {
+  {
+    "rendido": true,
+    "monto": 15000,
+    "metodoPago": "EFECTIVO"
+  }
+}

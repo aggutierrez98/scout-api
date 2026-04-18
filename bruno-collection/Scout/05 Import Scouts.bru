@@ -1,0 +1,19 @@
+meta {
+  name: Import Scouts
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/api/scout/import
+  body: multipartForm
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:multipart-form {
+  nomina: @file()
+}

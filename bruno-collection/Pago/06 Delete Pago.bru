@@ -1,0 +1,19 @@
+meta {
+  name: Delete Pago
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{base_url}}/api/pago/:id
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: pago-uuid-aqui
+}

@@ -1,0 +1,15 @@
+meta {
+  name: Get Equipos
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/equipo
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}

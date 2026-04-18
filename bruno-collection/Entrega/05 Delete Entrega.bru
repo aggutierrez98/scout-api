@@ -1,0 +1,19 @@
+meta {
+  name: Delete Entrega
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{base_url}}/api/entrega/:id
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: entrega-uuid-aqui
+}

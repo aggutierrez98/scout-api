@@ -1,0 +1,38 @@
+meta {
+  name: Create Scout
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/api/scout
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "nombre": "Juan",
+    "apellido": "Pérez",
+    "fechaNacimiento": "2010-03-15T00:00:00.000Z",
+    "dni": "12345678",
+    "sexo": "M",
+    "localidad": "Buenos Aires",
+    "direccion": "Av. Siempreviva 742",
+    "codigoPostal": "1900",
+    "provincia": "Buenos Aires",
+    "nacionalidad": "Argentina",
+    "telefono": "1123456789",
+    "mail": "juan@email.com",
+    "religion": "CATOLICA",
+    "funcion": "JOVEN",
+    "rama": "SCOUTS",
+    "progresionActual": "PISTA",
+    "afiliado": true,
+    "equipoId": null
+  }
+}

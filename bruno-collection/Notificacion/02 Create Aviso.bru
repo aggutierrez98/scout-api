@@ -1,0 +1,24 @@
+meta {
+  name: Create Aviso
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/notificacion
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "titulo": "Aviso de prueba",
+    "mensaje": "Este es un mensaje de prueba",
+    "tipo": "CUSTOM",
+    "userIds": ["user-uuid-aqui"]
+  }
+}

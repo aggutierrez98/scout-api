@@ -1,0 +1,19 @@
+meta {
+  name: Mark Read
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{base_url}}/api/notificacion/:id
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: notificacion-uuid-aqui
+}

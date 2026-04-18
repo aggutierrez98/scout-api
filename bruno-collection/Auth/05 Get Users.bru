@@ -1,0 +1,21 @@
+meta {
+  name: Get Users
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/api/auth/users
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:query {
+  ~limit: 15
+  ~offset: 0
+  ~nombre: Juan
+}

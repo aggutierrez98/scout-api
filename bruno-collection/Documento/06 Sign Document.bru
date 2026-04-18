@@ -1,0 +1,21 @@
+meta {
+  name: Sign Document
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/api/documento/sign
+  body: multipartForm
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:multipart-form {
+  documentoId: documento-tipo-uuid-aqui
+  theme: light
+  signature: @file()
+}

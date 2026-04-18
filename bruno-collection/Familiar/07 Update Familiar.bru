@@ -1,0 +1,27 @@
+meta {
+  name: Update Familiar
+  type: http
+  seq: 7
+}
+
+put {
+  url: {{base_url}}/api/familiar/:id
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: familiar-uuid-aqui
+}
+
+body:json {
+  {
+    "telefono": "1198765432",
+    "mail": "nuevo@email.com",
+    "direccion": "Corrientes 1234"
+  }
+}

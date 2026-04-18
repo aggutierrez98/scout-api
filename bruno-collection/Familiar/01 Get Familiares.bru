@@ -1,0 +1,21 @@
+meta {
+  name: Get Familiares
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/familiar
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:query {
+  ~limit: 15
+  ~offset: 0
+  ~scoutId: scout-uuid-aqui
+}

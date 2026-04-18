@@ -1,0 +1,25 @@
+meta {
+  name: Update Entrega
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{base_url}}/api/entrega/:id
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: entrega-uuid-aqui
+}
+
+body:json {
+  {
+    "fechaEntrega": "2026-05-01T00:00:00.000Z"
+  }
+}

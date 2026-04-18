@@ -1,0 +1,21 @@
+meta {
+  name: Upload Document
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base_url}}/api/documento/upload
+  body: multipartForm
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:multipart-form {
+  scoutId: scout-uuid-aqui
+  documentoId: documento-tipo-uuid-aqui
+  documentoFilled: @file()
+}

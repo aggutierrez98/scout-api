@@ -1,0 +1,29 @@
+meta {
+  name: Update Scout
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{base_url}}/api/scout/:id
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: scout-uuid-aqui
+}
+
+body:json {
+  {
+    "telefono": "1198765432",
+    "mail": "nuevo@email.com",
+    "direccion": "Corrientes 1234",
+    "progresionActual": "RUMBO",
+    "equipoId": "equipo-uuid-aqui"
+  }
+}

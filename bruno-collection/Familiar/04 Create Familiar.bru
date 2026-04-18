@@ -1,0 +1,33 @@
+meta {
+  name: Create Familiar
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/api/familiar
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "nombre": "María",
+    "apellido": "Pérez",
+    "fechaNacimiento": "1980-05-20T00:00:00.000Z",
+    "dni": "87654321",
+    "sexo": "F",
+    "localidad": "Buenos Aires",
+    "direccion": "Av. Siempreviva 742",
+    "codigoPostal": "1900",
+    "provincia": "Buenos Aires",
+    "nacionalidad": "Argentina",
+    "telefono": "1123456789",
+    "mail": "maria@email.com",
+    "estadoCivil": "CASADO"
+  }
+}

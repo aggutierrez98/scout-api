@@ -1,0 +1,24 @@
+meta {
+  name: Create Equipo
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/api/equipo
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "nombre": "Patrulla Cóndor",
+    "lema": "Siempre listos",
+    "fechaCreacion": "2024-01-01T00:00:00.000Z",
+    "rama": "SCOUTS"
+  }
+}

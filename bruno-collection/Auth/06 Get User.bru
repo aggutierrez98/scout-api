@@ -1,0 +1,19 @@
+meta {
+  name: Get User
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/api/auth/users/:id
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: user-uuid-aqui
+}

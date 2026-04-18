@@ -1,0 +1,35 @@
+meta {
+  name: Login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/auth
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "test",
+    "password": "1234"
+  }
+}
+
+script:post-response {
+  // Get the JSON response body
+  const body = res.getBody();
+  
+  // Check if the body exists and contains the token
+  if (body && body.token) {
+    // Save the token to the environment variable named "token"
+    bru.setEnvVar("token", body.token);
+    
+    // Optional: Log a success message to the Bruno console
+    console.log("Token successfully saved to environment variables.");
+  } else {
+    // Optional: Log an error if the token is missing
+    console.error("Token was not found in the response body.");
+  }
+}

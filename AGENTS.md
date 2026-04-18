@@ -10,8 +10,9 @@ Load these skills BEFORE writing any code when the context matches.
 | Payment logic, webhook processing, RBAC permissions, document workflows, scout/familiar rules | `business-domain` |
 | Writing TypeScript code, validators, mappers, HTTP responses, logging, secrets, Prisma queries | `api-conventions` |
 | Modifying or adding any route, controller, or validator — any endpoint change | `bruno` |
+| Domain questions: roles, ramas, reglas de negocio, terminología scouts, restricciones | `scouts-domain` |
 
-Skills are in `.claude/skills/`. Multiple skills can apply simultaneously — load all that match.
+Skills are in `.agents/skills/`. Multiple skills can apply simultaneously — load all that match.
 
 ## Project Quick Reference
 

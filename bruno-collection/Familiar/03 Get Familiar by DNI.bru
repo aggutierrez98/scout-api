@@ -1,0 +1,19 @@
+meta {
+  name: Get Familiar by DNI
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/api/familiar/by-dni/:dni
+  body: none
+  auth: none
+}
+
+headers {
+  x-api-key: {{api_key}}
+}
+
+params:path {
+  dni: 12345678
+}

@@ -1,0 +1,15 @@
+meta {
+  name: Mark All Read
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{base_url}}/api/notificacion/read-all
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}

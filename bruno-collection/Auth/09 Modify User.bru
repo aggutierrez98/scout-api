@@ -1,0 +1,27 @@
+meta {
+  name: Modify User
+  type: http
+  seq: 9
+}
+
+put {
+  url: {{base_url}}/api/auth/:id
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: user-uuid-aqui
+}
+
+body:json {
+  {
+    "active": true,
+    "role": "EDUCADOR",
+    "password": "NuevaPassword1"
+  }
+}

@@ -1,0 +1,44 @@
+meta {
+  name: Nómina Webhook (Cruz del Sur)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/webhook/nomina
+  body: json
+  auth: none
+}
+
+headers {
+  X-Webhook-Source: cruz-del-sur
+  X-Webhook-Secret: {{nomina_webhook_secret}}
+}
+
+body:json {
+  {
+    "event": "members.exported",
+    "timestamp": "2026-04-11T10:00:00.000Z",
+    "total": 1,
+    "trigger": "scheduled",
+    "data": [
+      {
+        "tipoDocumento": "DNI",
+        "documento": "12345678",
+        "nombre": "Juan",
+        "apellido": "Pérez",
+        "sexo": "M",
+        "fechaNacimiento": "15/03/2010",
+        "provincia": "Buenos Aires",
+        "localidad": "La Plata",
+        "calle": "Av. Siempreviva 742",
+        "codigoPostal": "1900",
+        "telefono": "1123456789",
+        "email": "juan@email.com",
+        "nacionalidad": "Argentina",
+        "funcion": "Scout",
+        "rama": "Scouts"
+      }
+    ]
+  }
+}

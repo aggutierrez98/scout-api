@@ -1,0 +1,15 @@
+meta {
+  name: Renew Token
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/auth/renew
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}

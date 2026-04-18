@@ -1,0 +1,26 @@
+meta {
+  name: Relate Familiar to Scout
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{base_url}}/api/familiar/relate/:id
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: familiar-uuid-aqui
+}
+
+body:json {
+  {
+    "scoutId": "scout-uuid-aqui",
+    "relacion": "MADRE"
+  }
+}

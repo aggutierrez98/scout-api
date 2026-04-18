@@ -1,0 +1,30 @@
+meta {
+  name: Fill Document
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/api/documento/fill
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "scoutId": "scout-uuid-aqui",
+    "documentoId": "documento-tipo-uuid-aqui",
+    "theme": "light",
+    "familiarId": null,
+    "cicloActividades": "2026",
+    "rangoDistanciaPermiso": "5 km",
+    "aclaraciones": "",
+    "lugarEvento": "Club Scout",
+    "fechaEventoComienzo": "2026-07-10T08:00:00.000Z",
+    "fechaEventoFin": "2026-07-14T18:00:00.000Z"
+  }
+}

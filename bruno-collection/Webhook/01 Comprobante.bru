@@ -1,0 +1,39 @@
+meta {
+  name: Comprobante (WhatsApp)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/webhook/comprobante
+  body: json
+  auth: none
+}
+
+headers {
+  X-Webhook-Source: whatsapp-comprobantes
+  X-Webhook-Secret: {{webhook_secret}}
+}
+
+body:json {
+  {
+    "evento": "comprobante_recibido",
+    "timestamp": "2026-04-11T12:00:00.000Z",
+    "datos": {
+      "es_comprobante": true,
+      "monto": 45000,
+      "fecha": "11/04/2026",
+      "hora": "10:30",
+      "cbu_alias_destino": "alias.destino",
+      "banco_emisor": "Banco Galicia",
+      "cuit_emisor": null,
+      "nombre_emisor": "Juan Pérez",
+      "numero_comprobante": "12345678",
+      "concepto": "Afiliacion 2026",
+      "whatsapp_remitente": "5491123456789",
+      "whatsapp_chat_id": "5491123456789@c.us",
+      "whatsapp_mensaje_texto": null,
+      "whatsapp_timestamp": "1712836800"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+meta {
+  name: Confirm Scan Document
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{base_url}}/api/documento/scan/confirm
+  body: multipartForm
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:multipart-form {
+  pdf: @file()
+  scoutId:
+  familiarId:
+  documentoId:
+  fechaPresentacion:
+}

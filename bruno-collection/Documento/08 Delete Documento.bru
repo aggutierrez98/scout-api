@@ -1,0 +1,19 @@
+meta {
+  name: Delete Documento
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{base_url}}/api/documento/:id
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: documento-uuid-aqui
+}

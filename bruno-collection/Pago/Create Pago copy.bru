@@ -1,0 +1,25 @@
+meta {
+  name: Create Pago copy
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{base_url}}/api/pago
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "scoutId": "scout-uuid-aqui",
+    "concepto": "Cuota abril",
+    "monto": 15000,
+    "metodoPago": "TRANSFERENCIA",
+    "fechaPago": "2026-04-11T00:00:00.000Z"
+  }
+}
