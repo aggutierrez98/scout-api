@@ -10,6 +10,7 @@ import {
 	FillDocumentSchema,
 	SignDocumentSchema,
 	UploadDocumentSchema,
+	ConfirmScanDocumentoSchema,
 } from "../validators/documento";
 import { DocumentoService } from "../services/documento";
 
@@ -34,6 +35,16 @@ export default function createDocumentoRouter(documentoService: DocumentoService
 		"/",
 		validate(PostDocumentoSchema),
 		documentoController.insertItem,
+	);
+	router.post(
+		"/scan",
+		documentoController.scanDocument,
+	);
+	router.post(
+		"/scan/confirm",
+		validate(ConfirmScanDocumentoSchema),
+		cleanCacheMiddleware,
+		documentoController.confirmScanDocument,
 	);
 	router.post(
 		"/fill",

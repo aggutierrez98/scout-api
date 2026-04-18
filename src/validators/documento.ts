@@ -34,6 +34,11 @@ export const validDocumentoCompletableId = async (id: string) => {
 	return !!respItem?.completable
 };
 
+export const validDocumentoDefinicionId = async (id: string) => {
+	const respItem = await prismaClient.documento.findUnique({ where: { uuid: id } });
+	return !!respItem;
+};
+
 export const DocumentoSchema = z.object({
 	scoutId: z.string().refine(validScoutID),
 	documentoId: z.string().refine(validDocumentoCompletableId),
@@ -170,5 +175,16 @@ export const PostDocumentoSchema = z.object({
 export const DeleteDocumentoSchema = z.object({
 	params: z.object({
 		id: IdSchema.refine(validDocumentoId),
+	}),
+});
+
+export const ScanDocumentoSchema = z.object({});
+
+export const ConfirmScanDocumentoSchema = z.object({
+	body: z.object({
+		scoutId: z.string().refine(validScoutID),
+		familiarId: z.string().optional(),
+		documentoId: z.string().refine(validDocumentoDefinicionId),
+		fechaPresentacion: z.coerce.date().optional(),
 	}),
 });

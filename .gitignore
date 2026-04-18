@@ -12,5 +12,11 @@ backup.sql
 # **/prisma/**.db
 # **/prisma/**.db-wal
 # **/prisma/**.db-shm
+
+**/**.db
+
 **/prisma/migrations/**
 *.DS_Store
+
+.claude
+CLAUDE.md

@@ -20,6 +20,10 @@ export interface GoogleDriveSecrets {
   SPREADSHEET_DATA_KEY: string;
 }
 
+export interface GoogleAISecrets {
+  API_KEY: string;
+}
+
 export interface TursoSecrets {
   AUTH_TOKEN: string;
   DATABASE_URL: string;
@@ -46,6 +50,7 @@ export interface AppSecrets {
   // Secretos organizados por servicio
   AWS: AWSSecrets;
   BETTERSTACK: BetterStackSecrets;
+  GOOGLE_AI: GoogleAISecrets;
   GOOGLE_DRIVE: GoogleDriveSecrets;
   TURSO: TursoSecrets;
 }
@@ -70,6 +75,9 @@ export const SECRET_KEYS = {
   // BetterStack (Logtail)
   BETTERSTACK_AUTH_TOKEN: 'AUTH_TOKEN',
   BETTERSTACK_INGESTING_HOST: 'INGESTING_HOST',
+
+  // Google AI
+  GOOGLE_AI_API_KEY: 'GOOGLE_AI_API_KEY',
 
   // Google Drive
   GOOGLE_DRIVE_PRIVATE_KEY: 'PRIVATE_KEY',

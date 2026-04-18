@@ -8,12 +8,13 @@ import {
 } from "../types";
 import { nanoid } from "nanoid";
 import { AppError, HttpCode } from "../utils";
-import { getFileInS3 } from "../utils/lib/s3.util";
+import { getFileInS3, uploadToS3 } from "../utils/lib/s3.util";
 import { PdfDocument } from '../utils/classes/documentos/PdfDocument';
 import logger from "../utils/classes/Logger";
 import { FillDocumentoData, PDFDocumentInstantiator } from "../utils/classes/documentos/DocumentoInstantiator";
 import { prismaClient } from "../utils/lib/prisma-client";
 import { mapDocumentoPresentado, mapDocumentoDefinicion } from "../mappers/documentoPresentado";
+import { scanAuthorizationDocument, AuthorizationDocumentScanResult } from "../utils/lib/gemini";
 
 
 type getQueryParams = {
@@ -169,7 +170,7 @@ export class DocumentoService implements IDocumentoService {
 			},
 		});
 
-		return responseItem as any;
+		return responseItem.map(doc => mapDocumentoPresentado(doc));
 	};
 	getDocumentosData = async () => {
 		const responseItem = await prismaClient.documento.findMany();
@@ -352,5 +353,66 @@ export class DocumentoService implements IDocumentoService {
 			return null;
 		}
 	}
+
+	scanDocumento = async (pdfBuffer: Buffer): Promise<AuthorizationDocumentScanResult> => {
+		return scanAuthorizationDocument(pdfBuffer);
+	};
+
+	confirmScanDocumento = async ({
+		scoutId,
+		familiarId,
+		documentoId,
+		fechaPresentacion,
+		pdfBuffer,
+	}: {
+		scoutId: string;
+		familiarId?: string;
+		documentoId: string;
+		fechaPresentacion?: Date;
+		pdfBuffer: Buffer;
+	}) => {
+		const uploadId = nanoid(10);
+
+		const documento = await prismaClient.documento.findUniqueOrThrow({
+			where: { uuid: documentoId },
+		});
+
+		const docName = documento.nombre.split(" ").join("_");
+		const fileName = `${scoutId}/${docName}_${uploadId}.pdf`;
+
+		await uploadToS3(pdfBuffer, fileName);
+
+		const created = await prismaClient.documentoPresentado.create({
+			data: {
+				uuid: nanoid(10),
+				documentoId,
+				scoutId,
+				familiarId: familiarId ?? null,
+				uploadId,
+				fechaPresentacion: fechaPresentacion ?? new Date(),
+			},
+			include: {
+				documento: {
+					select: {
+						nombre: true,
+						vence: true,
+						completable: true,
+						fileUploadId: true,
+						requiereFamiliar: true,
+						requiereFirma: true,
+					},
+				},
+				scout: {
+					select: {
+						nombre: true,
+						apellido: true,
+					},
+				},
+			},
+		});
+
+		const fileUrl = await getFileInS3(fileName);
+		return { ...mapDocumentoPresentado(created), fileUrl };
+	};
 }
 

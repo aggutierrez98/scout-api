@@ -4,6 +4,7 @@ import type {
   AWSSecrets,
   BetterStackSecrets,
   DatosGrupo,
+  GoogleAISecrets,
   GoogleDriveSecrets,
   TursoSecrets,
 } from '../../types/secrets';
@@ -118,6 +119,10 @@ export class SecretsManager {
           INGESTING_HOST: getFolderSecret("BETTERSTACK", SECRET_KEYS.BETTERSTACK_INGESTING_HOST),
         },
 
+        GOOGLE_AI: {
+          API_KEY: getSecret(SECRET_KEYS.GOOGLE_AI_API_KEY),
+        },
+
         GOOGLE_DRIVE: {
           PRIVATE_KEY: getFolderSecret("GOOGLE_DRIVE", SECRET_KEYS.GOOGLE_DRIVE_PRIVATE_KEY),
           SERVICE_ACCOUNT_EMAIL: getFolderSecret("GOOGLE_DRIVE", SECRET_KEYS.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL),
@@ -160,6 +165,13 @@ export class SecretsManager {
    */
   public getBetterStackSecrets(): BetterStackSecrets {
     return this.getSecrets().BETTERSTACK;
+  }
+
+  /**
+   * Obtiene solo los secretos de Google AI
+   */
+  public getGoogleAISecrets(): GoogleAISecrets {
+    return this.getSecrets().GOOGLE_AI;
   }
 
   /**

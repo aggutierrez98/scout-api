@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { UploadedFile } from "express-fileupload";
 import { AppError, HttpCode } from "../utils/classes/AppError";
 import { DocumentoService } from "../services/documento";
 
@@ -190,6 +191,50 @@ export class DocumentoController {
 			}
 
 			res.send(response);
+		} catch (e) {
+			next(e);
+		}
+	};
+
+	scanDocument = async (req: Request, res: Response, next: NextFunction) => {
+		try {
+			const pdfFile = req.files?.pdf as UploadedFile | undefined;
+			if (!pdfFile) {
+				throw new AppError({
+					name: "BAD_REQUEST",
+					httpCode: HttpCode.BAD_REQUEST,
+					description: "Se requiere un archivo PDF en el campo 'pdf'",
+				});
+			}
+
+			const result = await this.documentoService.scanDocumento(pdfFile.data);
+			res.status(200).json(result);
+		} catch (e) {
+			next(e);
+		}
+	};
+
+	confirmScanDocument = async (req: Request, res: Response, next: NextFunction) => {
+		try {
+			const pdfFile = req.files?.pdf as UploadedFile | undefined;
+			if (!pdfFile) {
+				throw new AppError({
+					name: "BAD_REQUEST",
+					httpCode: HttpCode.BAD_REQUEST,
+					description: "Se requiere un archivo PDF en el campo 'pdf'",
+				});
+			}
+
+			const { scoutId, familiarId, documentoId, fechaPresentacion } = req.body;
+			const result = await this.documentoService.confirmScanDocumento({
+				scoutId,
+				familiarId,
+				documentoId,
+				fechaPresentacion,
+				pdfBuffer: pdfFile.data,
+			});
+
+			res.status(201).json(result);
 		} catch (e) {
 			next(e);
 		}

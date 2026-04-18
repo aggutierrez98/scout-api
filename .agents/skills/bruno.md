@@ -113,6 +113,12 @@ La colección Bruno vive en: `scouts/bruno/scout-api/`
 |----------|---------|
 | `POST /api/nomina/sync` | `01 Sync Nomina.bru` |
 
+### Notificacion — `scouts/bruno/scout-api/Notificacion/`
+
+| Endpoint | Archivo |
+|----------|---------|
+| `GET /api/notificacion` | `01 Get Notificaciones.bru` |
+
 ### Webhook — `scouts/bruno/scout-api/Webhook/`
 
 | Endpoint | Archivo |

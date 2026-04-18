@@ -16,7 +16,7 @@ async function main() {
     
     try {
         const applied = await client.execute("SELECT migration_name FROM _prisma_migrations");
-        appliedNames = new Set(applied.rows.map((r: any) => r.migration_name as string));
+        appliedNames = new Set(applied.rows.map((r: any) => (r.migration_name ?? r[0]) as string));
     } catch (e: any) {
         if (e.message && e.message.includes("no such table: _prisma_migrations")) {
             // La tabla no existe, la creamos
@@ -37,23 +37,23 @@ async function main() {
         }
     }
 
-    const migrationsDir = path.resolve("prisma/migrations");
+    const migrationsDir = path.resolve("src/prisma/migrations");
     const dirs = (await fs.readdir(migrationsDir)).sort().filter(d => !d.startsWith('.'));
     for (const dir of dirs) {
         if (!appliedNames.has(dir) && (await fs.stat(path.join(migrationsDir, dir))).isDirectory()) {
             const file = await fs.readFile(path.join(migrationsDir, dir, "migration.sql"), "utf8");
             // dividir por ';' y ejecutar cada sentencia;
-            const statements = file.split(/;\s*\n/).filter(s => s.trim().length > 0);
+            const statements = file.split(/;\s*\n/).filter(s => s.trim().replace(/--[^\n]*/g, "").trim().length > 0);
             for (const sql of statements) {
                 await client.execute(sql);
             }
-            
-            // Registrar que la migración fue aplicada
+
+            // Registrar DESPUÉS de ejecutar exitosamente — si falla arriba, no se registra
             await client.execute({
                 sql: `INSERT INTO "_prisma_migrations" (id, checksum, bytes, applied_steps_count, migration_name) VALUES (?, ?, ?, ?, ?)`,
                 args: [dir, 'checksum', file.length, statements.length, dir]
             });
-            
+
             console.log(`✅ Migración ${dir} aplicada`);
         }
     }

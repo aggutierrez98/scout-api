@@ -76,12 +76,15 @@ model DocumentoPresentado {
   documentoId       String
   scout             Scout?    @relation(fields: [scoutId], references: [uuid])
   scoutId           String?
+  familiar          Familiar? @relation(fields: [familiarId], references: [uuid])
+  familiarId        String?
   uploadId          String?
   fechaPresentacion DateTime  @default(now())
   fechaCreacion     DateTime  @default(now())
 
   @@index([scoutId, documentoId])
   @@index([documentoId])
+  @@index([familiarId])
 }
 
 model Pago {
@@ -117,8 +120,9 @@ model Familiar {
   estadoCivil        String?
   fechaCreacion      DateTime        @default(now())
   fechaActualizacion DateTime        @updatedAt
-  padreScout         FamiliarScout[]
-  user               User?
+  padreScout            FamiliarScout[]
+  documentosPresentados DocumentoPresentado[]
+  user                  User?
 }
 
 model FamiliarScout {

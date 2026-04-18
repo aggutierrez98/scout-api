@@ -29,13 +29,13 @@ export const createAdmin = async () => {
         const password = prompt.hide("Ingresar contraseña: ");
         const role = ROLES.ADMINISTRADOR
 
-        const parseReturn = await RegisterSchema.safeParseAsync({ body: { username, password, role } })
-
-        if (!parseReturn.success) {
-            console.log("\nError: Las credenciales ingresadas no son validas")
-            console.log(parseReturn.error.errors.map(error => `- ${error.path[1]}: ${error.message}`).join("\n"))
-            return
-        }
+        // TODO: hacer que haya un parse para este script que UNICAMENTE revise si el user ya existe
+        // const parseReturn = await RegisterSchema.safeParseAsync({ body: { username, password, role } })
+        // if (!parseReturn.success) {
+        //     console.log("\nError: Las credenciales ingresadas no son validas")
+        //     console.log(parseReturn.error.errors.map(error => `- ${error.path[1]}: ${error.message}`).join("\n"))
+        //     return
+        // }
 
         const uuid = nanoid(10);
 
