@@ -21,6 +21,7 @@ model User {
   familiar       Familiar?      @relation(fields: [familiarId], references: [uuid])
   familiarId     String?        @unique
   notificaciones Notificacion[]
+  pushTokens     PushToken[]
 }
 
 model Scout {
@@ -186,4 +187,19 @@ model Notificacion {
   @@unique([avisoId, userId])
   @@index([userId])
   @@index([avisoId])
+}
+
+model PushToken {
+  id        Int      @id @default(autoincrement())
+  uuid      String   @unique
+  user      User     @relation(fields: [userId], references: [uuid])
+  userId    String
+  platform  String
+  token     String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, platform, token])
+  @@index([userId])
 }

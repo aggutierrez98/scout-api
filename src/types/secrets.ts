@@ -24,6 +24,10 @@ export interface GoogleAISecrets {
   API_KEY: string;
 }
 
+export interface FirebaseSecrets {
+  SERVICE_ACCOUNT_JSON: string;
+}
+
 export interface TursoSecrets {
   AUTH_TOKEN: string;
   DATABASE_URL: string;
@@ -46,10 +50,12 @@ export interface AppSecrets {
   JWT_SECRET: string;
   PORT: number;
   REDIS_CONNECTION_URI: string;
+  SERVICE_API_KEY: string;
 
   // Secretos organizados por servicio
   AWS: AWSSecrets;
   BETTERSTACK: BetterStackSecrets;
+  FIREBASE: FirebaseSecrets;
   GOOGLE_AI: GoogleAISecrets;
   GOOGLE_DRIVE: GoogleDriveSecrets;
   TURSO: TursoSecrets;
@@ -65,6 +71,10 @@ export const SECRET_KEYS = {
   JWT_SECRET: 'JWT_SECRET',
   PORT: 'PORT',
   REDIS_CONNECTION_URI: 'REDIS_CONNECTION_URI',
+  SERVICE_API_KEY: 'SCOUT_API_SERVICE_KEY',
+
+  // Firebase
+  FIREBASE_SERVICE_ACCOUNT_JSON: 'SERVICE_ACCOUNT_JSON',
 
   // AWS
   S3_ACCESS_KEY: 'S3_ACCESS_KEY',

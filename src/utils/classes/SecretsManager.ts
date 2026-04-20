@@ -4,6 +4,7 @@ import type {
   AWSSecrets,
   BetterStackSecrets,
   DatosGrupo,
+  FirebaseSecrets,
   GoogleAISecrets,
   GoogleDriveSecrets,
   TursoSecrets,
@@ -106,6 +107,7 @@ export class SecretsManager {
         JWT_SECRET: getSecret(SECRET_KEYS.JWT_SECRET),
         PORT: parseInt(getSecret(SECRET_KEYS.PORT, process.env.PORT || '8080'), 10),
         REDIS_CONNECTION_URI: getSecret(SECRET_KEYS.REDIS_CONNECTION_URI),
+        SERVICE_API_KEY: getSecret(SECRET_KEYS.SERVICE_API_KEY),
 
         AWS: {
           S3_ACCESS_KEY: getFolderSecret("AWS", SECRET_KEYS.S3_ACCESS_KEY),
@@ -117,6 +119,10 @@ export class SecretsManager {
         BETTERSTACK: {
           AUTH_TOKEN: getFolderSecret("BETTERSTACK", SECRET_KEYS.BETTERSTACK_AUTH_TOKEN),
           INGESTING_HOST: getFolderSecret("BETTERSTACK", SECRET_KEYS.BETTERSTACK_INGESTING_HOST),
+        },
+
+        FIREBASE: {
+          SERVICE_ACCOUNT_JSON: getFolderSecret("FIREBASE", SECRET_KEYS.FIREBASE_SERVICE_ACCOUNT_JSON),
         },
 
         GOOGLE_AI: {
@@ -165,6 +171,20 @@ export class SecretsManager {
    */
   public getBetterStackSecrets(): BetterStackSecrets {
     return this.getSecrets().BETTERSTACK;
+  }
+
+  /**
+   * Obtiene los secretos de Firebase
+   */
+  public getFirebaseSecrets(): FirebaseSecrets {
+    return this.getSecrets().FIREBASE;
+  }
+
+  /**
+   * Obtiene la API key para autenticación service-to-service
+   */
+  public getServiceApiKey(): string {
+    return this.getSecrets().SERVICE_API_KEY;
   }
 
   /**

@@ -37,3 +37,25 @@ export const PutNotificacionSchema = z.object({
 		id: IdSchema.refine(validNotificacionId),
 	}),
 });
+
+const validAvisoId = async (id: string) => {
+	const respItem = await prismaClient.aviso.findUnique({ where: { uuid: id } });
+	return !!respItem;
+};
+
+export const GetAvisosSchema = z.object({
+	query: z.object({
+		limit: z.string().optional(),
+		offset: z.string().optional(),
+		tipo: z.enum(VALID_TIPOS_AVISO).optional(),
+		fechaDesde: z.string().datetime({ offset: true }).optional(),
+		fechaHasta: z.string().datetime({ offset: true }).optional(),
+		userId: IdSchema.optional(),
+	}),
+});
+
+export const GetAvisoDestinatariosSchema = z.object({
+	params: z.object({
+		id: IdSchema.refine(validAvisoId),
+	}),
+});

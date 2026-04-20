@@ -1,15 +1,17 @@
 import crypto from "crypto";
 import { NextFunction, Response, Request } from "express";
 import { AppError, HttpCode } from "../utils";
+import { SecretsManager } from "../utils/classes/SecretsManager";
 
 /**
  * Middleware de autenticación service-to-service.
- * Valida el header `x-api-key` contra la variable de entorno `SERVICE_API_KEY`
+ * Valida el header `x-api-key` contra SERVICE_API_KEY de Infisical
  * usando una comparación timing-safe.
  */
 export const serviceAuth = (req: Request, res: Response, next: NextFunction) => {
 	try {
-		const serviceApiKey = process.env.SERVICE_API_KEY;
+		const secrets = SecretsManager.getInstance();
+		const serviceApiKey = secrets.isReady() ? secrets.getServiceApiKey() : undefined;
 
 		if (!serviceApiKey) {
 			throw new AppError({

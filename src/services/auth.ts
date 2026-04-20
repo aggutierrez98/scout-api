@@ -83,7 +83,7 @@ export class AuthService implements IAuthService {
     }
 
     getUsers = async ({
-        limit = 15,
+        limit,
         offset = 0,
         filters = {},
     }: queryParams) => {

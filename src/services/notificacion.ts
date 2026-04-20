@@ -2,6 +2,8 @@ import { nanoid } from "nanoid";
 import { IAviso } from "../types";
 import { prismaClient } from "../utils/lib/prisma-client";
 import { mapAviso, mapNotificacion } from "../mappers/notificacion";
+import { PushNotificationService } from "./pushNotification";
+import { PushTokenService } from "./pushToken";
 
 type queryParams = {
 	limit?: number;
@@ -11,15 +13,34 @@ type queryParams = {
 	};
 };
 
+type avisoQueryParams = {
+	limit?: number;
+	offset?: number;
+	filters?: {
+		tipo?: string;
+		fechaDesde?: string;
+		fechaHasta?: string;
+		userId?: string;
+	};
+};
+
 interface INotificacionService {
 	crearAviso: (data: IAviso) => Promise<ReturnType<typeof mapAviso>>;
 	getNotificaciones: (userId: string, params: queryParams) => Promise<{ notificaciones: ReturnType<typeof mapNotificacion>[]; totalNoLeidas: number }>;
+	findNotificacion: (uuid: string, userId: string) => Promise<ReturnType<typeof mapNotificacion> | null>;
 	marcarLeida: (notificacionUuid: string, userId: string) => Promise<ReturnType<typeof mapNotificacion>>;
 	marcarTodasLeidas: (userId: string) => Promise<{ actualizadas: number }>;
 	contarNoLeidas: (userId: string) => Promise<number>;
 }
 
 export class NotificacionService implements INotificacionService {
+	private pushNotificationService: PushNotificationService;
+
+	constructor() {
+		const pushTokenService = new PushTokenService();
+		this.pushNotificationService = new PushNotificationService({ pushTokenService });
+	}
+
 	crearAviso = async (data: IAviso) => {
 		const { userIds, ...avisoData } = data;
 		const avisoUuid = nanoid(10);
@@ -43,7 +64,18 @@ export class NotificacionService implements INotificacionService {
 			return aviso;
 		});
 
-		return mapAviso(result);
+		const mappedAviso = mapAviso(result);
+		this.pushNotificationService.sendPushToUsers(userIds, mappedAviso).catch(() => {});
+
+		return mappedAviso;
+	};
+
+	findNotificacion = async (uuid: string, userId: string) => {
+		const notificacion = await prismaClient.notificacion.findUnique({
+			where: { uuid, userId },
+			include: { aviso: true },
+		});
+		return notificacion ? mapNotificacion(notificacion) : null;
 	};
 
 	getNotificaciones = async (userId: string, { limit = 20, offset = 0, filters = {} }: queryParams) => {
@@ -116,5 +148,65 @@ export class NotificacionService implements INotificacionService {
 				leida: false,
 			},
 		});
+	};
+
+	listAvisos = async ({ limit = 10, offset = 0, filters = {} }: avisoQueryParams) => {
+		const { tipo, fechaDesde, fechaHasta, userId } = filters;
+
+		const where = {
+			...(tipo ? { tipo } : {}),
+			...(fechaDesde || fechaHasta
+				? {
+						fechaCreacion: {
+							...(fechaDesde ? { gte: new Date(fechaDesde) } : {}),
+							...(fechaHasta ? { lte: new Date(fechaHasta) } : {}),
+						},
+					}
+				: {}),
+			...(userId
+				? { notificaciones: { some: { userId } } }
+				: {}),
+		};
+
+		const [avisos, total] = await Promise.all([
+			prismaClient.aviso.findMany({
+				where,
+				orderBy: { fechaCreacion: "desc" },
+				skip: offset,
+				take: limit,
+				include: {
+					_count: { select: { notificaciones: true } },
+				},
+			}),
+			prismaClient.aviso.count({ where }),
+		]);
+
+		return {
+			avisos: avisos.map(({ _count, uuid, id: _id, ...rest }) => ({
+				...rest,
+				id: uuid,
+				totalDestinatarios: _count.notificaciones,
+			})),
+			total,
+		};
+	};
+
+	getAvisoDestinatarios = async (avisoUuid: string) => {
+		const notificaciones = await prismaClient.notificacion.findMany({
+			where: { avisoId: avisoUuid },
+			include: {
+				user: {
+					select: { uuid: true, username: true, role: true },
+				},
+			},
+		});
+
+		return notificaciones.map(({ user, leida, fechaLectura }) => ({
+			id: user.uuid,
+			username: user.username,
+			role: user.role,
+			leida,
+			fechaLectura,
+		}));
 	};
 }
