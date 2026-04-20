@@ -19,13 +19,13 @@ const client = new S3Client({
     }
 });
 
-export const uploadToS3 = async (file: Buffer, fileName: string) => {
+export const uploadToS3 = async (file: Buffer, fileName: string, contentType = "application/pdf") => {
     try {
         const uploadCommand = new PutObjectCommand({
             Bucket: awsConfiguration.bucketName,
             Key: fileName,
             Body: file,
-            ContentType: "application/pdf",
+            ContentType: contentType,
             StorageClass: "STANDARD_IA",
         });
 

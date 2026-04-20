@@ -174,6 +174,44 @@ export class DocumentoController {
 	// 	}
 	// };
 
+	uploadArchivo = async (req: Request, res: Response, next: NextFunction) => {
+		try {
+			const { id } = req.params;
+			const archivo = req.files?.archivo as UploadedFile | undefined;
+
+			if (!archivo) {
+				throw new AppError({
+					name: "BAD_REQUEST",
+					httpCode: HttpCode.BAD_REQUEST,
+					description: "Se requiere un archivo en el campo 'archivo'",
+				});
+			}
+
+			const validMimes = ["application/pdf", "image/jpeg"];
+			if (!validMimes.includes(archivo.mimetype)) {
+				throw new AppError({
+					name: "BAD_REQUEST",
+					httpCode: HttpCode.BAD_REQUEST,
+					description: "Solo se permiten archivos PDF o JPEG",
+				});
+			}
+
+			const result = await this.documentoService.uploadArchivoDocumento(id, archivo.data, archivo.mimetype);
+
+			if (!result) {
+				throw new AppError({
+					name: "NOT_FOUND",
+					httpCode: HttpCode.NOT_FOUND,
+					description: "Documento no encontrado",
+				});
+			}
+
+			return res.json(result);
+		} catch (e) {
+			next(e);
+		}
+	};
+
 	deleteItem = async (
 		{ params }: Request,
 		res: Response,

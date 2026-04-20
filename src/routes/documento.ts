@@ -37,6 +37,11 @@ export default function createDocumentoRouter(documentoService: DocumentoService
 		documentoController.insertItem,
 	);
 	router.post(
+		"/:id/archivo",
+		cleanCacheMiddleware,
+		documentoController.uploadArchivo,
+	);
+	router.post(
 		"/scan",
 		documentoController.scanDocument,
 	);

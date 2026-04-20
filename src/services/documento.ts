@@ -343,11 +343,46 @@ export class DocumentoService implements IDocumentoService {
 			const { uploadId, documento: { nombre }, scoutId } = responseItem
 
 			if (!uploadId || !scoutId) return false
-			const fileName = `${scoutId}/${nombre.split(" ").join("_")}_${uploadId}.pdf`
+
+			// Support both legacy format (plain uploadId → .pdf) and new format (uploadId contains full relative key)
+			const fileName = uploadId.includes("/")
+				? uploadId
+				: `${scoutId}/${nombre.split(" ").join("_")}_${uploadId}.pdf`
+
 			const fileInS3 = await getFileInS3(fileName)
 			return {
 				fileUrl: fileInS3
 			}
+		} catch (error) {
+			logger.error(error as string);
+			return null;
+		}
+	}
+
+	uploadArchivoDocumento = async (id: string, fileBuffer: Buffer, mimeType: string) => {
+		try {
+			const ext = mimeType === "image/jpeg" ? "jpg" : "pdf";
+			const contentType = mimeType === "image/jpeg" ? "image/jpeg" : "application/pdf";
+
+			const responseItem = await prismaClient.documentoPresentado.findUnique({
+				where: { uuid: id },
+				include: { documento: { select: { nombre: true } } },
+			});
+
+			if (!responseItem) return null;
+
+			const docName = responseItem.documento.nombre.split(" ").join("_");
+			const fileKey = `documentos/${id}/${docName}_${nanoid(10)}.${ext}`;
+
+			await uploadToS3(fileBuffer, fileKey, contentType);
+
+			await prismaClient.documentoPresentado.update({
+				where: { uuid: id },
+				data: { uploadId: fileKey },
+			});
+
+			const fileUrl = await getFileInS3(fileKey);
+			return { fileUrl };
 		} catch (error) {
 			logger.error(error as string);
 			return null;
