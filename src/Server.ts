@@ -30,6 +30,10 @@ import { NominaService } from "./services/nomina";
 import createNominaRouter, { createNominaSyncRouter } from "./routes/nomina";
 import { NotificacionService } from "./services/notificacion";
 import createNotificacionRouter from "./routes/notificacion";
+import { TipoEventoService } from "./services/tipoEvento";
+import createTipoEventoRouter from "./routes/tipoEvento";
+import { EventoService } from "./services/evento";
+import createEventoRouter from "./routes/evento";
 // import recordarCumpleaños from "./whatsapp/recordarCumpleaños";
 import swaggerSpecJSON from "./docs/spec.json";
 // import { WhatsAppSbot } from "./whatsapp/WhatsappSession";
@@ -146,7 +150,11 @@ export default class Server {
 		const notificacionService = new NotificacionService();
 		router.use("/notificacion", checkSession, createNotificacionRouter(notificacionService));
 
-		// TODO: Crear modelo de eventos
+		const tipoEventoService = new TipoEventoService();
+		router.use("/tipo-evento", checkSession, createTipoEventoRouter(tipoEventoService));
+
+		const eventoService = new EventoService();
+		router.use("/evento", checkSession, createEventoRouter(eventoService));
 
 		return router;
 	}

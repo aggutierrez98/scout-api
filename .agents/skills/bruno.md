@@ -97,6 +97,7 @@ La colección Bruno vive en: `bruno-collection/` (raíz del repo)
 | `DELETE /api/documento/:id` | `08 Delete Documento.bru` |
 | `POST /api/documento/scan` | `09 Scan Document.bru` |
 | `POST /api/documento/scan/confirm` | `10 Confirm Scan Document.bru` |
+| `POST /api/documento/:id/archivo` | `11 Upload Archivo Documento.bru` |
 
 ### Pago — `bruno-collection/Pago/`
 
@@ -123,6 +124,15 @@ La colección Bruno vive en: `bruno-collection/` (raíz del repo)
 | `POST /api/notificacion/aviso` | `02 Create Aviso.bru` |
 | `PUT /api/notificacion/:id/read` | `03 Mark Read.bru` |
 | `PUT /api/notificacion/read-all` | `04 Mark All Read.bru` |
+| `GET /api/notificacion/avisos` | `05 Get Avisos.bru` |
+| `GET /api/notificacion/avisos/:id/destinatarios` | `06 Get Aviso Destinatarios.bru` |
+
+### PushToken — `bruno-collection/PushToken/`
+
+| Endpoint | Archivo |
+|----------|---------|
+| `POST /api/push-token` | `01 Register Push Token.bru` |
+| `DELETE /api/push-token` | `02 Unregister Push Token.bru` |
 
 ### Webhook — `bruno-collection/Webhook/`
 

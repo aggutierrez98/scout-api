@@ -1,10 +1,47 @@
 import { Prisma } from "@prisma/client";
 import ProgressBar from "progress";
-import { SPLIT_STRING, VALID_RELATIONSHIPS, excelDateToJSDate, parseDMYtoDate } from "../../utils";
-import { EstadosType, FuncionType, ProgresionType, RelacionFamiliarType, ReligionType, ScoutXLSX } from "../../types";
+import {
+    PROGRESIONES_POR_RAMA,
+    VALID_RAMAS,
+    VALID_PROGRESSIONS,
+    VALID_RELATIONSHIPS,
+    excelDateToJSDate,
+    parseDMYtoDate
+} from "../../utils";
+import { EstadosType, FuncionType, ProgresionType, RamasType, RelacionFamiliarType, ReligionType, ScoutXLSX } from "../../types";
 import { nanoid } from "nanoid";
 import { getSpreadSheetData } from "../../utils/helpers/googleDriveApi";
 import { SecretsManager } from "../../utils/classes/SecretsManager";
+
+const parseFullName = (
+    fullName: unknown,
+): { apellido: string; nombre: string } | null => {
+    if (!fullName || typeof fullName !== "string") return null;
+    const normalized = fullName.trim();
+    if (!normalized) return null;
+
+    // Formato "Apellido, Nombre"
+    if (normalized.includes(",")) {
+        const [apellidoRaw, ...nombreParts] = normalized
+            .split(",")
+            .map((part) => part.trim())
+            .filter(Boolean);
+
+        const nombreRaw = nombreParts.join(" ").trim();
+        if (!apellidoRaw || !nombreRaw) return null;
+        return { apellido: apellidoRaw, nombre: nombreRaw };
+    }
+
+    // Formato "Apellido Nombre" / "Apellido Nombre Segundo"
+    const parts = normalized.split(/\s+/).filter(Boolean);
+    if (parts.length < 2) return null;
+
+    const [apellido, ...nombreParts] = parts;
+    const nombre = nombreParts.join(" ").trim();
+    if (!apellido || !nombre) return null;
+
+    return { apellido, nombre };
+};
 
 export const loadScouts = async () => {
     let prismaClient;
@@ -37,8 +74,17 @@ export const loadScouts = async () => {
         const scouts: Prisma.ScoutCreateManyInput[] = [];
         const familiares: Prisma.FamiliarScoutCreateManyInput[] = [];
         for (const scoutData of data) {
+            index++
 
-            const [apellido, nombre] = scoutData.Nombre!.split(SPLIT_STRING);
+            const parsedScoutName = parseFullName(scoutData.Nombre);
+            if (!parsedScoutName) {
+                console.warn(
+                    `\n⚠️  Fila inválida de scout (I: ${index}) sin nombre parseable: "${scoutData.Nombre ?? ""}". Se omite.`,
+                );
+                bar.tick(1);
+                continue;
+            }
+            const { apellido, nombre } = parsedScoutName;
 
             let fechaNacimiento = new Date();
             if (typeof scoutData["Fecha Nacimiento"] === "number") {
@@ -50,11 +96,49 @@ export const loadScouts = async () => {
 
             const sexo = scoutData.Sexo === "Masculino" ? "M" : "F";
             const funcion = (scoutData.Funcion?.toLocaleUpperCase() as FuncionType) || "COLABORADOR"
-            const progresionActual =
-                scoutData.Progresion?.toUpperCase() as ProgresionType;
             const religion = scoutData.Religion?.toUpperCase() as ReligionType;
+            const ramaRaw = scoutData.Rama?.toLocaleUpperCase();
+            const rama = (
+                ramaRaw && VALID_RAMAS.includes(ramaRaw as RamasType)
+                    ? (ramaRaw as RamasType)
+                    : undefined
+            );
 
-            //Todo: Solucionar error en script que por defecto los pone en la pantera
+            // Normalizaciones de planilla (ej: "PISTA" -> "PISTAS")
+            const progresionRaw = scoutData.Progresion
+                ?.toUpperCase()
+                ?.replace(/\s/g, "_")
+                ?.trim();
+            const progresionNormalized =
+                progresionRaw === "PISTA" ? "PISTAS" : progresionRaw;
+
+            let progresionActual: ProgresionType | undefined = undefined;
+            if (
+                progresionNormalized &&
+                VALID_PROGRESSIONS.includes(progresionNormalized as ProgresionType)
+            ) {
+                progresionActual = progresionNormalized as ProgresionType;
+            }
+
+            // Si no existe en enum de Prisma, se ignora para no romper createMany
+            if (progresionNormalized && !progresionActual) {
+                console.warn(
+                    `\n⚠️  Progresion inválida "${progresionNormalized}" (dni: ${scoutData.Documento}). Se guarda como null.`,
+                );
+            }
+
+            // Alinea progresión con rama para no guardar combinaciones inconsistentes
+            if (
+                rama &&
+                progresionActual &&
+                !PROGRESIONES_POR_RAMA[rama].includes(progresionActual as never)
+            ) {
+                console.warn(
+                    `\n⚠️  Progresion "${progresionActual}" no corresponde a rama "${rama}" (dni: ${scoutData.Documento}). Se guarda como null.`,
+                );
+                progresionActual = undefined;
+            }
+
             const equipoId = (
                 await prismaClient.equipo.findFirst({
                     where: { nombre: scoutData.Equipo },
@@ -73,7 +157,7 @@ export const loadScouts = async () => {
                 funcion: funcion,
                 sexo,
                 religion,
-                rama: scoutData.Rama?.toLocaleUpperCase(),
+                rama,
                 estado: scoutData.Estado?.toLocaleUpperCase() as EstadosType,
                 dni: scoutData.Documento ?? "",
                 localidad: scoutData.Localidad ?? "",
@@ -95,7 +179,14 @@ export const loadScouts = async () => {
 
                 for (const { name, relacion } of familiaresData) {
                     if (!name) continue
-                    const [apellido, nombre] = name.split(SPLIT_STRING);
+                    const parsedFamiliarName = parseFullName(name);
+                    if (!parsedFamiliarName) {
+                        console.warn(
+                            `\n⚠️  Nombre de familiar inválido "${String(name)}" (I-scout: ${index}). Se omite.`,
+                        );
+                        continue;
+                    }
+                    const { apellido, nombre } = parsedFamiliarName;
 
                     const familiarId = (
                         await prismaClient.familiar.findFirst({
@@ -137,7 +228,6 @@ export const loadScouts = async () => {
                 })
             }
 
-            index++
             bar.tick(1);
         }
 
@@ -163,6 +253,7 @@ export const loadScouts = async () => {
 
     } catch (error) {
         console.error("Error en el script: ", (error as Error).message);
+        throw error;
     } finally {
         if (prismaClient) {
             await prismaClient.$disconnect();

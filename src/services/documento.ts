@@ -246,7 +246,8 @@ export class DocumentoService implements IDocumentoService {
 				tipoEvento,
 				retiroData,
 				fechaPago,
-				listaPagos,
+				pago,
+				numeroRecibo,
 				aclaraciones,
 				confirmation,
 				documentoFilled
@@ -285,7 +286,8 @@ export class DocumentoService implements IDocumentoService {
 				tipoEvento,
 				retiroData,
 				fechaPago,
-				listaPagos,
+				pago,
+				numeroRecibo,
 				aclaraciones,
 				documentoFilled
 			})

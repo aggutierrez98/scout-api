@@ -26,10 +26,11 @@ export type FillDocumentoData = {
     confirmation?: boolean
     documentoFilled?: fileUpload.UploadedFile
     fechaPago?: Date,
-    listaPagos?: {
+    pago?: {
         monto: number
         concepto: string
-    }[]
+    }
+    numeroRecibo?: number
 }
 
 export type PdfModelFunc = (data: FillDocumentoData) => any;
@@ -116,19 +117,15 @@ export const PDFDocumentInstantiator: Record<PDFDocumentsEnum, PdfModelFunc> = {
             },
         });
     },
-    [PDFDocumentsEnum.ReciboPago]: ({ docData, signature, theme, scoutId, familiarId, documentoFilled, fechaPago, listaPagos }: FillDocumentoData) => {
+    [PDFDocumentsEnum.ReciboPago]: ({ docData, familiarId, documentoFilled, fechaPago, pago, numeroRecibo }: FillDocumentoData) => {
         return new ReciboPago({
             documentName: docData.nombre,
             fileUploadId: docData.fileUploadId!,
-            // scoutId,
             familiarId: familiarId!,
             fechaPago: new Date(fechaPago!),
-            listaPagos: listaPagos!,
+            pago: pago!,
+            numeroRecibo: numeroRecibo!,
             documentoFilled: documentoFilled?.data,
-            data: {
-                signature,
-                theme,
-            },
         });
     },
 };

@@ -1,4 +1,4 @@
-import {
+import type {
 	FuncionType,
 	IScout,
 	IScoutData,
@@ -7,13 +7,13 @@ import {
 	ScoutXLSX,
 	SexoType,
 } from "../types";
-import { OrderToGetScouts } from "../types";
+import type { OrderToGetScouts } from "../types";
 import { nanoid } from "nanoid";
-import { AppError, getAge, HttpCode } from "../utils";
+import { AppError, getAge, HttpCode, PROGRESIONES_POR_RAMA } from "../utils";
 import { prismaClient } from "../utils/lib/prisma-client";
-import fileUpload from "express-fileupload";
+import type fileUpload from "express-fileupload";
 import { readXlsxBuffer } from "../utils/lib/exceljs";
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import logger from "../utils/classes/Logger";
 import { mapXLSXScoutToScoutData } from "../utils/helpers/mapXLSXScoutToScoutData";
 import { mapScout } from "../mappers/scout";
@@ -28,11 +28,11 @@ type queryParams = {
 		equipos?: string[];
 		progresiones?: ProgresionType[];
 		funciones?: FuncionType[];
-		ramas?: RamasType[],
-		existingUser?: string,
-		familiarId?: string
+		ramas?: RamasType[];
+		existingUser?: string;
+		familiarId?: string;
 	};
-	select?: Prisma.ScoutSelect
+	select?: Prisma.ScoutSelect;
 };
 
 interface IScoutService {
@@ -44,12 +44,38 @@ interface IScoutService {
 		filters,
 	}: queryParams) => Promise<Partial<IScoutData>[]>;
 	getScout: (id: string) => Promise<IScoutData | null>;
-	updateScout: (id: string, dataUpdated: IScout) => Promise<IScoutData | null>;
+	updateScout: (
+		id: string,
+		dataUpdated: Partial<IScout>,
+	) => Promise<IScoutData | null>;
 	deleteScout: (id: string) => Promise<IScoutData | null>;
 }
 
+const isValidProgresionForRama = (
+	rama?: RamasType | null,
+	progresion?: ProgresionType | null,
+) => {
+	if (!progresion) return true;
+	if (!rama) return false;
+	if (!(rama in PROGRESIONES_POR_RAMA)) {
+		return false;
+	}
+
+	const allowedProgresiones = (PROGRESIONES_POR_RAMA[rama] ??
+		[]) as readonly ProgresionType[];
+	return allowedProgresiones.includes(progresion);
+};
+
 export class ScoutService implements IScoutService {
 	insertScout = async (scout: IScout) => {
+		if (!isValidProgresionForRama(scout.rama, scout.progresionActual)) {
+			throw new AppError({
+				name: "BAD_PARAMETERS",
+				httpCode: HttpCode.BAD_REQUEST,
+				description: `La progresion ${scout.progresionActual} no corresponde a la rama ${scout.rama}`,
+			});
+		}
+
 		const uuid = nanoid(10);
 
 		const responseInsert = await prismaClient.scout.create({
@@ -62,7 +88,7 @@ export class ScoutService implements IScoutService {
 				localidad: scout.localidad.toLocaleUpperCase(),
 				telefono: scout.telefono?.toLocaleUpperCase(),
 				mail: scout.mail?.toLocaleUpperCase(),
-				rama: scout.rama?.toLocaleUpperCase(),
+				rama: scout.rama,
 			},
 		});
 
@@ -73,7 +99,7 @@ export class ScoutService implements IScoutService {
 		offset = 0,
 		orderBy = "apellido",
 		filters = {},
-		select
+		select,
 	}: queryParams) => {
 		const {
 			funciones,
@@ -83,7 +109,7 @@ export class ScoutService implements IScoutService {
 			sexo,
 			ramas,
 			existingUser,
-			familiarId
+			familiarId,
 		} = filters;
 
 		const responseItem = await prismaClient.scout.findMany({
@@ -117,22 +143,23 @@ export class ScoutService implements IScoutService {
 					},
 				],
 				user: existingUser
-					? (existingUser === "true"
+					? existingUser === "true"
 						? { isNot: null }
 						: { is: null }
-					) : undefined,
-				familiarScout: familiarId ? {
-					some: {
-						familiarId
-					}
-				} : {}
+					: undefined,
+				familiarScout: familiarId
+					? {
+							some: {
+								familiarId,
+							},
+						}
+					: {},
 			},
 			select,
 		});
 
-		return responseItem.map(scout => mapScout(scout));
+		return responseItem.map((scout) => mapScout(scout));
 	};
-
 
 	getScout = async (id: string) => {
 		try {
@@ -188,7 +215,13 @@ export class ScoutService implements IScoutService {
 
 			if (!responseItem) return null;
 
-			const { documentosPresentados, familiarScout, entregasObtenidas, equipo, ...rest } = responseItem;
+			const {
+				documentosPresentados,
+				familiarScout,
+				entregasObtenidas,
+				equipo,
+				...rest
+			} = responseItem;
 			const response: IScoutData = mapScout(rest) as IScoutData;
 
 			response.documentosPresentados = documentosPresentados.map(
@@ -204,31 +237,77 @@ export class ScoutService implements IScoutService {
 				edad: getAge(familiar.fechaNacimiento),
 				relacion,
 			}));
-			response.entregasObtenidas = entregasObtenidas.map(entrega => ({
+			response.entregasObtenidas = entregasObtenidas.map((entrega) => ({
 				...entrega,
-				id: entrega.uuid
+				id: entrega.uuid,
 			}));
-			response.equipo = equipo ? {
-				...equipo,
-				id: equipo.uuid
-			} : null;
+			response.equipo = equipo
+				? {
+						...equipo,
+						id: equipo.uuid,
+					}
+				: null;
 
 			return response;
-		} catch (error) {
+		} catch (_error) {
 			return null;
 		}
 	};
-	updateScout = async (id: string, dataUpdated: IScout) => {
-		const { direccion, localidad, funcion, mail, telefono, equipoId, religion, progresionActual, rama } = dataUpdated
+	updateScout = async (id: string, dataUpdated: Partial<IScout>) => {
+		const {
+			direccion,
+			localidad,
+			mail,
+			telefono,
+			equipoId,
+			religion,
+			progresionActual,
+			rama,
+		} = dataUpdated;
+
+		const currentScout = await prismaClient.scout.findUnique({
+			where: { uuid: id },
+			select: { rama: true, progresionActual: true },
+		});
+
+		if (!currentScout) {
+			throw new AppError({
+				name: "NOT_FOUND",
+				httpCode: HttpCode.NOT_FOUND,
+			});
+		}
+
+		const nextRama = (rama ?? currentScout.rama) as RamasType | null;
+		const nextProgresion = (progresionActual ??
+			currentScout.progresionActual) as ProgresionType | null;
+
+		if (!isValidProgresionForRama(nextRama, nextProgresion)) {
+			throw new AppError({
+				name: "BAD_PARAMETERS",
+				httpCode: HttpCode.BAD_REQUEST,
+				description: `La progresion ${nextProgresion} no corresponde a la rama ${nextRama}`,
+			});
+		}
 
 		const responseItem = await prismaClient.scout.update({
 			where: { uuid: id },
-			data: { direccion, localidad, funcion, mail, telefono, equipoId, religion, progresionActual, rama },
+			data: {
+				direccion,
+				localidad,
+				mail,
+				telefono,
+				equipoId,
+				religion,
+				progresionActual,
+				rama,
+			},
 		});
 		return mapScout(responseItem);
 	};
 	deleteScout = async (id: string) => {
-		const responseItem = await prismaClient.scout.delete({ where: { uuid: id } });
+		const responseItem = await prismaClient.scout.delete({
+			where: { uuid: id },
+		});
 		return mapScout(responseItem);
 	};
 
@@ -241,19 +320,19 @@ export class ScoutService implements IScoutService {
 	};
 
 	importScouts = async (nomina: fileUpload.UploadedFile) => {
-		const scoutsData = readXlsxBuffer(nomina.data) as Partial<ScoutXLSX>[]
+		const scoutsData = readXlsxBuffer(nomina.data) as Partial<ScoutXLSX>[];
 
 		const scouts: Prisma.ScoutCreateManyInput[] = [];
 		for (const scoutData of scoutsData) {
-			const data = await mapXLSXScoutToScoutData(scoutData)
+			const data = await mapXLSXScoutToScoutData(scoutData);
 			const foundExisting = await prismaClient.scout.findFirst({
-				where: { dni: data.dni }
+				where: { dni: data.dni },
 			});
 
 			if (!foundExisting) {
 				scouts.push({
 					...data,
-					uuid: nanoid(10)
+					uuid: nanoid(10),
 				});
 			}
 		}
@@ -267,14 +346,14 @@ export class ScoutService implements IScoutService {
 			return {
 				total: scouts.length,
 				successful: scoutsResult.count,
-			}
+			};
 		} catch (error) {
-			logger.error(error as string)
+			logger.error(error as string);
 			throw new AppError({
 				name: "BAD_FILE",
 				httpCode: HttpCode.BAD_REQUEST,
-				description: "El archivo enviado contiene valores no validos"
-			})
+				description: "El archivo enviado contiene valores no validos",
+			});
 		}
-	}
+	};
 }

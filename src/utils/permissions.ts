@@ -10,6 +10,8 @@ export const EXTERNO_PERM = [
     "read_notificacion",
     "modify_notificacion",
     "create_documento",
+    "read_evento",
+    "read_tipo-evento",
 ]
 export const COLABORADOR_PERM = [
     ...EXTERNO_PERM,
@@ -44,4 +46,10 @@ export const ADMIN_PERM = [
     "create_auth",
     "modify_auth",
     "create_nomina",
+    "create_evento",
+    "modify_evento",
+    "delete_evento",
+    "create_tipo-evento",
+    "modify_tipo-evento",
+    "delete_tipo-evento",
 ]

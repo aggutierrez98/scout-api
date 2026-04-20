@@ -1,0 +1,22 @@
+meta {
+  name: Unregister Push Token
+  type: http
+  seq: 2
+}
+
+delete {
+  url: {{base_url}}/api/push-token
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "platform": "WEB",
+    "token": "fcm-token-de-ejemplo-aqui"
+  }
+}

@@ -9,10 +9,18 @@ export interface IPago {
     fechaPago: Date | string;
 }
 
+export interface IReciboPagoData {
+    numeroRecibo: number;
+    uploadPath: string | null;
+    fileUrl: string | null;
+    fechaCreacion: Date;
+}
+
 export interface IPagoData extends IPago {
     id: string;
     rendido: boolean;
     fechaCreacion: Date;
+    reciboPago?: IReciboPagoData | null;
 }
 
 export type PagoXLSX = {

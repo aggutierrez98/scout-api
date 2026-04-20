@@ -165,7 +165,7 @@ export const updateScout: OAS3Options = {
 				example: {
 					nombre: "RobertoNUEVONOMBRE",
 					mail: "Roberto.WilliamsNUEVOMAIL@example.com",
-					progresionActual: "PISTA",
+					progresionActual: "PISTAS",
 					religion: "JUDIA",
 					Funcion: "EDUCADOR",
 					equipoId: null,

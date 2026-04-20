@@ -6,20 +6,31 @@ import {
 	VALID_FUNCTIONS,
 	VALID_GET_SCOUTS_FILTERS,
 	VALID_RAMAS,
+	PROGRESIONES_POR_RAMA,
 } from "../utils";
-import { IScout } from "../types";
+import type { IScout } from "../types";
 import { directionReg, lettersReg, numberReg } from "../utils/regex";
 import { IdSchema, QuerySearchSchema } from "./generics";
-import { initPrisma, prismaClient } from "../utils/lib/prisma-client";
+import { prismaClient } from "../utils/lib/prisma-client";
 // import { getPrismaClient } from "../utils/lib/prisma-client";
 
-export const excelFileSchema = z.object({
-	nomina: z.object({
-		mimetype: z.literal('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', { description: "El archivo debe ser formato xlsx" }),
-		size: z.number().max(2 * 1024 * 1024, "El archivo no debe superar los 2MB"), // Máximo 2MB
-		data: z.instanceof(Buffer, { message: "No se envio el archivo correctamente" }), //Debe tener un buffer de datos adentro
-	})
-}, { message: "Debe enviar un archivo de nomina" });
+export const excelFileSchema = z.object(
+	{
+		nomina: z.object({
+			mimetype: z.literal(
+				"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+				{ description: "El archivo debe ser formato xlsx" },
+			),
+			size: z
+				.number()
+				.max(2 * 1024 * 1024, "El archivo no debe superar los 2MB"), // Máximo 2MB
+			data: z.instanceof(Buffer, {
+				message: "No se envio el archivo correctamente",
+			}), //Debe tener un buffer de datos adentro
+		}),
+	},
+	{ message: "Debe enviar un archivo de nomina" },
+);
 
 export const validScoutID = async (id: string) => {
 	const ScoutModel = prismaClient.scout;
@@ -27,7 +38,7 @@ export const validScoutID = async (id: string) => {
 	return !!respItem;
 };
 
-export const ScoutSchema = z.object({
+const ScoutBaseSchema = z.object({
 	nombre: z.string().max(100).regex(lettersReg),
 	apellido: z.string().max(100).regex(lettersReg),
 	fechaNacimiento: z.date(),
@@ -46,7 +57,20 @@ export const ScoutSchema = z.object({
 	funcion: z.enum(VALID_FUNCTIONS),
 	rama: z.enum(VALID_RAMAS),
 	progresionActual: z.enum(VALID_PROGRESSIONS).nullable(),
-}) satisfies z.Schema<IScout>;
+});
+
+export const ScoutSchema = ScoutBaseSchema.refine(
+	(data) => {
+		if (!data.progresionActual) return true;
+		return PROGRESIONES_POR_RAMA[data.rama].includes(
+			data.progresionActual as never,
+		);
+	},
+	{
+		message: "La progresionActual no corresponde a la rama",
+		path: ["progresionActual"],
+	},
+) satisfies z.Schema<IScout>;
 
 export const GetScoutsSchema = z.object({
 	query: QuerySearchSchema.extend({
@@ -69,7 +93,7 @@ export const PutScoutSchema = z.object({
 	params: z.object({
 		id: IdSchema.refine(validScoutID),
 	}),
-	body: ScoutSchema.deepPartial(),
+	body: ScoutBaseSchema.omit({ funcion: true }).deepPartial(),
 });
 
 export const DeleteScoutSchema = z.object({
@@ -79,5 +103,5 @@ export const DeleteScoutSchema = z.object({
 });
 
 export const ImportScoutsSchema = z.object({
-	files: excelFileSchema
-})
+	files: excelFileSchema,
+});

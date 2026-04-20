@@ -1,0 +1,23 @@
+meta {
+  name: Upload Archivo Documento
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{base_url}}/api/documento/:id/archivo
+  body: multipartForm
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: documento-presentado-uuid-aqui
+}
+
+body:multipart-form {
+  archivo: @file()
+}

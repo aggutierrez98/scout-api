@@ -1,0 +1,19 @@
+meta {
+  name: Get Aviso Destinatarios
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/api/notificacion/avisos/:id/destinatarios
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: aviso-uuid-aqui
+}

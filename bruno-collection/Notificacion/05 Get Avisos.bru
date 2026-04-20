@@ -1,0 +1,24 @@
+meta {
+  name: Get Avisos
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/api/notificacion/avisos
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:query {
+  ~tipo: CUSTOM
+  ~fechaDesde: 2024-01-01T00:00:00.000Z
+  ~fechaHasta: 2024-12-31T23:59:59.000Z
+  ~userId: user-uuid-aqui
+  ~limit: 20
+  ~offset: 0
+}

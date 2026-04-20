@@ -1,4 +1,5 @@
 import { CruzDelSurMember, NominaSyncResult } from "../types/nomina";
+import type { RamasType } from "../types";
 import { prismaClient } from "../utils/lib/prisma-client";
 import { AppError, HttpCode } from "../utils";
 import { RAMAS_MAP, FUNCIONES_MAP } from "../utils/constants";
@@ -30,9 +31,9 @@ function parseDate(dateStr?: string): Date | undefined {
 }
 
 // Mapea la rama de cruz-del-sur a la rama del sistema
-function mapRama(rama?: string): string | undefined {
+function mapRama(rama?: string): RamasType | undefined {
 	if (!rama) return undefined;
-	return (RAMAS_MAP as Record<string, string>)[rama] ?? undefined;
+	return (RAMAS_MAP as Record<string, RamasType>)[rama] ?? undefined;
 }
 
 // Mapea la función de cruz-del-sur a la función del sistema

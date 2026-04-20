@@ -6,3 +6,5 @@ export { mapPago } from "./pago";
 export { mapEntregaRealizada } from "./entrega";
 export { mapDocumentoPresentado, mapDocumentoDefinicion } from "./documentoPresentado";
 export { mapAviso, mapNotificacion } from "./notificacion";
+export { mapTipoEvento } from "./tipoEvento";
+export { mapEvento, mapEventoParticipante } from "./evento";

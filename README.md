@@ -10,6 +10,7 @@ API REST para gestión de grupos Scout. Sistema completo de administración de s
 - [Modelos de datos](#-modelos-de-datos)
 - [Autenticación y RBAC](#-autenticación-y-rbac)
 - [Rutas HTTP](#-rutas-http)
+- [Sistema de Notificaciones y Push](#-sistema-de-notificaciones-y-push)
 - [Webhook — whatsapp-comprobantes](#-webhook--whatsapp-comprobantes)
 - [Estructura de Carpetas](#-estructura-de-carpetas)
 - [Configurar entorno de desarrollo](#-configurar-entorno-de-desarrollo)
@@ -220,8 +221,29 @@ Datos del familiar: `uuid`, `nombre`, `apellido`, `dni`, `sexo`, `telefono`, `ma
 ### Documento / DocumentoPresentado / EntregaRealizada
 
 - `Documento`: catálogo de tipos de documentos requeridos por la organización
-- `DocumentoPresentado`: instancia de documento presentado por un scout; referencia al archivo en S3
+- `DocumentoPresentado`: instancia de documento presentado por un scout; campo `uploadId` referencia la clave S3 del archivo adjunto (PDF o JPEG). Formato del `uploadId`:
+  - **Nuevo** (subido vía `POST /:id/archivo`): clave S3 completa, e.g. `documentos/{uuid}/{nombre}_{id}.{ext}`
+  - **Legacy** (generados internamente): ID nanoid de 10 chars; la clave S3 se reconstruye como `{scoutId}/{docName}_{uploadId}.pdf`
 - `EntregaRealizada`: registro de insignias y hitos de progresión completados
+
+### Aviso / Notificacion
+
+| Modelo | Descripción |
+|---|---|
+| `Aviso` | Mensaje enviado por un administrador a uno o varios usuarios. Campos: `titulo`, `mensaje`, `tipo` (`CUMPLEAÑOS`, `PAGO_PENDIENTE`, `EVENTO`, `CUSTOM`), `referenciaId?`, `referenciaTipo?` |
+| `Notificacion` | Instancia de `Aviso` para un usuario específico. Campos: `leida`, `fechaLectura` |
+
+### PushToken
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `uuid` | String (PK) | Identificador único |
+| `userId` | String (FK) | Usuario al que pertenece el token |
+| `platform` | String | `"EXPO"` (mobile) o `"WEB"` (FCM browser) |
+| `token` | String | Token de push (Expo o FCM) |
+| `active` | Boolean | Si el token está activo |
+
+Unique constraint: `(userId, platform, token)` — el registro se reactiva (upsert) si el mismo token se registra de nuevo.
 
 ---
 
@@ -262,20 +284,171 @@ Ejemplos: `create_pago`, `read_scout`, `delete_documento`, `modify_entrega`.
 
 ## 🗺 Rutas HTTP
 
+### Auth — `/api/auth`
+
+| Método | Path | Auth | Descripción |
+|---|---|---|---|
+| `POST` | `/api/auth` | Sin auth | Login — devuelve JWT |
+| `GET` | `/api/auth/renew` | Bearer | Renovar JWT |
+| `GET` | `/api/auth/me` | Bearer | Datos del usuario autenticado |
+| `GET` | `/api/auth/notifications` | Bearer | Notificaciones del usuario (legacy) |
+| `GET` | `/api/auth/users` | Bearer (ADMIN) | Listar usuarios (filtro `?nombre=`) |
+| `GET` | `/api/auth/users/:id` | Bearer (ADMIN) | Obtener usuario por UUID |
+| `POST` | `/api/auth/create` | Bearer (ADMIN) | Crear usuario — `password`, `role`, `scoutId?`, `familiarId?` opcionales |
+| `PUT` | `/api/auth/firstLogin` | Bearer | Cambiar contraseña en primer login |
+| `PUT` | `/api/auth/:id` | Bearer (ADMIN) | Modificar usuario |
+
+### Scout — `/api/scout`
+
 | Método | Path | Descripción |
 |---|---|---|
-| `POST` / `GET` | `/api/auth` | Login y validación JWT |
-| `GET` / `POST` / `PUT` / `DELETE` | `/api/scout` | CRUD de scouts |
-| `GET` / `POST` / `PUT` / `DELETE` | `/api/pago` | CRUD de pagos de cuotas |
-| `GET` / `POST` / `PUT` / `DELETE` | `/api/documento` | Gestión documental + subida a S3 |
-| `GET` / `POST` / `PUT` / `DELETE` | `/api/entrega` | Insignias y progresiones |
-| `GET` / `POST` / `PUT` / `DELETE` | `/api/familiar` | Gestión de familiares |
-| `GET` / `POST` / `PUT` / `DELETE` | `/api/equipo` | Patrullas / unidades |
+| `GET` | `/api/scout` | Listar scouts (filtros, paginación) |
+| `GET` | `/api/scout/:id` | Obtener scout |
+| `GET` | `/api/scout/by-dni/:dni` | Buscar por DNI (auth: x-api-key) |
+| `POST` | `/api/scout` | Crear scout |
+| `POST` | `/api/scout/import` | Importar scouts en masa (CSV/XLSX) |
+| `PUT` | `/api/scout/:id` | Actualizar scout |
+| `DELETE` | `/api/scout/:id` | Eliminar scout |
+
+### Familiar — `/api/familiar`
+
+| Método | Path | Descripción |
+|---|---|---|
+| `GET` | `/api/familiar` | Listar familiares |
+| `GET` | `/api/familiar/:id` | Obtener familiar |
+| `GET` | `/api/familiar/by-dni/:dni` | Buscar por DNI (auth: x-api-key) |
+| `POST` | `/api/familiar` | Crear familiar |
+| `PUT` | `/api/familiar/relate/:id` | Vincular familiar a scout |
+| `PUT` | `/api/familiar/unrelate/:id` | Desvincular familiar de scout |
+| `PUT` | `/api/familiar/:id` | Actualizar familiar |
+| `DELETE` | `/api/familiar/:id` | Eliminar familiar |
+
+### Entrega — `/api/entrega`
+
+| Método | Path | Descripción |
+|---|---|---|
+| `GET` | `/api/entrega` | Listar entregas (filtros, paginación) |
+| `GET` | `/api/entrega/:id` | Obtener entrega |
+| `POST` | `/api/entrega` | Crear entrega |
+| `PUT` | `/api/entrega/:id` | Actualizar entrega |
+| `DELETE` | `/api/entrega/:id` | Eliminar entrega |
+
+**Tipos de entrega (`tipoEntrega`):**
+
+| Valor | Descripción visible |
+|---|---|
+| `PROGRESION` | Entrega de etapa de progresion personal |
+| `UNIFORME` | Entrega de uniforme scout |
+| `PROMESA` | Formulacion de promesa Scout |
+| `INSG_GUIA` | Entrega de insignia de Guia de patrulla |
+| `INSG_SUBGUIA` | Entrega de insignia de Subguia de patrulla |
+
+### Documento — `/api/documento`
+
+| Método | Path | Descripción |
+|---|---|---|
+| `GET` | `/api/documento` | Listar documentos presentados |
+| `GET` | `/api/documento/data` | Catálogo de tipos de documentos |
+| `GET` | `/api/documento/:id` | Obtener documento. `?download=true` devuelve URL firmada de S3 |
+| `POST` | `/api/documento` | Registrar documento presentado |
+| `POST` | `/api/documento/:id/archivo` | Subir archivo (PDF o JPEG) a documento existente — campo `archivo` (multipart) |
+| `POST` | `/api/documento/fill` | Generar PDF desde plantilla |
+| `POST` | `/api/documento/sign` | Firmar PDF existente |
+| `POST` | `/api/documento/upload` | Subir PDF ya completado |
+| `POST` | `/api/documento/scan` | Escanear PDF con Gemini OCR (sin persistir) |
+| `POST` | `/api/documento/scan/confirm` | Confirmar escaneo y persistir en BD + S3 |
+| `DELETE` | `/api/documento/:id` | Eliminar documento |
+
+### Pago — `/api/pago`
+
+| Método | Path | Descripción |
+|---|---|---|
+| `GET` | `/api/pago` | Listar pagos |
+| `GET` | `/api/pago/:id` | Obtener pago |
+| `POST` | `/api/pago` | Registrar pago |
+| `POST` | `/api/pago/import` | Importar pagos desde CSV |
+| `PUT` | `/api/pago/:id` | Actualizar pago |
+| `DELETE` | `/api/pago/:id` | Eliminar pago |
+
+### Equipo — `/api/equipo`
+
+| Método | Path | Descripción |
+|---|---|---|
+| `GET` | `/api/equipo` | Listar equipos |
+| `GET` | `/api/equipo/:id` | Obtener equipo |
+| `POST` | `/api/equipo` | Crear equipo |
+| `PUT` | `/api/equipo/:id` | Actualizar equipo |
+| `DELETE` | `/api/equipo/:id` | Eliminar equipo |
+
+### Notificacion — `/api/notificacion`
+
+| Método | Path | Auth | Descripción |
+|---|---|---|---|
+| `GET` | `/api/notificacion` | Bearer | Notificaciones del usuario autenticado (`?leida=`, `?limit=`, `?offset=`) |
+| `POST` | `/api/notificacion/aviso` | Bearer | Crear aviso y enviarlo a usuarios (push + in-app) |
+| `PUT` | `/api/notificacion/:id/read` | Bearer | Marcar notificación como leída |
+| `PUT` | `/api/notificacion/read-all` | Bearer | Marcar todas como leídas |
+| `GET` | `/api/notificacion/avisos` | Bearer (ADMIN) | Listar avisos con filtros (`?tipo=`, `?fechaDesde=`, `?fechaHasta=`, `?userId=`) |
+| `GET` | `/api/notificacion/avisos/:id/destinatarios` | Bearer (ADMIN) | Listar destinatarios de un aviso con estado de lectura |
+
+### PushToken — `/api/push-token`
+
+| Método | Path | Descripción |
+|---|---|---|
+| `POST` | `/api/push-token` | Registrar token de push (`platform`: `"EXPO"` \| `"WEB"`, `token`: string) |
+| `DELETE` | `/api/push-token` | Desregistrar token de push |
+
+### Otros
+
+| Método | Path | Descripción |
+|---|---|---|
 | `POST` | `/api/webhook/comprobante` | Recepción de comprobantes vía webhook (whatsapp-comprobantes) |
 | `POST` | `/api/webhook/nomina` | Recepción de nómina diaria vía webhook (cruz-del-sur) |
-| `POST` | `/api/nomina/sync` | Pull on-demand de nómina desde cruz-del-sur (requiere ADMINISTRADOR) |
-| — | `/health` | Health check |
-| — | `/docs` | Documentación Swagger |
+| `POST` | `/api/nomina/sync` | Pull on-demand de nómina (requiere ADMINISTRADOR) |
+| `GET` | `/health` | Health check |
+| `GET` | `/docs` | Documentación Swagger |
+
+---
+
+## 🔔 Sistema de Notificaciones y Push
+
+### Flujo completo
+
+```
+Admin crea Aviso (POST /api/notificacion/aviso)
+    ↓
+Se crean registros Notificacion (in-app) para cada userId
+    ↓
+pushNotificationService.sendPushToUsers() [fire-and-forget]
+    ├── getTokensDeUsuarios(userIds) → PushToken activos
+    ├── tokens EXPO → expo-server-sdk → APNs / FCM mobile
+    └── tokens WEB  → firebase-admin → FCM → browser
+```
+
+### Modelos involucrados
+
+- `Aviso`: el mensaje en sí
+- `Notificacion`: vínculo Aviso ↔ User con estado de lectura
+- `PushToken`: tokens de dispositivo registrados por plataforma
+
+### Endpoints relevantes
+
+| Endpoint | Descripción |
+|---|---|
+| `POST /api/notificacion/aviso` | Crear aviso + trigger push |
+| `GET /api/notificacion` | Inbox del usuario (`?leida=`, paginado) |
+| `PUT /api/notificacion/:id/read` | Marcar como leída |
+| `PUT /api/notificacion/read-all` | Marcar todas como leídas |
+| `GET /api/notificacion/avisos` | Lista de avisos enviados (solo ADMIN) |
+| `GET /api/notificacion/avisos/:id/destinatarios` | Destinatarios con estado de lectura (solo ADMIN) |
+| `POST /api/push-token` | Registrar token (`platform`, `token`) |
+| `DELETE /api/push-token` | Desregistrar token |
+
+### Variables de entorno (en Infisical)
+
+```
+FIREBASE_SERVICE_ACCOUNT_JSON   # Service account GCP para FCM web
+```
 
 ---
 
@@ -517,7 +690,9 @@ scout-api/
 │   │   ├── entrega.ts
 │   │   ├── equipo.ts
 │   │   ├── familiar.ts
+│   │   ├── notificacion.ts
 │   │   ├── pago.ts
+│   │   ├── pushToken.ts
 │   │   ├── scout.ts
 │   │   └── webhook.ts
 │   │
@@ -549,18 +724,23 @@ scout-api/
 │   ├── routes/
 │   │   ├── auth.ts, scout.ts, documento.ts, pago.ts
 │   │   ├── familiar.ts, equipo.ts, entrega.ts
+│   │   ├── notificacion.ts, pushToken.ts
 │   │   ├── webhook.ts
 │   │   └── index.ts
 │   │
 │   ├── services/                     # Lógica de negocio pura
 │   │   ├── auth.ts, scout.ts, documento.ts, pago.ts
 │   │   ├── familiar.ts, equipo.ts, entrega.ts
+│   │   ├── notificacion.ts           # Avisos in-app + trigger push
+│   │   ├── pushNotification.ts       # Envío real vía FCM (web) y Expo (mobile)
+│   │   ├── pushToken.ts              # CRUD de PushToken en BD
 │   │   └── webhook.ts
 │   │
 │   ├── types/
 │   │   ├── constantTypes.ts          # Enums (ROLES, ramas, etc.)
 │   │   ├── scout.ts, familiar.ts, pago.ts, documento.ts
 │   │   ├── entrega.ts, equipo.ts, user.ts, webhook.ts
+│   │   ├── pushToken.ts              # IPushTokenCreate, IPushTokenData
 │   │   └── XLSXTypes.ts
 │   │
 │   ├── utils/
@@ -588,6 +768,7 @@ scout-api/
 │   ├── validators/                   # Schemas Zod por entidad
 │   │   ├── auth.ts, scout.ts, familiar.ts, equipo.ts
 │   │   ├── pago.ts, documento.ts, entrega.ts
+│   │   ├── notificacion.ts, pushToken.ts
 │   │   ├── webhook.ts
 │   │   └── generics.ts
 │   │
@@ -785,6 +966,23 @@ Caché de consultas frecuentes. TTL por defecto: 60 segundos.
 ### 6. Logtail
 
 Logs centralizados en la nube (solo en producción).
+
+### 7. Firebase Cloud Messaging (FCM)
+
+Push notifications hacia browsers web. La integración usa `firebase-admin` (Admin SDK) con una service account de Google Cloud.
+
+**Secreto requerido en Infisical** (`/scouts/backend`):
+```
+FIREBASE_SERVICE_ACCOUNT_JSON   # JSON completo de la service account de GCP
+```
+
+> ⚠️ Las claves privadas PEM de Infisical llegan con `\\n` dobles. El servicio aplica `.replace(/\\n/g, '\n')` tras el `JSON.parse`.
+
+### 8. Expo Push Notifications
+
+Push notifications hacia la app mobile (iOS/Android). Usa `expo-server-sdk` con el project ID de EAS.
+
+El servicio `pushNotification.ts` envía en batch a todos los tokens registrados para los usuarios destinatarios, separando por plataforma (`EXPO` vs `WEB`).
 
 ---
 

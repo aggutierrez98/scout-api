@@ -9,6 +9,8 @@ export * from "./pago";
 export * from "./familiar";
 export * from "./notificacion";
 export * from "./pushToken";
+export * from "./tipoEvento";
+export * from "./evento";
 
 
 export interface IInsignaObt {

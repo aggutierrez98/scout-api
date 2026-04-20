@@ -1,9 +1,12 @@
 import { nanoid } from "nanoid";
 import * as XLSX from "xlsx";
-import { FuncionType, IPago, IPagoData, MetodosPagoType, ProgresionType, RamasType } from "../types";
+import { FuncionType, IPago, IPagoData, MetodosPagoType, PDFDocumentsEnum, ProgresionType, RamasType } from "../types";
 import { prismaClient } from "../utils/lib/prisma-client";
 import { mapPago } from "../mappers/pago";
 import { mapPartialScout } from "../mappers/scout";
+import { ReciboPago } from "../utils/classes/documentos/ReciboPago";
+import { getFileInS3 } from "../utils/lib/s3.util";
+import logger from "../utils/classes/Logger";
 
 type queryParams = {
 	limit?: number;
@@ -42,7 +45,87 @@ export class PagoService implements IPagoService {
 				scoutId: pago.scoutId,
 			},
 		});
+
+		this.generateRecibo({
+			pagoUuid: responseInsert.uuid,
+			scoutId: responseInsert.scoutId,
+			monto: responseInsert.monto,
+			concepto: responseInsert.concepto,
+			fechaPago: responseInsert.fechaPago,
+		}).catch(err => logger.error(`Error generando recibo para pago ${responseInsert.uuid}: ${err}`));
+
 		return mapPago(responseInsert) as any;
+	};
+
+	private generateRecibo = async ({
+		pagoUuid,
+		scoutId,
+		monto,
+		concepto,
+		fechaPago,
+	}: {
+		pagoUuid: string;
+		scoutId: string;
+		monto: number;
+		concepto: string;
+		fechaPago: Date;
+	}) => {
+		// Obtener próximo número de recibo de forma atómica
+		const lastRecibo = await prismaClient.reciboPago.findFirst({
+			orderBy: { numeroRecibo: 'desc' },
+			select: { numeroRecibo: true },
+		});
+		const numeroRecibo = (lastRecibo?.numeroRecibo ?? 0) + 1;
+
+		// Buscar primer familiar del scout
+		const scoutConFamiliar = await prismaClient.scout.findUnique({
+			where: { uuid: scoutId },
+			select: {
+				familiarScout: {
+					include: { familiar: { select: { uuid: true } } },
+					take: 1,
+				},
+			},
+		});
+		const familiarId = scoutConFamiliar?.familiarScout[0]?.familiar?.uuid;
+
+		// Buscar plantilla del documento ReciboPago
+		const documento = await prismaClient.documento.findFirst({
+			where: { nombre: PDFDocumentsEnum.ReciboPago },
+			select: { nombre: true, fileUploadId: true },
+		});
+
+		if (!documento?.fileUploadId || !familiarId) {
+			// Crear el registro sin PDF si faltan datos requeridos
+			await prismaClient.reciboPago.create({
+				data: { uuid: nanoid(10), numeroRecibo, pagoId: pagoUuid },
+			});
+			return;
+		}
+
+		// Crear registro primero para reservar el numeroRecibo
+		const reciboRecord = await prismaClient.reciboPago.create({
+			data: { uuid: nanoid(10), numeroRecibo, pagoId: pagoUuid },
+		});
+
+		// Generar PDF y subir a S3
+		const recibo = new ReciboPago({
+			documentName: documento.nombre,
+			fileUploadId: documento.fileUploadId,
+			familiarId,
+			fechaPago,
+			pago: { monto, concepto },
+			numeroRecibo,
+		});
+
+		await recibo.getData();
+		await recibo.fill({});
+		await recibo.upload();
+
+		await prismaClient.reciboPago.update({
+			where: { uuid: reciboRecord.uuid },
+			data: { uploadPath: recibo.uploadPath },
+		});
 	};
 
 	getPagos = async ({ limit = 15, offset = 0, filters = {} }: queryParams) => {
@@ -112,7 +195,9 @@ export class PagoService implements IPagoService {
 			},
 		});
 		return responseItem.map(pago => mapPago(pago));
-	}; getPago = async (id: string) => {
+	};
+
+	getPago = async (id: string) => {
 		try {
 			const responseItem = await prismaClient.pago.findUnique({
 				where: { uuid: id },
@@ -130,15 +215,31 @@ export class PagoService implements IPagoService {
 							telefono: true,
 						},
 					},
+					reciboPago: {
+						select: {
+							numeroRecibo: true,
+							uploadPath: true,
+							fechaCreacion: true,
+						},
+					},
 				},
 			});
 
 			if (!responseItem) return null;
 
-			const { scout, ...pago } = responseItem;
+			const { scout, reciboPago, ...pago } = responseItem;
+
+			let fileUrl: string | null = null;
+			if (reciboPago?.uploadPath) {
+				fileUrl = (await getFileInS3(reciboPago.uploadPath)) ?? null;
+			}
+
 			return {
 				...mapPago(pago),
-				scout: mapPartialScout(scout)
+				scout: mapPartialScout(scout),
+				reciboPago: reciboPago
+					? { ...reciboPago, fileUrl }
+					: null,
 			} as any;
 		} catch (error) {
 			return null;
@@ -148,13 +249,20 @@ export class PagoService implements IPagoService {
 	updatePago = async (id: string, { scoutId, ...dataUpdated }: IPago) => {
 		const responseItem = await prismaClient.pago.update({
 			where: { uuid: id },
-			data: {
-				...dataUpdated,
-				scoutId: scoutId,
+			data: { ...dataUpdated, scoutId },
+			include: {
+				scout: {
+					select: {
+						id: true, uuid: true, nombre: true, apellido: true,
+						dni: true, funcion: true, fechaNacimiento: true,
+						sexo: true, telefono: true,
+					},
+				},
 			},
 		});
 
-		return mapPago(responseItem) as any;
+		const { scout, ...pago } = responseItem;
+		return { ...mapPago(pago), scout: mapPartialScout(scout) } as any;
 	};
 
 	deletePago = async (id: string) => {
@@ -175,7 +283,7 @@ export class PagoService implements IPagoService {
 			Efectivo: "EFECTIVO",
 		};
 
-		const ramaMap: Record<string, string> = {
+		const ramaMap: Record<string, RamasType> = {
 			Manada: "MANADA",
 			Unidad: "SCOUTS",
 			Caminantes: "CAMINANTES",
@@ -184,7 +292,7 @@ export class PagoService implements IPagoService {
 
 		for (let i = 0; i < rows.length; i++) {
 			const row = rows[i];
-			const fila = i + 2; // +2: fila 1 es el header
+			const fila = i + 2;
 
 			const fechaStr = row["Fecha"]?.trim();
 			const nombreStr = row["Nombre"]?.trim();
@@ -193,7 +301,6 @@ export class PagoService implements IPagoService {
 			const montoRaw = row["Monto"]?.trim();
 			const metodoPagoRaw = row["Metodo de pago"]?.trim();
 
-			// Saltear filas vacías
 			if (!fechaStr && !nombreStr && !conceptoStr) continue;
 
 			if (!fechaStr || !nombreStr || !conceptoStr || !montoRaw || !metodoPagoRaw) {
@@ -201,7 +308,6 @@ export class PagoService implements IPagoService {
 				continue;
 			}
 
-			// Parsear fecha DD/MM/YYYY o D/M/YYYY
 			const dateParts = fechaStr.split("/");
 			if (dateParts.length !== 3) {
 				errors.push({ fila, nombre: nombreStr, razon: `Fecha inválida: ${fechaStr}` });
@@ -214,7 +320,6 @@ export class PagoService implements IPagoService {
 				continue;
 			}
 
-			// Parsear monto formato argentino: " $45.000,00" → 45000
 			const montoStr = montoRaw.replace(/\s/g, "").replace("$", "").replace(/\./g, "").replace(",", ".");
 			const monto = parseFloat(montoStr);
 			if (isNaN(monto) || monto <= 0) {
@@ -224,7 +329,6 @@ export class PagoService implements IPagoService {
 
 			const metodoPago = metodoPagoMap[metodoPagoRaw] ?? "OTRO";
 
-			// Buscar scout: primero por DNI, luego por nombre + rama
 			let scoutUuid: string | null = null;
 
 			const dniMatch = nombreStr.match(/\(DNI:\s*(\d+)\)/);
@@ -251,7 +355,7 @@ export class PagoService implements IPagoService {
 					apellido = parts[1] ?? "";
 				}
 
-				const rama = ramaMap[ramaStr] ?? undefined;
+				const rama = ramaStr ? ramaMap[ramaStr] : undefined;
 
 				const scout = await prismaClient.scout.findFirst({
 					where: {

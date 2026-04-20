@@ -9,6 +9,33 @@ datasource db {
   provider = "sqlite"
 }
 
+enum Progresion {
+  INTERRAMA
+  LOBO_PATA_TIERNA
+  LOBO_SALTADOR
+  LOBO_RASTREADOR
+  LOBO_CAZADOR
+  PISTAS
+  SENDA
+  RUMBO
+  TRAVESIA
+  FUEGO
+  TIERRA
+  AGUA
+  AIRE
+  ENCUENTRO
+  COMPROMISO
+  PROYECCION
+}
+
+enum Rama {
+  CASTORES
+  MANADA
+  SCOUTS
+  CAMINANTES
+  ROVERS
+}
+
 model User {
   id             Int            @id @default(autoincrement())
   uuid           String         @unique
@@ -40,9 +67,9 @@ model Scout {
   nacionalidad          String?
   provincia             String?
   mail                  String?
-  progresionActual      String?
+  progresionActual      Progresion?
   religion              String?               @default("CATOLICA")
-  rama                  String?
+  rama                  Rama?
   equipo                Equipo?               @relation(fields: [equipoId], references: [uuid])
   equipoId              String?
   funcion               String?
@@ -51,6 +78,7 @@ model Scout {
   entregasObtenidas     EntregaRealizada[]
   familiarScout         FamiliarScout[]
   pagosRealizados       Pago[]
+  eventosParticipante   EventoParticipante[]
   fechaCreacion         DateTime              @default(now())
   fechaActualizacion    DateTime              @updatedAt
   user                  User?
@@ -59,15 +87,17 @@ model Scout {
 }
 
 model Documento {
-  id                  Int                   @id @default(autoincrement())
-  uuid                String                @unique
-  nombre              String
-  vence               Boolean
-  completable         Boolean
-  fileUploadId        String?
-  requiereFamiliar    Boolean               @default(false)
-  requiereFirma       Boolean               @default(false)
-  documentoPresentado DocumentoPresentado[]
+  id                           Int                              @id @default(autoincrement())
+  uuid                         String                           @unique
+  nombre                       String
+  vence                        Boolean
+  completable                  Boolean
+  fileUploadId                 String?
+  requiereFamiliar             Boolean                          @default(false)
+  requiereFirma                Boolean                          @default(false)
+  documentoPresentado          DocumentoPresentado[]
+  tipoEventoDocumentos         TipoEventoDocumento[]
+  tipoEventoDocumentosParticipante TipoEventoDocumentoParticipante[]
 }
 
 model DocumentoPresentado {
@@ -89,18 +119,29 @@ model DocumentoPresentado {
 }
 
 model Pago {
-  id            Int      @id @default(autoincrement())
-  uuid          String   @unique
+  id            Int         @id @default(autoincrement())
+  uuid          String      @unique
   concepto      String
   monto         Float
-  rendido       Boolean  @default(false)
+  rendido       Boolean     @default(false)
   metodoPago    String
-  scout         Scout    @relation(fields: [scoutId], references: [uuid])
+  scout         Scout       @relation(fields: [scoutId], references: [uuid])
   scoutId       String
   fechaPago     DateTime
-  fechaCreacion DateTime @default(now())
+  fechaCreacion DateTime    @default(now())
+  reciboPago    ReciboPago?
 
   @@index([scoutId])
+}
+
+model ReciboPago {
+  id            Int      @id @default(autoincrement())
+  uuid          String   @unique
+  numeroRecibo  Int      @unique
+  pago          Pago     @relation(fields: [pagoId], references: [uuid], onDelete: Cascade)
+  pagoId        String   @unique
+  uploadPath    String?
+  fechaCreacion DateTime @default(now())
 }
 
 model Familiar {
@@ -202,4 +243,79 @@ model PushToken {
 
   @@unique([userId, platform, token])
   @@index([userId])
+}
+
+model TipoEvento {
+  id                       Int                              @id @default(autoincrement())
+  uuid                     String                           @unique
+  nombre                   String                           @unique
+  activo                   Boolean                          @default(true)
+  fechaCreacion            DateTime                         @default(now())
+  fechaActualizacion       DateTime                         @updatedAt
+  eventos                  Evento[]
+  documentosEvento         TipoEventoDocumento[]
+  documentosParticipante   TipoEventoDocumentoParticipante[]
+}
+
+model TipoEventoDocumento {
+  id           Int        @id @default(autoincrement())
+  tipoEvento   TipoEvento @relation(fields: [tipoEventoId], references: [uuid])
+  tipoEventoId String
+  documento    Documento  @relation(fields: [documentoId], references: [uuid])
+  documentoId  String
+
+  @@unique([tipoEventoId, documentoId])
+  @@index([tipoEventoId])
+}
+
+model TipoEventoDocumentoParticipante {
+  id               Int        @id @default(autoincrement())
+  tipoEvento       TipoEvento @relation(fields: [tipoEventoId], references: [uuid])
+  tipoEventoId     String
+  documento        Documento  @relation(fields: [documentoId], references: [uuid])
+  documentoId      String
+  tipoParticipante String
+
+  @@unique([tipoEventoId, documentoId, tipoParticipante])
+  @@index([tipoEventoId])
+}
+
+model Evento {
+  id                 Int                  @id @default(autoincrement())
+  uuid               String               @unique
+  nombre             String
+  descripcion        String
+  tipoEvento         TipoEvento           @relation(fields: [tipoEventoId], references: [uuid])
+  tipoEventoId       String
+  lugarNombre        String?
+  lugarDireccion     String
+  lugarLocalidad     String
+  lugarPartido       String
+  lugarProvincia     String
+  lugarLatitud       Float?
+  lugarLongitud      Float?
+  fechaHoraInicio    DateTime
+  fechaHoraFin       DateTime
+  costo              Float?
+  activo             Boolean              @default(true)
+  fechaCreacion      DateTime             @default(now())
+  fechaActualizacion DateTime             @updatedAt
+  participantes      EventoParticipante[]
+
+  @@index([tipoEventoId])
+}
+
+model EventoParticipante {
+  id               Int      @id @default(autoincrement())
+  uuid             String   @unique
+  evento           Evento   @relation(fields: [eventoId], references: [uuid])
+  eventoId         String
+  scout            Scout    @relation(fields: [scoutId], references: [uuid])
+  scoutId          String
+  tipoParticipante String
+  fechaCreacion    DateTime @default(now())
+
+  @@unique([eventoId, scoutId])
+  @@index([eventoId])
+  @@index([scoutId])
 }
