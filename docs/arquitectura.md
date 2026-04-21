@@ -67,7 +67,7 @@ src/
 | `funcion` | Enum | Scout, Guía, Suplente, etc. |
 | `equipoId` | String (FK) | Patrulla / unidad a la que pertenece |
 | `estado` | Enum | ACTIVO, INACTIVO, etc. |
-| `progresionActual` | String | Etapa de progresión vigente |
+| `progresionActual` | String | Etapa de progresión vigente. Formato: `PROG_<RAMA>_<ETAPA>` (ej. `PROG_TROPA_1`). Validado contra `PROGRESIONES_POR_RAMA` en `ScoutService`. |
 
 ### Pago
 
@@ -131,6 +131,8 @@ Modelos para gestión documental e insignias de progresión.
 | `GET` / `POST` / `PUT` / `DELETE` | `/api/entrega` | Insignias y progresiones |
 | `GET` / `POST` / `PUT` / `DELETE` | `/api/familiar` | Gestión de familiares |
 | `GET` / `POST` / `PUT` / `DELETE` | `/api/equipo` | Patrullas / unidades |
+| `GET` / `POST` / `PUT` / `DELETE` | `/api/evento` | Eventos del grupo |
+| `GET` / `POST` / `PUT` / `DELETE` | `/api/tipo-evento` | Catálogo de tipos de evento |
 
 ---
 
@@ -141,13 +143,23 @@ Modelos para gestión documental e insignias de progresión.
 - Expiración: **2 horas**.
 - El middleware `checkSession` valida el token en cada request protegido y adjunta el usuario al contexto.
 
-### Jerarquía de roles
+### Roles del sistema
 
-```
-EXTERNO < COLABORADOR < EDUCADOR < JEFE_RAMA < ADMINISTRADOR
-```
+| Rol | Permission set |
+|---|---|
+| `EXTERNO` | `EXTERNO_PERM` |
+| `JOVEN` | `EXTERNO_PERM` |
+| `COLABORADOR` | `COLABORADOR_PERM` |
+| `ACOMPAÑANTE` | `COLABORADOR_PERM` |
+| `PADRE_REPRESENTANTE` | `FAMILIAR_PERM` (solo lectura + documentos propios) |
+| `AYUDANTE_RAMA` | `AYUDANTE_PERM` (lectura + entregas + equipos + familiares) |
+| `SUBJEFE_RAMA` | `EDUCADOR_PERM` |
+| `JEFE_RAMA` | `JEFE_PERM` (+ create/modify/delete evento) |
+| `SUBJEFE_GRUPO` | `JEFE_PERM` |
+| `JEFE_GRUPO` | `JEFE_PERM` |
+| `ADMINISTRADOR` | `ADMIN_PERM` (acceso completo + gestión de usuarios y tipo-evento) |
 
-Cada rol incluye todos los permisos del rol anterior.
+Los permission sets están definidos en `src/utils/permissions.ts` y el mapa `grants` en `src/utils/helpers/validatePermissions.ts`.
 
 ### Formato de permisos
 
@@ -155,18 +167,23 @@ Cada rol incluye todos los permisos del rol anterior.
 {accion}_{recurso}
 ```
 
-Ejemplos: `create_pago`, `read_scout`, `delete_documento`.
+Ejemplos: `create_pago`, `read_scout`, `delete_documento`, `create_evento`.
 
-### Permisos por rol (ejemplos relevantes)
+### Row-Level Scoping (ScopingContext)
 
-| Rol | Permisos destacados |
-|---|---|
-| `COLABORADOR` | `create_pago`, `read_scout` |
-| `EDUCADOR` | Todo lo de COLABORADOR + gestión de documentos y entregas |
-| `JEFE_RAMA` | Todo lo de EDUCADOR + gestión de equipos |
-| `ADMINISTRADOR` | Acceso completo |
+Además del RBAC por acción, cada request tiene un **ScopingContext** que restringe QUÉ filas puede ver el usuario autenticado:
 
-La constante `COLABORADOR_PERM` define el set base del rol COLABORADOR, que incluye `create_pago`.
+| Scope | Aplicable a | Restricción |
+|---|---|---|
+| `ALL` | ADMINISTRADOR, JEFE_GRUPO, SUBJEFE_GRUPO, COLABORADOR, etc. | Sin filtro — ve todos los registros |
+| `RAMA` | `AYUDANTE_RAMA`, `SUBJEFE_RAMA`, `JEFE_RAMA` | Solo scouts de la misma rama del usuario |
+| `FAMILIAR` | `PADRE_REPRESENTANTE` | Solo scouts vinculados a su familiar |
+
+**Implementación:**
+- `src/utils/helpers/buildScopingContext.ts` — construye el contexto a partir del usuario
+- `src/middlewares/session.ts` — agrega `res.locals.scopingContext` en cada request autenticado
+- Los controllers inyectan el contexto en los services vía parámetro
+- Los services aplican `ramaFilter` o `familiarId` al `where` de Prisma según el scope
 
 ---
 

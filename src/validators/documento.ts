@@ -93,6 +93,14 @@ export const FillDataSchema = z.object({
 	fechaEventoComienzo: z.coerce.date().optional(),
 	fechaEventoFin: z.coerce.date().optional(),
 	fechaPago: z.coerce.date().optional(),
+	transporteContratadoOpcion: z.enum(["SI", "NO"]).optional(),
+	transporteAlternativoDescripcion: z.string().optional(),
+	transporteLlegadaDiaHorario: z.string().optional(),
+	transporteRetiroDiaHorario: z.string().optional(),
+	transporteCelularContacto: z.string().optional(),
+	avalAclaracion: z.string().optional(),
+	avalDni: z.string().optional(),
+	avalFuncionGrupoScout: z.string().optional(),
 	listaPagos: z.array(z.object({
 		monto: z.number().min(0),
 		concepto: z.string().max(100),
@@ -148,6 +156,12 @@ export const SignDocumentSchema = z.object({
 export const UploadDocumentSchema = z.object({
 	body: SignDataSchema.omit({ theme: true }),
 	files: filesSchema.omit({ signature: true })
+});
+
+export const GetDocumentosPendientesSchema = z.object({
+	query: z.object({
+		familiarId: z.string().refine(validFamiliarID, { message: "Familiar no encontrado" }),
+	}),
 });
 
 export const GetDocumentosSchema = z.object({

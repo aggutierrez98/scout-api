@@ -6,6 +6,7 @@ import {
 	DeleteDocumentoSchema,
 	GetDocumentoSchema,
 	GetDocumentosSchema,
+	GetDocumentosPendientesSchema,
 	PostDocumentoSchema,
 	FillDocumentSchema,
 	SignDocumentSchema,
@@ -24,6 +25,11 @@ export default function createDocumentoRouter(documentoService: DocumentoService
 	);
 	router.get("/data",
 		documentoController.getData
+	);
+	router.get(
+		"/pendientes",
+		validate(GetDocumentosPendientesSchema),
+		documentoController.getDocumentosPendientes,
 	);
 	router.get(
 		"/:id",

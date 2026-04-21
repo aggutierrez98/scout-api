@@ -70,6 +70,8 @@ export enum PDFDocumentsEnum {
 	AutorizacionIngresoMenores = "Autorizacion ingreso de menores de edad",
 	AutorizacionSalidasCercanas = "Autorizacion de salidas cercanas",
 	AutorizacionEventos = "Autorizacion para salidas acantonamientos campamentos",
+	DeclaracionJuradaSalud = "Declaracion Jurada de Salud",
+	DeclaracionJuradaParticipacionMayores18 = "Declaracion Jurada para Participacion para Jovenes Mayores de 18 anos en Salidas Acantonamientos Campamentos",
 	ReciboPago = "Recibo de pago",
 }
 

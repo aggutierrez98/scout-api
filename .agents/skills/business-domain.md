@@ -63,8 +63,8 @@ When adding a new permission: add it to the LOWEST role that makes sense and let
 ## Payment Business Rules
 
 - **metodoPago** values: `EFECTIVO`, `TRANSFERENCIA`, `OTRO`
-- **rendido** = false by default — must be explicitly marked as rendered by treasurer
-- **Payments created via webhook** always have `metodoPago = "TRANSFERENCIA"` and `rendido = false`
+- **rendido** is derived automatically at creation: `TRANSFERENCIA` → `true` (already settled), `EFECTIVO` / `OTRO` → `false` (pending manual settlement by treasurer)
+- **Payments created via webhook** always have `metodoPago = "TRANSFERENCIA"` — `rendido` is set by the same derivation rule (`true`)
 - **concepto** max 50 chars, stored in UPPERCASE
 - **fechaPago**: if missing from webhook payload, default to current date
 

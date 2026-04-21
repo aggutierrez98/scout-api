@@ -19,6 +19,24 @@ No es necesario para: operaciones CRUD genéricas, configuración de infraestruc
 | **Normas y reglamentos**: estatutos, reglamentos, roles institucionales, permisos, uniformes, ética, administración, finanzas, afiliación, seguros | `Scouts Argentina - Normas y Reglamentos` | `scouts-argentina---normas-y-reglamentos` |
 | **Guías de programa**: metodología educativa, ramas (Lobatos/Scouts/Caminantes/Rovers), ciclo de programa, progresión personal, actividades, campamentos, protección infantil, participación juvenil | `Scouts Argentina - Guías de Programa` | `scouts-argentina---guías-de-programa` |
 
+## Glosario Rápido
+
+| Término | Definición |
+|---------|------------|
+| **Rama** | Categoría por edad: Manada (6–10), Unidad/Scouts (10–14), Caminantes (14–17), Rovers/Pioneros (17–21) |
+| **Patrulla / Equipo** | Grupo pequeño (5–8 scouts) dentro de una rama, con nombre de animal y lema |
+| **Lobato / Lobezna** | Integrante de la rama Manada |
+| **Scout** | Integrante de la rama Unidad; también nombre genérico de cualquier miembro |
+| **Caminante** | Integrante de la rama Caminantes |
+| **Rover / Pionero** | Integrante de la rama Rovers; scout en formación para ser dirigente |
+| **Dirigente** | Adulto formado que lidera y acompaña a los scouts |
+| **Progresión** | Etapas de avance personal: Huella → Senda → Rumbo → Travesía (varía por rama) |
+| **Función** | Rol dentro del equipo: Guía, Subguía, Tesorero, Secretario, Vocal |
+| **Especialidad** | Habilidad específica reconocida con insignia (Primeros Auxilios, Campismo, etc.) |
+| **Entrega** | Ceremonia donde se otorgan insignias y reconocimientos |
+| **Cuota** | Pago mensual del scout para financiar actividades del grupo |
+| **Comprobante** | Recibo de pago procesado via WhatsApp webhook |
+
 ## Cómo consultar
 
 ```bash

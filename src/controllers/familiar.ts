@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 
 import { AppError, HttpCode } from "../utils/classes/AppError";
 import { FamiliarService } from "../services/familiar";
+import type { ScopingContext } from "../utils/helpers/buildScopingContext";
 
 export class FamiliarController {
 	public familiarService;
@@ -31,21 +32,23 @@ export class FamiliarController {
 	getItems = async (req: Request, res: Response, next: NextFunction) => {
 		const { offset, limit, select, ...filters } = req.query;
 
+		const scopingContext: ScopingContext = res.locals.scopingContext
+		if (scopingContext.scope === 'RAMA' && scopingContext.rama) {
+			(filters as any).ramaFilter = scopingContext.rama
+		} else if (scopingContext.scope === 'FAMILIAR' && scopingContext.familiarId) {
+			(filters as any).familiarUuid = scopingContext.familiarId
+		}
+
 		const selectedFields = select?.toString().split(",").reduce((acc, field) => ({ ...acc, [`${field}`]: true }), {})
 
 		try {
-			try {
-				const response = await this.familiarService.getFamiliares({
-					limit: limit ? Number(limit) : undefined,
-					offset: offset ? Number(offset) : undefined,
-					filters,
-					select: selectedFields
-				});
-				res.send(response);
-			} catch (e) {
-				next(e);
-			}
-
+			const response = await this.familiarService.getFamiliares({
+				limit: limit ? Number(limit) : undefined,
+				offset: offset ? Number(offset) : undefined,
+				filters,
+				select: selectedFields
+			});
+			res.send(response);
 		} catch (e) {
 			next(e);
 		}

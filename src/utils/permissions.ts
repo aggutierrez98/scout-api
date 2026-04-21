@@ -1,4 +1,32 @@
 
+export const FAMILIAR_PERM = [
+    "read_scout",
+    "read_familiar",
+    "read_equipo",
+    "read_documento",
+    "read_pago",
+    "read_entrega",
+    "read_auth",
+    "read_notificacion",
+    "modify_notificacion",
+    "create_documento",
+    "read_evento",
+]
+
+export const AYUDANTE_PERM = [
+    ...FAMILIAR_PERM,
+    "read_tipo-evento",
+    "create_entrega",
+    "modify_entrega",
+    "modify_documento",
+    "create_equipo",
+    "modify_equipo",
+    "delete_equipo",
+    "create_familiar",
+    "modify_familiar",
+    "create_notificacion",
+]
+
 export const EXTERNO_PERM = [
     "read_scout",
     "read_familiar",
@@ -40,15 +68,15 @@ export const JEFE_PERM = [
     "delete_scout",
     "delete_familiar",
     "delete_entrega",
+    "create_evento",
+    "modify_evento",
+    "delete_evento",
 ]
 export const ADMIN_PERM = [
     ...JEFE_PERM,
     "create_auth",
     "modify_auth",
     "create_nomina",
-    "create_evento",
-    "modify_evento",
-    "delete_evento",
     "create_tipo-evento",
     "modify_tipo-evento",
     "delete_tipo-evento",

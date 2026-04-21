@@ -24,6 +24,7 @@ type queryParams = {
 		equipos?: string[];
 		funciones?: FuncionType[];
 		progresiones?: ProgresionType[]
+		familiarId?: string;
 	};
 };
 
@@ -43,6 +44,7 @@ export class PagoService implements IPagoService {
 				uuid: nanoid(10),
 				concepto: pago.concepto.toLocaleUpperCase(),
 				scoutId: pago.scoutId,
+				rendido: pago.metodoPago === "TRANSFERENCIA",
 			},
 		});
 
@@ -120,6 +122,7 @@ export class PagoService implements IPagoService {
 
 		await recibo.getData();
 		await recibo.fill({});
+		await recibo.sign({});
 		await recibo.upload();
 
 		await prismaClient.reciboPago.update({
@@ -140,13 +143,29 @@ export class PagoService implements IPagoService {
 			tiempoHasta,
 			funciones,
 			progresiones,
-			ramas
+			ramas,
+			familiarId,
 		} = filters;
 
 		const responseItem = await prismaClient.pago.findMany({
 			skip: offset,
 			take: limit,
 			orderBy: { fechaPago: "desc" },
+			include: {
+				scout: {
+					select: {
+						id: true,
+						uuid: true,
+						nombre: true,
+						apellido: true,
+						dni: true,
+						funcion: true,
+						fechaNacimiento: true,
+						sexo: true,
+						telefono: true,
+					},
+				},
+			},
 			where: {
 				metodoPago: metodoPago || undefined,
 				scout: {
@@ -162,7 +181,10 @@ export class PagoService implements IPagoService {
 					rama: {
 						in: ramas,
 					},
-					uuid: scoutId
+					uuid: scoutId,
+					familiarScout: familiarId
+						? { some: { familiarId } }
+						: undefined,
 				},
 				rendido: rendido ? rendido === "true" ? true : false : undefined,
 				fechaPago: {
@@ -194,7 +216,10 @@ export class PagoService implements IPagoService {
 				],
 			},
 		});
-		return responseItem.map(pago => mapPago(pago));
+		return responseItem.map(({ scout, ...pago }) => ({
+			...mapPago(pago),
+			scout: mapPartialScout(scout),
+		}));
 	};
 
 	getPago = async (id: string) => {
@@ -382,7 +407,7 @@ export class PagoService implements IPagoService {
 						metodoPago,
 						scoutId: scoutUuid,
 						fechaPago,
-						rendido: false,
+						rendido: metodoPago === "TRANSFERENCIA",
 					},
 				});
 				createdCount++;

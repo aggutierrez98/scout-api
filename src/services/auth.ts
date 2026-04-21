@@ -12,8 +12,9 @@ interface LoginParams {
 }
 interface GetUserParams {
     username?: string;
-    userId?: string,
-    hasLoggedIn?: boolean
+    userId?: string;
+    hasLoggedIn?: boolean;
+    invitationToken?: string;
 }
 interface CreateParams {
     username: string;
@@ -34,6 +35,7 @@ interface ModifyParams {
     role?: RolesType
     userId: string
     password?: string
+    clearInvitationToken?: boolean
 }
 
 interface queryParams {
@@ -52,7 +54,7 @@ interface IAuthService {
 }
 
 export class AuthService implements IAuthService {
-    getUser = async ({ username, userId, hasLoggedIn = true }: GetUserParams) => {
+    getUser = async ({ username, userId, hasLoggedIn = true, invitationToken }: GetUserParams) => {
         const hasLoggedInFilter = hasLoggedIn ? { password: { not: null } } : { password: { equals: null } }
 
         const user = await prismaClient.user.findUnique({
@@ -60,6 +62,7 @@ export class AuthService implements IAuthService {
                 OR: [{ username }, { uuid: userId }],
                 username,
                 uuid: userId,
+                ...(invitationToken !== undefined ? { invitationToken } : {}),
                 ...hasLoggedInFilter,
             },
             include: {
@@ -175,12 +178,14 @@ export class AuthService implements IAuthService {
     createUser = async ({ password, username, scoutId, familiarId, role }: CreateParams) => {
         const uuid = nanoid(10);
         const newPassword = password ? await encrypt(password) : undefined
+        const invitationToken = newPassword ? undefined : nanoid(20)
 
         const user = await prismaClient.user.create({
             data: {
                 uuid,
                 username,
                 password: newPassword,
+                invitationToken,
                 scoutId: scoutId,
                 familiarId: familiarId,
                 role
@@ -200,6 +205,7 @@ export class AuthService implements IAuthService {
         return {
             ...userScout,
             role: userScout.role as RolesType,
+            invitationToken: user.invitationToken ?? undefined,
         }
     }
 
@@ -235,7 +241,7 @@ export class AuthService implements IAuthService {
         }
     }
 
-    modifyUser = async ({ active, role, userId, password }: ModifyParams) => {
+    modifyUser = async ({ active, role, userId, password, clearInvitationToken }: ModifyParams) => {
 
         const modifiedPassword = password ? await encrypt(password) : undefined
 
@@ -243,7 +249,8 @@ export class AuthService implements IAuthService {
             data: {
                 active,
                 role,
-                password: modifiedPassword
+                password: modifiedPassword,
+                ...(clearInvitationToken ? { invitationToken: null } : {}),
             },
             where: {
                 uuid: userId,

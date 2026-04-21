@@ -230,7 +230,7 @@ export const VALID_TIPOS_AVISO = [
 	"CUSTOM",
 ] as const;
 
-export const VALID_REFERENCIA_TIPOS = ["scout", "pago", "evento"] as const;
+export const VALID_REFERENCIA_TIPOS = ["scout", "familiar", "pago", "evento"] as const;
 
 export const VALID_ESTADOS = ["ACTIVO", "INACTIVO"] as const;
 

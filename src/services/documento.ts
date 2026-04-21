@@ -11,7 +11,7 @@ import { AppError, HttpCode } from "../utils";
 import { getFileInS3, uploadToS3 } from "../utils/lib/s3.util";
 import { PdfDocument } from '../utils/classes/documentos/PdfDocument';
 import logger from "../utils/classes/Logger";
-import { FillDocumentoData, PDFDocumentInstantiator } from "../utils/classes/documentos/DocumentoInstantiator";
+import { FillDocumentoData, resolvePdfDocumentInstantiator } from "../utils/classes/documentos/DocumentoInstantiator";
 import { prismaClient } from "../utils/lib/prisma-client";
 import { mapDocumentoPresentado, mapDocumentoDefinicion } from "../mappers/documentoPresentado";
 import { scanAuthorizationDocument, AuthorizationDocumentScanResult } from "../utils/lib/gemini";
@@ -30,6 +30,7 @@ type getQueryParams = {
 		funciones?: FuncionType[];
 		ramas?: RamasType[];
 		progresiones?: ProgresionType[]
+		familiarId?: string;
 	};
 };
 
@@ -95,6 +96,7 @@ export class DocumentoService implements IDocumentoService {
 			tiempoDesde,
 			tiempoHasta,
 			scoutId,
+			familiarId,
 		} = filters;
 
 		const responseItem = await prismaClient.documentoPresentado.findMany({
@@ -133,7 +135,10 @@ export class DocumentoService implements IDocumentoService {
 					rama: {
 						in: ramas
 					},
-					uuid: scoutId
+					uuid: scoutId,
+					familiarScout: familiarId
+						? { some: { familiarId } }
+						: undefined,
 				},
 				documento: {
 					vence: vence ? vence === "true" ? true : false : undefined,
@@ -246,6 +251,14 @@ export class DocumentoService implements IDocumentoService {
 				tipoEvento,
 				retiroData,
 				fechaPago,
+				transporteContratadoOpcion,
+				transporteAlternativoDescripcion,
+				transporteLlegadaDiaHorario,
+				transporteRetiroDiaHorario,
+				transporteCelularContacto,
+				avalAclaracion,
+				avalDni,
+				avalFuncionGrupoScout,
 				pago,
 				numeroRecibo,
 				aclaraciones,
@@ -267,12 +280,14 @@ export class DocumentoService implements IDocumentoService {
 				description: "El documento enviado no es completable"
 			})
 
-			if (!PDFDocumentInstantiator[mappedDocData.nombre as PDFDocumentsEnum]) throw new AppError({
+			const pdfDocumentInstantiator = resolvePdfDocumentInstantiator(mappedDocData.nombre);
+
+			if (!pdfDocumentInstantiator) throw new AppError({
 				name: "BAD_REQUEST",
 				httpCode: HttpCode.BAD_REQUEST,
 				description: "La complecion del documento no se encuentra implementada"
 			})
-			const pdfModel: (PdfDocument) = PDFDocumentInstantiator[mappedDocData.nombre as PDFDocumentsEnum]({
+			const pdfModel: (PdfDocument) = pdfDocumentInstantiator({
 				docData: mappedDocData,
 				scoutId,
 				signature,
@@ -286,6 +301,14 @@ export class DocumentoService implements IDocumentoService {
 				tipoEvento,
 				retiroData,
 				fechaPago,
+				transporteContratadoOpcion,
+				transporteAlternativoDescripcion,
+				transporteLlegadaDiaHorario,
+				transporteRetiroDiaHorario,
+				transporteCelularContacto,
+				avalAclaracion,
+				avalDni,
+				avalFuncionGrupoScout,
 				pago,
 				numeroRecibo,
 				aclaraciones,
@@ -391,6 +414,68 @@ export class DocumentoService implements IDocumentoService {
 		}
 	}
 
+	getDocumentosPendientes = async (familiarId: string) => {
+		const familiar = await prismaClient.familiar.findUnique({
+			where: { uuid: familiarId },
+			include: {
+				padreScout: {
+					include: {
+						scout: {
+							select: { uuid: true, nombre: true, apellido: true },
+						},
+					},
+				},
+			},
+		});
+
+		if (!familiar) return [];
+
+		const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+		const allCompletable = await prismaClient.documento.findMany({
+			where: { completable: true },
+		});
+
+		const results: {
+			documentoId: string;
+			documentoNombre: string;
+			scoutId: string;
+			scoutNombre: string;
+			scoutApellido: string;
+			requiereFamiliar: boolean;
+		}[] = [];
+
+		for (const { scout } of familiar.padreScout) {
+			const submitted = await prismaClient.documentoPresentado.findMany({
+				where: { scoutId: scout.uuid },
+				select: { documentoId: true, fechaPresentacion: true },
+			});
+
+			for (const doc of allCompletable) {
+				const entregas = submitted.filter((s) => s.documentoId === doc.uuid);
+				const esPendiente = doc.vence
+					? !entregas.some(
+						(s) =>
+							s.fechaPresentacion !== null &&
+							new Date(s.fechaPresentacion) >= startOfYear,
+					)
+					: entregas.length === 0;
+
+				if (esPendiente) {
+					results.push({
+						documentoId: doc.uuid,
+						documentoNombre: doc.nombre,
+						scoutId: scout.uuid,
+						scoutNombre: scout.nombre,
+						scoutApellido: scout.apellido,
+						requiereFamiliar: doc.requiereFamiliar,
+					});
+				}
+			}
+		}
+
+		return results;
+	};
+
 	scanDocumento = async (pdfBuffer: Buffer): Promise<AuthorizationDocumentScanResult> => {
 		return scanAuthorizationDocument(pdfBuffer);
 	};
@@ -452,4 +537,3 @@ export class DocumentoService implements IDocumentoService {
 		return { ...mapDocumentoPresentado(created), fileUrl };
 	};
 }
-

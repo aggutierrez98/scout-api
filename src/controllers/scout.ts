@@ -3,6 +3,7 @@ import { AppError, HttpCode } from "../utils/classes/AppError";
 import { IUserData, OrderToGetScouts } from "../types";
 import { ScoutService } from "../services/scout";
 import { UploadedFile } from "express-fileupload";
+import type { ScopingContext } from "../utils/helpers/buildScopingContext";
 
 export class ScoutController {
 	public scoutService;
@@ -33,9 +34,12 @@ export class ScoutController {
 		try {
 			const { offset, limit, orderBy, select, ...filters } = req.query;
 
-			const user: IUserData = res.locals.currentUser
-			const userIsFamiliar = (user.role === "EXTERNO" && !!user.familiar)
-			if (userIsFamiliar) filters.familiarId = user.familiar!.id
+			const scopingContext: ScopingContext = res.locals.scopingContext
+			if (scopingContext.scope === 'RAMA' && scopingContext.rama) {
+				filters.ramas = [scopingContext.rama] as any
+			} else if (scopingContext.scope === 'FAMILIAR' && scopingContext.familiarId) {
+				filters.familiarId = scopingContext.familiarId
+			}
 
 			const selectedFields = select?.toString().split(",").reduce((acc, field) => ({ ...acc, [`${field}`]: true }), {})
 

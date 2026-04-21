@@ -181,6 +181,48 @@ logger.error("Error inesperado", { error: err.message, stack: err.stack });
 logger.warn("Scout sin equipo asignado", { scoutId: uuid });
 ```
 
+## S3 File Storage
+
+Key format for uploaded documents:
+```
+documentos/{scoutUuid}/{documentoNombre}_{uploadId}.{ext}
+```
+
+Upload pattern (via `uploadToS3` from `src/utils/lib/s3.util.ts`):
+```typescript
+const key = `documentos/${scoutId}/${docName}_${uploadId}.pdf`;
+const uploadPath = await uploadToS3(pdfBuffer, key);
+// Store uploadPath in DocumentoPresentado.fileUploadId
+```
+
+Download — presigned URL (expires 1 hour):
+```typescript
+const url = await getFileInS3(uploadPath); // returns presigned URL string
+```
+
+Never expose raw S3 keys or bucket names in API responses — always generate presigned URLs.
+
+## PDF Generation (pdf-lib)
+
+```typescript
+import { PDFDocument } from "pdf-lib";
+
+// Load template from S3, fill form fields, flatten, upload
+const pdfBytes = await getFileInS3(templateUploadId); // fetch template
+const pdfDoc = await PDFDocument.load(pdfBytes);
+const form = pdfDoc.getForm();
+
+form.getTextField("nombre").setText(scout.nombre);
+form.getTextField("apellido").setText(scout.apellido);
+// ... fill all fields
+
+form.flatten(); // make non-editable
+const filledBuffer = Buffer.from(await pdfDoc.save());
+await uploadToS3(filledBuffer, destinationKey);
+```
+
+Use the `ReciboPago` class in `src/utils/classes/documentos/` as the reference pattern for document generation.
+
 ## Prisma Queries
 
 - Always use `uuid` in `where` clauses — never the integer `id`

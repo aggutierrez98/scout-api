@@ -40,6 +40,7 @@ import swaggerSpecJSON from "./docs/spec.json";
 import logger from "./utils/classes/Logger";
 import fileUpload from 'express-fileupload';
 import cron from "node-cron";
+import { registerCrons } from "./crons";
 
 // // import expressSession from 'express-session';
 
@@ -166,9 +167,8 @@ export default class Server {
 	loadCrons() {
 		// recordarCumpleaños()
 
-		// Forma 3 — Sync programado diario con cruz-del-sur.
-		// Corre a las 7:00 AM (Argentina, UTC-3 = 10:00 UTC) todos los días,
-		// una hora después del export diario de cruz-del-sur (6:00 AM).
+		// Sync diario de nómina con cruz-del-sur — 7:00 AM Argentina (10:00 UTC)
+		// Se ejecuta una hora después del export diario de cruz-del-sur (6:00 AM).
 		cron.schedule("0 10 * * *", async () => {
 			logger.info("[Cron] Iniciando sync diario de nómina con cruz-del-sur");
 			try {
@@ -179,6 +179,9 @@ export default class Server {
 				logger.error(`[Cron] Error en sync diario de nómina ${(err as Error).message}`)
 			}
 		}, { timezone: "UTC" });
+
+		// Crons de notificaciones: cumpleaños, eventos, cuota mensual
+		registerCrons();
 	}
 
 	listen() {

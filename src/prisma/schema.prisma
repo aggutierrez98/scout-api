@@ -47,8 +47,9 @@ model User {
   scoutId        String?        @unique
   familiar       Familiar?      @relation(fields: [familiarId], references: [uuid])
   familiarId     String?        @unique
-  notificaciones Notificacion[]
-  pushTokens     PushToken[]
+  invitationToken String?
+  notificaciones  Notificacion[]
+  pushTokens      PushToken[]
 }
 
 model Scout {

@@ -8,10 +8,11 @@ Load these skills BEFORE writing any code when the context matches.
 |---------|-------|
 | Adding routes, services, controllers, middlewares, or any new resource | `architecture` |
 | Payment logic, webhook processing, RBAC permissions, document workflows, scout/familiar rules | `business-domain` |
-| Writing TypeScript code, validators, mappers, HTTP responses, logging, Prisma queries | `api-conventions` |
+| Writing TypeScript code, validators, mappers, HTTP responses, logging, Prisma queries, S3, PDF | `api-conventions` |
 | Accessing secrets, adding new Infisical secrets, using SecretsManager, avoiding process.env | `secrets-manager` |
 | Modifying or adding any route, controller, or validator — any endpoint change | `bruno` |
 | Domain questions: roles, ramas, reglas de negocio, terminología scouts, restricciones | `scouts-domain` |
+| Auth, login, firstLogin, user creation, JWT, invitationToken, checkSession, User model | `auth` |
 
 Skills are in `.agents/skills/`. Multiple skills can apply simultaneously — load all that match.
 

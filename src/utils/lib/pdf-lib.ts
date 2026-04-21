@@ -22,9 +22,11 @@ interface FillFormProperties {
     returnBase64?: boolean
 }
 
+type SignatureInput = fileUpload.UploadedFile | Buffer | string;
+
 interface SignProperties {
     inputFile: Buffer,
-    signature: fileUpload.UploadedFile,
+    signature: SignatureInput,
     returnBase64?: boolean
     options: {
         rotate?: number,
@@ -35,6 +37,12 @@ interface SignProperties {
         scale?: number
         negate?: boolean
     }
+}
+
+const getSignatureBuffer = async (signature: SignatureInput): Promise<Buffer> => {
+    if (typeof signature === "string") return await readFile(signature);
+    if (Buffer.isBuffer(signature)) return signature;
+    return signature.data;
 }
 
 export const fillPdfForm = async ({ dataObject, inputFile, options: { fontColor, fontFamily, fontSize, strikeThrough } = {}, returnBase64 = false, }: FillFormProperties) => {
@@ -86,12 +94,12 @@ export const fillPdfForm = async ({ dataObject, inputFile, options: { fontColor,
                     const newDefaultAppareance = defaultAppareance + '\n' + setFillingRgbColor(rgbColor.red, rgbColor.green, rgbColor.blue).toString();
                     textField.acroField.setDefaultAppearance(newDefaultAppareance);
                 }
-                if (fontSelected) textField.updateAppearances(fontSelected)
                 if (fontSize) textField.setFontSize(fontSize)
 
                 if (key.startsWith("Check_")) textField.setFontSize(7)
 
                 textField.setText(dataObject[key] as string || "")
+                if (fontSelected) textField.updateAppearances(fontSelected)
             }
         }
     }
@@ -106,13 +114,16 @@ export const signPdf = async ({ signature, inputFile, options: { position: { x, 
 
     const pdfDoc = await PDFDocument.load(new Uint8Array(inputFile))
     const page = pdfDoc.getPages()[0];
+    const signatureBuffer = await getSignatureBuffer(signature);
 
-    const finalImage = await sharp(signature.data)
+    const finalImage = await sharp(signatureBuffer)
         .grayscale()
         .threshold(180)
         .negate(negate) // Negar imagen
         .rotate(rotate)  // Rotar imagen los grados correspondientes
         .removeAlpha() // Eliminar fondo
+        .trim()
+        .png()
         .toBuffer();
 
     const signatureImage = await pdfDoc.embedPng(new Uint8Array(finalImage));

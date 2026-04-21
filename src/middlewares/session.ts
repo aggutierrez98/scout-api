@@ -4,6 +4,7 @@ import { JwtPayload } from "jsonwebtoken";
 import { AppError, HttpCode } from "../utils";
 import { AuthService } from "../services/auth";
 import { validatePermissions, HTTPMethods } from '../utils/helpers/validatePermissions';
+import { buildScopingContext } from '../utils/helpers/buildScopingContext';
 import { RolesType } from "../types";
 
 interface RequestExt extends Request {
@@ -57,6 +58,7 @@ export const checkSession = async (req: RequestExt, res: Response, next: NextFun
 			}
 
 			res.locals.currentUser = user
+			res.locals.scopingContext = buildScopingContext(user)
 			next();
 		}
 

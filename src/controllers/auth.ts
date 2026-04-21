@@ -34,16 +34,24 @@ export class AuthController {
 
     firstLogin = async ({ body }: Request, res: Response, next: NextFunction) => {
         try {
-            const { username, password } = body;
-            const user = await this.authService.getUser({ username: username?.toString(), hasLoggedIn: false });
+            const { username, password, invitationToken } = body;
+            const user = await this.authService.getUser({
+                username: username?.toString(),
+                hasLoggedIn: false,
+                invitationToken,
+            });
             if (!user) {
                 throw new AppError({
                     name: "NOT_VALID_USER",
                     httpCode: HttpCode.UNAUTHORIZED,
-                    description: "El usuario no es valido"
+                    description: "El token de invitación no es válido"
                 });
             }
-            const response = await this.authService.modifyUser({ userId: user.id, password });
+            const response = await this.authService.modifyUser({
+                userId: user.id,
+                password,
+                clearInvitationToken: true,
+            });
             res.send(response);
         } catch (e) {
             next(e);

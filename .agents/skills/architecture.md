@@ -129,6 +129,26 @@ The global `errorMiddleware` in `Server.ts` catches all `AppError` instances.
 - Cache key format: `{resource}/{params}` (e.g., `scout/123`, `pago?scoutId=abc`)
 - Never cache webhook responses
 
+## Data Model — Key Relationships
+
+```
+Scout ──1:N──> DocumentoPresentado
+  │──1:N──> Pago
+  │──1:N──> EntregaRealizada
+  │──N:1──> Equipo
+  │──N:M──> Familiar  (via FamiliarScout: familiarId, scoutId, relacion)
+  └──1:1──> User?     (optional, via scoutId on User)
+
+Documento ──1:N──> DocumentoPresentado
+Familiar  ──1:1──> User?  (optional, via familiarId on User)
+User      ──1:N──> Notificacion
+User      ──1:N──> PushToken
+Aviso     ──1:N──> Notificacion
+```
+
+- Every entity has `id` (autoincrement, internal) and `uuid` (nanoid, API-facing)
+- Soft-delete only on Scout via `estado: ACTIVO | INACTIVO | EGRESADO` — no hard deletes on Scout
+
 ## Adding a New Resource — Checklist
 
 When adding a new entity/resource, create ALL of these:

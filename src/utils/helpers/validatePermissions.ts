@@ -1,7 +1,7 @@
 import { RolesType } from "../../types";
 import logger from "../classes/Logger";
 import { VALID_ROLES } from "../constants";
-import { ADMIN_PERM, COLABORADOR_PERM, EDUCADOR_PERM, EXTERNO_PERM, JEFE_PERM } from '../permissions';
+import { ADMIN_PERM, AYUDANTE_PERM, COLABORADOR_PERM, EDUCADOR_PERM, EXTERNO_PERM, FAMILIAR_PERM, JEFE_PERM } from '../permissions';
 
 export type HTTPMethods = keyof typeof actionsFromMethods;
 
@@ -25,8 +25,8 @@ const validators = {
         JOVEN: EXTERNO_PERM,
         COLABORADOR: COLABORADOR_PERM,
         ACOMPAÑANTE: COLABORADOR_PERM,
-        PADRE_REPRESENTANTE: COLABORADOR_PERM,
-        AYUDANTE_RAMA: EDUCADOR_PERM,
+        PADRE_REPRESENTANTE: FAMILIAR_PERM,
+        AYUDANTE_RAMA: AYUDANTE_PERM,
         SUBJEFE_RAMA: EDUCADOR_PERM,
         JEFE_RAMA: JEFE_PERM,
         SUBJEFE_GRUPO: JEFE_PERM,

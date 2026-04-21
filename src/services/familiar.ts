@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { IFamiliar, IFamiliarScoutData, RelacionFamiliarType } from "../types";
+import { IFamiliar, IFamiliarScoutData, RelacionFamiliarType, RamasType } from "../types";
 import { Prisma } from "@prisma/client";
 import { prismaClient } from "../utils/lib/prisma-client";
 import { mapFamiliar } from "../mappers/familiar";
@@ -12,6 +12,8 @@ interface queryParams {
 		nombre?: string;
 		scoutId?: string
 		existingUser?: string
+		ramaFilter?: RamasType
+		familiarUuid?: string
 	};
 	select?: Prisma.FamiliarSelect
 }
@@ -172,70 +174,60 @@ export class FamiliarService implements IFamiliarService {
 		const {
 			nombre = "",
 			scoutId,
-			existingUser
+			existingUser,
+			ramaFilter,
+			familiarUuid,
 		} = filters;
+
+		const scopingConditions: Prisma.FamiliarWhereInput[] = []
+		if (familiarUuid) {
+			scopingConditions.push({ uuid: familiarUuid })
+		}
+		if (ramaFilter) {
+			scopingConditions.push({ padreScout: { some: { scout: { rama: ramaFilter } } } })
+		}
 
 		const responses = await prismaClient.familiar.findMany({
 			skip: offset,
 			take: limit,
 			orderBy: { nombre: "asc" },
 			where: {
-				OR: [
-					{
-						padreScout: {
-							some: {
-								scout: {
-									OR: [
-										{
-											nombre: {
-												contains: nombre,
-											},
-										},
-										{
-											apellido: {
-												contains: nombre,
-											},
-										},
-										{
-											uuid: {
-												equals: scoutId,
-											},
-										},
-									]
-								}
-							}
-						}
-					},
+				AND: [
+					...scopingConditions,
 					{
 						OR: [
 							{
-								nombre: {
-									contains: nombre,
-								},
+								padreScout: {
+									some: {
+										scout: {
+											OR: [
+												{ nombre: { contains: nombre } },
+												{ apellido: { contains: nombre } },
+												{ uuid: { equals: scoutId } },
+											]
+										}
+									}
+								}
 							},
 							{
-								apellido: {
-									contains: nombre,
-								},
+								OR: [
+									{ nombre: { contains: nombre } },
+									{ apellido: { contains: nombre } },
+								]
 							},
-						]
-					},
-
-				],
-				padreScout: {
-					some: {
-						scout: {
-							uuid: {
-								equals: scoutId,
-							},
-						}
+						],
+						padreScout: {
+							some: {
+								scout: { uuid: { equals: scoutId } },
+							}
+						},
+						user: existingUser
+							? (existingUser === "true"
+								? { isNot: null }
+								: { is: null }
+							) : undefined
 					}
-				},
-				user: existingUser
-					? (existingUser === "true"
-						? { isNot: null }
-						: { is: null }
-					) : undefined
+				]
 			},
 			select
 		});

@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { UploadedFile } from "express-fileupload";
 import { AppError, HttpCode } from "../utils/classes/AppError";
 import { DocumentoService } from "../services/documento";
+import type { ScopingContext } from "../utils/helpers/buildScopingContext";
 
 export class DocumentoController {
 	public documentoService;
@@ -35,6 +36,13 @@ export class DocumentoController {
 
 	getItems = async (req: Request, res: Response, next: NextFunction) => {
 		const { offset, limit, ...filters } = req.query;
+
+		const scopingContext: ScopingContext = res.locals.scopingContext
+		if (scopingContext.scope === 'RAMA' && scopingContext.rama) {
+			(filters as any).ramas = [scopingContext.rama]
+		} else if (scopingContext.scope === 'FAMILIAR' && scopingContext.familiarId) {
+			(filters as any).familiarId = scopingContext.familiarId
+		}
 
 		try {
 			const response = await this.documentoService.getDocumentos({
@@ -229,6 +237,16 @@ export class DocumentoController {
 			}
 
 			res.send(response);
+		} catch (e) {
+			next(e);
+		}
+	};
+
+	getDocumentosPendientes = async (req: Request, res: Response, next: NextFunction) => {
+		try {
+			const { familiarId } = req.query as { familiarId: string };
+			const result = await this.documentoService.getDocumentosPendientes(familiarId);
+			res.json(result);
 		} catch (e) {
 			next(e);
 		}

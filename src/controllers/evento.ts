@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { AppError, HttpCode } from "../utils/classes/AppError";
 import { EventoService } from "../services/evento";
+import type { ScopingContext } from "../utils/helpers/buildScopingContext";
 
 export class EventoController {
 	public eventoService: EventoService;
@@ -75,9 +76,10 @@ export class EventoController {
 		}
 	};
 
-	addParticipantes = async ({ params, body }: Request, res: Response, next: NextFunction) => {
+	addParticipantes = async (req: Request, res: Response, next: NextFunction) => {
 		try {
-			const response = await this.eventoService.addParticipantes(params.id, body);
+			const scopingContext: ScopingContext = res.locals.scopingContext
+			const response = await this.eventoService.addParticipantes(req.params.id, req.body, scopingContext);
 			res.status(201).send(response);
 		} catch (e) {
 			next(e);

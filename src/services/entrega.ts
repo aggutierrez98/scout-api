@@ -25,6 +25,7 @@ type queryParams = {
 		funciones?: FuncionType[];
 		ramas?: RamasType[];
 		progresiones?: ProgresionType[];
+		familiarId?: string;
 	};
 };
 
@@ -209,6 +210,7 @@ export class EntregaService implements IEntregaService {
 			equipos,
 			progresiones,
 			ramas,
+			familiarId,
 		} = filters;
 
 		const responseItem = await prismaClient.entregaRealizada.findMany({
@@ -249,6 +251,9 @@ export class EntregaService implements IEntregaService {
 						in: ramas,
 					},
 					uuid: scoutId,
+					familiarScout: familiarId
+						? { some: { familiarId } }
+						: undefined,
 				},
 			},
 			include: {

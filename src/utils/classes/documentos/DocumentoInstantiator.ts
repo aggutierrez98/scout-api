@@ -7,6 +7,8 @@ import { AutorizacionIngresoMenores } from "./AutorizacionIngresoMenores"
 import { AutorizacionSalidasCercanas } from "./AutorizacionSalidasCercanas"
 import { AutorizacionEventos } from "./AutorizacionEventos"
 import { ReciboPago } from "./ReciboPago"
+import { DeclaracionJuradaSalud } from "./DeclaracionJuradaSalud"
+import { DeclaracionJuradaParticipacionMayores18 } from "./DeclaracionJuradaParticipacionMayores18"
 
 export type FillDocumentoData = {
     scoutId: string,
@@ -26,6 +28,14 @@ export type FillDocumentoData = {
     confirmation?: boolean
     documentoFilled?: fileUpload.UploadedFile
     fechaPago?: Date,
+    transporteContratadoOpcion?: "SI" | "NO"
+    transporteAlternativoDescripcion?: string
+    transporteLlegadaDiaHorario?: string
+    transporteRetiroDiaHorario?: string
+    transporteCelularContacto?: string
+    avalAclaracion?: string
+    avalDni?: string
+    avalFuncionGrupoScout?: string
     pago?: {
         monto: number
         concepto: string
@@ -117,6 +127,35 @@ export const PDFDocumentInstantiator: Record<PDFDocumentsEnum, PdfModelFunc> = {
             },
         });
     },
+    [PDFDocumentsEnum.DeclaracionJuradaSalud]: ({ docData, scoutId, familiarId, documentoFilled }: FillDocumentoData) => {
+        return new DeclaracionJuradaSalud({
+            documentName: docData.nombre,
+            fileUploadId: docData.fileUploadId!,
+            scoutId,
+            familiarId,
+            documentoFilled: documentoFilled?.data,
+        });
+    },
+    [PDFDocumentsEnum.DeclaracionJuradaParticipacionMayores18]: ({ docData, scoutId, documentoFilled, fechaEventoComienzo, fechaEventoFin, lugarEvento, tipoEvento, transporteContratadoOpcion, transporteAlternativoDescripcion, transporteLlegadaDiaHorario, transporteRetiroDiaHorario, transporteCelularContacto, avalAclaracion, avalDni, avalFuncionGrupoScout }: FillDocumentoData) => {
+        return new DeclaracionJuradaParticipacionMayores18({
+            documentName: docData.nombre,
+            fileUploadId: docData.fileUploadId!,
+            scoutId,
+            fechaEventoComienzo: fechaEventoComienzo ? new Date(fechaEventoComienzo) : undefined,
+            fechaEventoFin: fechaEventoFin ? new Date(fechaEventoFin) : undefined,
+            lugarEvento,
+            tipoEvento,
+            transporteContratadoOpcion,
+            transporteAlternativoDescripcion,
+            transporteLlegadaDiaHorario,
+            transporteRetiroDiaHorario,
+            transporteCelularContacto,
+            avalAclaracion,
+            avalDni,
+            avalFuncionGrupoScout,
+            documentoFilled: documentoFilled?.data,
+        });
+    },
     [PDFDocumentsEnum.ReciboPago]: ({ docData, familiarId, documentoFilled, fechaPago, pago, numeroRecibo }: FillDocumentoData) => {
         return new ReciboPago({
             documentName: docData.nombre,
@@ -128,4 +167,33 @@ export const PDFDocumentInstantiator: Record<PDFDocumentsEnum, PdfModelFunc> = {
             documentoFilled: documentoFilled?.data,
         });
     },
+};
+
+const normalizeDocumentName = (documentName: string) =>
+    documentName
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+
+export const resolvePdfDocumentInstantiator = (documentName: string) => {
+    const directInstantiator = PDFDocumentInstantiator[documentName as PDFDocumentsEnum];
+    if (directInstantiator) return directInstantiator;
+
+    switch (normalizeDocumentName(documentName)) {
+        case normalizeDocumentName(PDFDocumentsEnum.DeclaracionJuradaSalud):
+        case "declaracion jurada de salud":
+        case "declaracion jurada salud":
+        case "formulario de informacion de salud":
+            return PDFDocumentInstantiator[PDFDocumentsEnum.DeclaracionJuradaSalud];
+        case normalizeDocumentName(PDFDocumentsEnum.DeclaracionJuradaParticipacionMayores18):
+        case "declaracion jurada para participacion de jovenes mayores de 18 anos en salidas acantonamientos campamentos":
+        case "declaracion jurada para participacion para jovenes mayores de 18 anos en salidas acantonamientos campamentos":
+        case "declaracion jurada participacion mayores de 18":
+        case "declaracion jurada mayores de 18":
+            return PDFDocumentInstantiator[PDFDocumentsEnum.DeclaracionJuradaParticipacionMayores18];
+        default:
+            return null;
+    }
 };

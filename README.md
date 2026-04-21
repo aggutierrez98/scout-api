@@ -190,6 +190,19 @@ router.use("/scout", checkSession, createScoutRouter(scoutService));
 | `estado` | Enum | `ACTIVO`, `INACTIVO`, `EGRESADO` |
 | `progresionActual` | String | Etapa de progresión vigente |
 
+### User
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `uuid` | String (PK) | Identificador externo (nunca exponer `id`) |
+| `username` | String | Único |
+| `password` | String? | Hash bcrypt — `null` hasta el primer login |
+| `invitationToken` | String? | Token de un solo uso generado al crear el usuario sin contraseña; se entrega al usuario para activar la cuenta vía `PUT /api/auth/firstLogin`; se limpia (→ `null`) tras la activación exitosa |
+| `role` | String | `EXTERNO` por defecto |
+| `active` | Boolean | — |
+| `scoutId` | String? (FK) | Scout vinculado (unique) |
+| `familiarId` | String? (FK) | Familiar vinculado (unique) |
+
 ### Pago
 
 | Campo | Tipo | Descripción |
@@ -197,7 +210,7 @@ router.use("/scout", checkSession, createScoutRouter(scoutService));
 | `uuid` | String (PK) | — |
 | `concepto` | String | Descripción del pago |
 | `monto` | Float | Importe |
-| `rendido` | Boolean | Si fue rendido en tesorería |
+| `rendido` | Boolean | Derivado automáticamente del método de pago al crearse: `TRANSFERENCIA` → `true`, cualquier otro → `false` |
 | `metodoPago` | Enum | `EFECTIVO`, `TRANSFERENCIA`, `OTRO` |
 | `scoutId` | String (FK) | — |
 | `fechaPago` | DateTime | Fecha del comprobante o ingreso |
@@ -249,6 +262,16 @@ Unique constraint: `(userId, platform, token)` — el registro se reactiva (upse
 
 ## 🔐 Autenticación y RBAC
 
+### Flujo de activación de cuenta (primer login)
+
+Los usuarios creados desde el panel web nacen **sin contraseña**. El flujo de activación es:
+
+1. Admin crea el usuario vía `POST /api/auth/create` → la respuesta incluye `invitationToken` (20 chars, nanoid)
+2. Admin comparte el token con el usuario (WhatsApp, mail, etc.)
+3. Usuario abre `/first-login` en la web, ingresa `username`, `invitationToken`, `password` y confirmación
+4. `PUT /api/auth/firstLogin` valida que el usuario exista, no tenga contraseña y el token coincida
+5. Se establece la contraseña hasheada y el `invitationToken` se limpia (`null`) — uso único
+
 ### JWT
 
 - Expiración: **2 horas**
@@ -294,8 +317,8 @@ Ejemplos: `create_pago`, `read_scout`, `delete_documento`, `modify_entrega`.
 | `GET` | `/api/auth/notifications` | Bearer | Notificaciones del usuario (legacy) |
 | `GET` | `/api/auth/users` | Bearer (ADMIN) | Listar usuarios (filtro `?nombre=`) |
 | `GET` | `/api/auth/users/:id` | Bearer (ADMIN) | Obtener usuario por UUID |
-| `POST` | `/api/auth/create` | Bearer (ADMIN) | Crear usuario — `password`, `role`, `scoutId?`, `familiarId?` opcionales |
-| `PUT` | `/api/auth/firstLogin` | Bearer | Cambiar contraseña en primer login |
+| `POST` | `/api/auth/create` | Bearer (ADMIN) | Crear usuario — devuelve `invitationToken` si se crea sin contraseña |
+| `PUT` | `/api/auth/firstLogin` | Sin auth | Activar cuenta: requiere `username`, `invitationToken` y `password` |
 | `PUT` | `/api/auth/:id` | Bearer (ADMIN) | Modificar usuario |
 
 ### Scout — `/api/scout`

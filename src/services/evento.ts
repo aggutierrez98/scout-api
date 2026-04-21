@@ -3,6 +3,8 @@ import { IEvento, IAddParticipantes } from "../types";
 import { prismaClient } from "../utils/lib/prisma-client";
 import { mapEvento, mapEventoParticipante } from "../mappers/evento";
 import { NotificacionService } from "./notificacion";
+import { AppError, HttpCode } from "../utils";
+import type { ScopingContext } from "../utils/helpers/buildScopingContext";
 
 type queryParams = {
 	limit?: number;
@@ -148,7 +150,7 @@ export class EventoService {
 		return mapEvento(item);
 	};
 
-	addParticipantes = async (eventoId: string, { scoutId, equipoId, rama, tipoParticipante }: IAddParticipantes) => {
+	addParticipantes = async (eventoId: string, { scoutId, equipoId, rama, tipoParticipante }: IAddParticipantes, scopingContext?: ScopingContext) => {
 		const evento = await prismaClient.evento.findUnique({
 			where: { uuid: eventoId },
 			select: { uuid: true, nombre: true },
@@ -175,6 +177,21 @@ export class EventoService {
 		}
 
 		if (scoutIds.length === 0) return [];
+
+		if (scopingContext?.scope === 'RAMA' && scopingContext.rama) {
+			const scouts = await prismaClient.scout.findMany({
+				where: { uuid: { in: scoutIds } },
+				select: { uuid: true, rama: true },
+			});
+			const outsideRama = scouts.filter((s) => s.rama !== scopingContext.rama);
+			if (outsideRama.length > 0) {
+				throw new AppError({
+					name: "UNAUTHORIZED",
+					description: "No podés agregar participantes de otra rama",
+					httpCode: HttpCode.FORBIDDEN,
+				});
+			}
+		}
 
 		const existentes = await prismaClient.eventoParticipante.findMany({
 			where: { eventoId, scoutId: { in: scoutIds } },

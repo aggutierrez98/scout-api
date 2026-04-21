@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { AppError, HttpCode } from "../utils/classes/AppError";
 import { EntregaService } from "../services/entrega";
+import type { ScopingContext } from "../utils/helpers/buildScopingContext";
 
 export class EntregaController {
 	public entregaService;
@@ -29,6 +30,13 @@ export class EntregaController {
 
 	getItems = async (req: Request, res: Response, next: NextFunction) => {
 		const { offset, limit, ...filters } = req.query;
+
+		const scopingContext: ScopingContext = res.locals.scopingContext
+		if (scopingContext.scope === 'RAMA' && scopingContext.rama) {
+			(filters as any).ramas = [scopingContext.rama]
+		} else if (scopingContext.scope === 'FAMILIAR' && scopingContext.familiarId) {
+			(filters as any).familiarId = scopingContext.familiarId
+		}
 
 		try {
 			const response = await this.entregaService.getEntregas({

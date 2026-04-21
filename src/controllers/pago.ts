@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { UploadedFile } from "express-fileupload";
 import { AppError, HttpCode } from "../utils/classes/AppError";
 import { PagoService } from "../services/pago";
+import type { ScopingContext } from "../utils/helpers/buildScopingContext";
 
 export class PagoController {
 	public pagoService;
@@ -29,8 +30,14 @@ export class PagoController {
 	};
 
 	getItems = async (req: Request, res: Response, next: NextFunction) => {
-
 		const { offset, limit, ...filters } = req.query;
+
+		const scopingContext: ScopingContext = res.locals.scopingContext
+		if (scopingContext.scope === 'RAMA' && scopingContext.rama) {
+			(filters as any).ramas = [scopingContext.rama]
+		} else if (scopingContext.scope === 'FAMILIAR' && scopingContext.familiarId) {
+			(filters as any).familiarId = scopingContext.familiarId
+		}
 
 		try {
 			const response = await this.pagoService.getPagos({
