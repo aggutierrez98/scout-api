@@ -26,7 +26,7 @@ export const validFamiliarID = async (id: string) => {
 export const FamiliarSchema = z.object({
 	nombre: z.string().max(100).regex(lettersReg),
 	apellido: z.string().max(100).regex(lettersReg),
-	fechaNacimiento: z.date(),
+	fechaNacimiento: z.coerce.date(),
 	dni: z.string().max(10).regex(numberReg),
 	sexo: z.enum(VALID_SEX).optional().nullable(),
 	localidad: z.string().max(100).regex(lettersReg),

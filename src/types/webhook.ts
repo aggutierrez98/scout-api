@@ -20,6 +20,7 @@ export interface IWebhookComprobanteDatos {
   whatsapp_chat_id: string;
   whatsapp_mensaje_texto: string | null;
   whatsapp_timestamp: string;
+  scoutId?: string | null;
 }
 
 // Resultado del procesamiento del webhook

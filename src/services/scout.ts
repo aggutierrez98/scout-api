@@ -188,7 +188,7 @@ export class ScoutService implements IScoutService {
 							documento: {
 								select: {
 									nombre: true,
-									vence: true,
+									requiereRenovacionAnual: true,
 								},
 							},
 						},

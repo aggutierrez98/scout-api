@@ -46,8 +46,17 @@ export const checkSession = async (req: RequestExt, res: Response, next: NextFun
 			const resource = req.baseUrl.split("api/")[1];
 			const method = req.method as HTTPMethods
 			const authService = new AuthService()
-			const user = await authService.getUser({ userId: isUser.id })!
-			const isAllowed = validatePermissions({ method, resource, userRole: (user?.role as RolesType) })
+			const user = await authService.getUser({ userId: isUser.id })
+
+			if (!user) {
+				throw new AppError({
+					name: "INVALID_TOKEN",
+					description: "Debes estar autorizado",
+					httpCode: HttpCode.UNAUTHORIZED,
+				});
+			}
+
+			const isAllowed = validatePermissions({ method, resource, userRole: user.role as RolesType })
 
 			if (!isAllowed) {
 				throw new AppError({

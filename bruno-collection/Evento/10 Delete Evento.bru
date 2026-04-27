@@ -1,0 +1,19 @@
+meta {
+  name: Delete Evento
+  type: http
+  seq: 10
+}
+
+delete {
+  url: {{base_url}}/api/evento/:id
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: evento-uuid-aqui
+}

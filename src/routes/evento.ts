@@ -6,11 +6,13 @@ import { validate } from "../middlewares/validate";
 import {
 	GetEventosSchema,
 	GetEventoSchema,
+	GetEventoNominaSchema,
 	PostEventoSchema,
 	PutEventoSchema,
 	DeleteEventoSchema,
 	PostParticipantesSchema,
 	DeleteParticipanteSchema,
+	DeleteParticipantesSchema,
 } from "../validators/evento";
 
 export default function createEventoRouter(eventoService: EventoService) {
@@ -20,10 +22,12 @@ export default function createEventoRouter(eventoService: EventoService) {
 	router.get("/", validate(GetEventosSchema), eventoController.getItems);
 	router.get("/mis-eventos", eventoController.getMisEventos);
 	router.get("/:id", validate(GetEventoSchema), cacheMiddleware, eventoController.getItem);
+	router.get("/:id/nomina", validate(GetEventoNominaSchema), eventoController.exportNomina);
 	router.post("/", validate(PostEventoSchema), cleanCacheMiddleware, eventoController.insertItem);
 	router.put("/:id", validate(PutEventoSchema), cleanCacheMiddleware, eventoController.updateItem);
 	router.delete("/:id", validate(DeleteEventoSchema), cleanCacheMiddleware, eventoController.deleteItem);
 	router.post("/:id/participantes", validate(PostParticipantesSchema), cleanCacheMiddleware, eventoController.addParticipantes);
+	router.delete("/:id/participantes", validate(DeleteParticipantesSchema), cleanCacheMiddleware, eventoController.removeAllParticipantes);
 	router.delete("/:id/participantes/:participanteId", validate(DeleteParticipanteSchema), cleanCacheMiddleware, eventoController.removeParticipante);
 
 	return router;

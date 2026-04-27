@@ -1,7 +1,7 @@
 import { resolve } from "path";
 import { FillingOptions, fillPdfForm, StraighThroughLine } from "../../lib/pdf-lib";
 import { nanoid } from "nanoid";
-import { getPDFFile } from "../../helpers/googleDriveApi";
+import { getFile } from "../../helpers/googleDriveApi";
 import { uploadToS3 } from "../../lib/s3.util";
 
 
@@ -10,7 +10,7 @@ interface PdfData { [key: string]: string | StraighThroughLine[] | boolean }
 
 export interface BaseConstructorProps {
     documentName: string,
-    fileUploadId: string,
+    googleDriveFileId: string,
     fillingOptions?: FillingOptions,
     documentoFilled?: Buffer
     data?: any
@@ -18,7 +18,7 @@ export interface BaseConstructorProps {
 
 export abstract class PdfDocument {
     protected documentName: string
-    protected fileUploadId: string
+    protected googleDriveFileId: string
     protected _uploadId: string
     protected dirPath: string
     protected options: FillingOptions
@@ -26,9 +26,9 @@ export abstract class PdfDocument {
     protected abstract data: any
     protected abstract uploadFolder: string
 
-    constructor({ documentName, fileUploadId, fillingOptions, documentoFilled }: BaseConstructorProps) {
+    constructor({ documentName, googleDriveFileId, fillingOptions, documentoFilled }: BaseConstructorProps) {
         this.dirPath = resolve("src/public/docs")
-        this.fileUploadId = fileUploadId
+        this.googleDriveFileId = googleDriveFileId
         this.documentName = documentName.split(" ").join("_")
         this.options = fillingOptions || {
             fontColor: "#000",
@@ -46,7 +46,7 @@ export abstract class PdfDocument {
 
     async fill({ returnBase64 }: { returnBase64?: boolean }): Promise<void | string> {
 
-        const data = await getPDFFile(this.fileUploadId)
+        const data = await getFile(this.googleDriveFileId)
         if (!data) return
 
         const mappedData = this.mapData();

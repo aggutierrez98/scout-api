@@ -3,6 +3,7 @@ import logger from "../utils/classes/Logger";
 import { ejecutarCumpleañosCron } from "./cumpleaños";
 import { ejecutarEventosReminderCron } from "./eventosReminder";
 import { ejecutarCuotaMensualCron } from "./cuotaMensual";
+import { ejecutarDocumentosPendientesCron } from "./documentosPendientes";
 
 const TZ = "America/Argentina/Buenos_Aires";
 
@@ -36,8 +37,8 @@ export function registerCrons() {
 		{ timezone: TZ },
 	);
 
-	// Cuota mensual — todos los sábados a las 10:00 AM Argentina
-	// Recuerda a los familiares sin pago de cuota del mes en curso
+	// Pagos pendientes — todos los sábados a las 10:00 AM Argentina
+	// Usa el motor de obligaciones/imputaciones y notifica familiares + usuario directo del scout
 	cron.schedule(
 		"0 10 * * 6",
 		async () => {
@@ -46,6 +47,21 @@ export function registerCrons() {
 				await ejecutarCuotaMensualCron();
 			} catch (err) {
 				logger.error(`[Cron/Cuota] Error: ${(err as Error).message}`);
+			}
+		},
+		{ timezone: TZ },
+	);
+
+	// Documentos pendientes/vencidos — todos los sábados a las 10:00 AM Argentina
+	// Recuerda a familiares con usuarios asociados sobre documentos requeridos para ingreso.
+	cron.schedule(
+		"0 10 * * 6",
+		async () => {
+			logger.info("[Cron/Documentos] Iniciando");
+			try {
+				await ejecutarDocumentosPendientesCron();
+			} catch (err) {
+				logger.error(`[Cron/Documentos] Error: ${(err as Error).message}`);
 			}
 		},
 		{ timezone: TZ },

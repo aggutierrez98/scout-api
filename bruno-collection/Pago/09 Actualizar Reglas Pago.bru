@@ -1,0 +1,48 @@
+meta {
+  name: Actualizar Reglas Pago
+  type: http
+  seq: 9
+}
+
+put {
+  url: {{base_url}}/api/pago/reglas/:id
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: ciclo-reglas-uuid
+}
+
+body:json {
+  {
+    "anio": 2026,
+    "fechaInicio": "2026-01-01T00:00:00.000Z",
+    "fechaFin": "2026-12-31T23:59:59.999Z",
+    "afiliacion": [
+      {
+        "funcionScout": "JOVEN",
+        "monto": 13000,
+        "obligatoria": true
+      }
+    ],
+    "cuotasMensuales": [
+      { "mes": 1, "montoBase": 16000, "cobrable": true },
+      { "mes": 2, "montoBase": 16000, "cobrable": true },
+      { "mes": 3, "montoBase": 16000, "cobrable": true }
+    ],
+    "descuentoPagoAnual": {
+      "habilitado": true,
+      "mesBonificado": 12
+    },
+    "descuentosFamiliares": [
+      { "cantidadMinima": 1, "cantidadMaxima": 1, "montoPorScout": 16000 },
+      { "cantidadMinima": 2, "cantidadMaxima": 2, "montoPorScout": 12000 },
+      { "cantidadMinima": 3, "cantidadMaxima": null, "montoPorScout": 8500 }
+    ]
+  }
+}

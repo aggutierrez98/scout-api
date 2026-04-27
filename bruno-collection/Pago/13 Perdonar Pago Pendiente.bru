@@ -1,0 +1,26 @@
+meta {
+  name: Perdonar Pago Pendiente
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{base_url}}/api/pago/pendientes/:id/perdonar
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: obligacion-uuid-aqui
+}
+
+body:json {
+  {
+    "motivo": "Condonación autorizada por jefatura por situación excepcional.",
+    "montoCondonado": 5000
+  }
+}

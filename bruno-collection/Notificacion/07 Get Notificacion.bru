@@ -1,0 +1,19 @@
+meta {
+  name: Get Notificacion
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{base_url}}/api/notificacion/:id
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: notificacion-uuid-aqui
+}

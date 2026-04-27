@@ -244,8 +244,34 @@ export class DocumentoController {
 
 	getDocumentosPendientes = async (req: Request, res: Response, next: NextFunction) => {
 		try {
-			const { familiarId } = req.query as { familiarId: string };
-			const result = await this.documentoService.getDocumentosPendientes(familiarId);
+			const { familiarId, soloCompletable, offset, limit } = req.query as {
+				familiarId?: string;
+				soloCompletable?: "true" | "false";
+				offset?: string;
+				limit?: string;
+			};
+			const scopingContext: ScopingContext = res.locals.scopingContext;
+
+			if (
+				scopingContext.scope === "FAMILIAR" &&
+				scopingContext.familiarId &&
+				familiarId &&
+				scopingContext.familiarId !== familiarId
+			) {
+				throw new AppError({
+					name: "UNAUTHORIZED",
+					httpCode: HttpCode.FORBIDDEN,
+					description: "No tenés permisos para consultar pendientes de otro familiar",
+				});
+			}
+
+			const result = await this.documentoService.getDocumentosPendientes({
+				scopingContext,
+				familiarId,
+				soloCompletable: soloCompletable === "true",
+				offset: offset ? Number(offset) : undefined,
+				limit: limit ? Number(limit) : undefined,
+			});
 			res.json(result);
 		} catch (e) {
 			next(e);

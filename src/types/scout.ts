@@ -26,7 +26,7 @@ export interface IScoutData extends IScout {
 	documentosPresentados?: {
 		id: string;
 		nombre?: string;
-		vence?: boolean;
+		requiereRenovacionAnual?: boolean;
 		fechaPresentacion: Date;
 	}[];
 	entregasObtenidas?: {

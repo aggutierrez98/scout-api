@@ -1,0 +1,20 @@
+meta {
+  name: Delete Participante
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{base_url}}/api/evento/:id/participantes/:participanteId
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: evento-uuid-aqui
+  participanteId: participante-uuid-o-scout-uuid
+}

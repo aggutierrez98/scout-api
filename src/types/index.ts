@@ -11,6 +11,8 @@ export * from "./notificacion";
 export * from "./pushToken";
 export * from "./tipoEvento";
 export * from "./evento";
+export * from "./nomina";
+export * from "./pagoReglas";
 
 
 export interface IInsignaObt {
@@ -20,4 +22,3 @@ export interface IInsignaObt {
     progresion: string | null;
     fechaObtencion: Date;
 }
-

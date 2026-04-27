@@ -41,7 +41,7 @@ export const validScoutID = async (id: string) => {
 const ScoutBaseSchema = z.object({
 	nombre: z.string().max(100).regex(lettersReg),
 	apellido: z.string().max(100).regex(lettersReg),
-	fechaNacimiento: z.date(),
+	fechaNacimiento: z.coerce.date(),
 	dni: z.string().max(10).regex(numberReg),
 	sexo: z.enum(VALID_SEX).optional().nullable(),
 	localidad: z.string().max(100).regex(lettersReg),
@@ -55,13 +55,13 @@ const ScoutBaseSchema = z.object({
 	religion: z.enum(VALID_RELIGIONS),
 	equipoId: IdSchema.max(10).nullable(),
 	funcion: z.enum(VALID_FUNCTIONS),
-	rama: z.enum(VALID_RAMAS),
+	rama: z.enum(VALID_RAMAS).nullable(),
 	progresionActual: z.enum(VALID_PROGRESSIONS).nullable(),
 });
 
 export const ScoutSchema = ScoutBaseSchema.refine(
 	(data) => {
-		if (!data.progresionActual) return true;
+		if (!data.progresionActual || !data.rama) return true;
 		return PROGRESIONES_POR_RAMA[data.rama].includes(
 			data.progresionActual as never,
 		);

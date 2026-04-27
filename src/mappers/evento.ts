@@ -1,4 +1,4 @@
-import { Documento, Evento, EventoParticipante, Scout, TipoEvento, TipoEventoDocumento, TipoEventoDocumentoParticipante } from "@prisma/client";
+import type { Documento, Evento, EventoParticipante, Scout, TipoEvento, TipoEventoDocumento, TipoEventoDocumentoParticipante } from "@prisma/client";
 
 type TipoEventoWithDocs = TipoEvento & {
 	documentosEvento?: Array<TipoEventoDocumento & { documento: Documento }>;
@@ -7,7 +7,7 @@ type TipoEventoWithDocs = TipoEvento & {
 
 type EventoWithRelations = Evento & {
 	tipoEvento?: TipoEventoWithDocs;
-	participantes?: Array<EventoParticipante & { scout?: Pick<Scout, "uuid" | "nombre" | "apellido"> }>;
+	participantes?: Array<EventoParticipante & { scout?: Pick<Scout, "uuid" | "nombre" | "apellido" | "funcion"> }>;
 };
 
 export const mapEvento = (evento: EventoWithRelations) => {
@@ -32,7 +32,7 @@ export const mapEvento = (evento: EventoWithRelations) => {
 			tipoParticipante,
 			fechaCreacion,
 			scout: scout
-				? { id: scout.uuid, nombre: scout.nombre, apellido: scout.apellido }
+				? { id: scout.uuid, nombre: scout.nombre, apellido: scout.apellido, funcion: scout.funcion }
 				: undefined,
 		})),
 	};

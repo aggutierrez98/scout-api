@@ -3,13 +3,51 @@ import { UploadedFile } from "express-fileupload";
 import { AppError, HttpCode } from "../utils/classes/AppError";
 import { PagoService } from "../services/pago";
 import type { ScopingContext } from "../utils/helpers/buildScopingContext";
+import { ROLES, RolesType } from "../types";
+import { ServicioReglasPago } from "../services/servicioReglasPago";
+import { ServicioObligacionesPago } from "../services/servicioObligacionesPago";
+import { ServicioCondonacionPago } from "../services/servicioCondonacionPago";
+
+const ROLES_ALTOS: RolesType[] = [
+	ROLES.JEFE_GRUPO,
+	ROLES.SUBJEFE_GRUPO,
+	ROLES.ADMINISTRADOR,
+];
 
 export class PagoController {
 	public pagoService;
+	private servicioReglasPago;
+	private servicioObligacionesPago;
+	private servicioCondonacionPago;
 
 	constructor({ pagoService }: { pagoService: PagoService }) {
 		this.pagoService = pagoService;
+		this.servicioReglasPago = new ServicioReglasPago();
+		this.servicioObligacionesPago = new ServicioObligacionesPago();
+		this.servicioCondonacionPago = new ServicioCondonacionPago();
 	}
+
+	private getCurrentUser = (res: Response) => {
+		const currentUser = res.locals.currentUser;
+		if (!currentUser) {
+			throw new AppError({
+				name: "UNAUTHENTICATED",
+				httpCode: HttpCode.UNAUTHORIZED,
+				description: "Debes estar autenticado",
+			});
+		}
+		return currentUser;
+	};
+
+	private requireRoles = (role: RolesType, roles: RolesType[]) => {
+		if (!roles.includes(role)) {
+			throw new AppError({
+				name: "FORBIDDEN",
+				httpCode: HttpCode.FORBIDDEN,
+				description: "No tenés permisos para ejecutar esta acción",
+			});
+		}
+	};
 
 	getItem = async ({ params }: Request, res: Response, next: NextFunction) => {
 		try {
@@ -32,11 +70,11 @@ export class PagoController {
 	getItems = async (req: Request, res: Response, next: NextFunction) => {
 		const { offset, limit, ...filters } = req.query;
 
-		const scopingContext: ScopingContext = res.locals.scopingContext
-		if (scopingContext.scope === 'RAMA' && scopingContext.rama) {
-			(filters as any).ramas = [scopingContext.rama]
-		} else if (scopingContext.scope === 'FAMILIAR' && scopingContext.familiarId) {
-			(filters as any).familiarId = scopingContext.familiarId
+		const scopingContext: ScopingContext = res.locals.scopingContext;
+		if (scopingContext.scope === "RAMA" && scopingContext.rama) {
+			(filters as any).ramas = [scopingContext.rama];
+		} else if (scopingContext.scope === "FAMILIAR" && scopingContext.familiarId) {
+			(filters as any).familiarId = scopingContext.familiarId;
 		}
 
 		try {
@@ -121,6 +159,96 @@ export class PagoController {
 
 			const result = await this.pagoService.importPagos(csvFile.data);
 			res.status(201).json(result);
+		} catch (e) {
+			next(e);
+		}
+	};
+
+	getReglasActiva = async (_req: Request, res: Response, next: NextFunction) => {
+		try {
+			const reglas = await this.servicioReglasPago.obtenerReglaActiva();
+			res.send(reglas);
+		} catch (e) {
+			next(e);
+		}
+	};
+
+	crearReglas = async ({ body }: Request, res: Response, next: NextFunction) => {
+		try {
+			const currentUser = this.getCurrentUser(res);
+			this.requireRoles(currentUser.role, ROLES_ALTOS);
+			const reglas = await this.servicioReglasPago.crearBorradorReglas(body);
+			res.status(201).send(reglas);
+		} catch (e) {
+			next(e);
+		}
+	};
+
+	actualizarReglas = async ({ params, body }: Request, res: Response, next: NextFunction) => {
+		try {
+			const currentUser = this.getCurrentUser(res);
+			this.requireRoles(currentUser.role, ROLES_ALTOS);
+			const reglas = await this.servicioReglasPago.actualizarReglas(params.id, body);
+			res.send(reglas);
+		} catch (e) {
+			next(e);
+		}
+	};
+
+	activarReglas = async ({ params }: Request, res: Response, next: NextFunction) => {
+		try {
+			const currentUser = this.getCurrentUser(res);
+			this.requireRoles(currentUser.role, ROLES_ALTOS);
+			const reglas = await this.servicioReglasPago.activarReglas(params.id);
+			res.send(reglas);
+		} catch (e) {
+			next(e);
+		}
+	};
+
+	getPendientes = async ({ query }: Request, res: Response, next: NextFunction) => {
+		try {
+			const currentUser = this.getCurrentUser(res);
+			const pendientes = await this.servicioObligacionesPago.listarPendientes({
+				user: currentUser,
+				filters: query,
+			});
+			res.send(pendientes);
+		} catch (e) {
+			next(e);
+		}
+	};
+
+	getPendiente = async ({ params }: Request, res: Response, next: NextFunction) => {
+		try {
+			const currentUser = this.getCurrentUser(res);
+			const pendiente = await this.servicioObligacionesPago.obtenerPendiente({
+				user: currentUser,
+				obligacionId: params.id,
+			});
+			if (!pendiente) {
+				throw new AppError({
+					name: "NOT_FOUND",
+					httpCode: HttpCode.NOT_FOUND,
+					description: "No existe el pendiente solicitado",
+				});
+			}
+			res.send(pendiente);
+		} catch (e) {
+			next(e);
+		}
+	};
+
+	perdonarPendiente = async ({ params, body }: Request, res: Response, next: NextFunction) => {
+		try {
+			const currentUser = this.getCurrentUser(res);
+			this.requireRoles(currentUser.role, ROLES_ALTOS);
+			const result = await this.servicioCondonacionPago.perdonarObligacion({
+				obligacionId: params.id,
+				input: body,
+				userId: currentUser.id,
+			});
+			res.status(201).send(result);
 		} catch (e) {
 			next(e);
 		}

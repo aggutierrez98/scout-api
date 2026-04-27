@@ -1,0 +1,25 @@
+meta {
+  name: Update Tipo de Evento
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{base_url}}/api/tipo-evento/:id
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: tipo-evento-uuid-aqui
+}
+
+body:json {
+  {
+    "nombre": "Campamento (actualizado)"
+  }
+}

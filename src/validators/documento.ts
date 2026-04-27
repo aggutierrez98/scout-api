@@ -1,13 +1,11 @@
-import { z, ZodIssueCode } from "zod";
+import { z } from "zod";
 import { IDocumento } from "../types";
 import { validScoutID } from "./scout";
 import { ISODateStringReg, nanoIdRegex, numberReg } from "../utils/regex";
 import { IdSchema, QuerySearchSchema } from "./generics";
-import { prismaClient, initPrisma } from "../utils/lib/prisma-client";
+import { prismaClient } from "../utils/lib/prisma-client";
 import { validFamiliarID } from ".";
 import { VALID_TIPOS_EVENTO } from '../utils/constants';
-// import { prismaClient } from "../utils/lib/prisma-client";
-// import { getPrismaClient } from "../utils/lib/prisma-client";
 
 export const filesSchema = z.object({
 	signature: z.object({
@@ -31,7 +29,7 @@ export const validDocumentoId = async (id: string) => {
 export const validDocumentoCompletableId = async (id: string) => {
 	const DocumentoDataModel = prismaClient.documento;
 	const respItem = await DocumentoDataModel.findUnique({ where: { uuid: id } });
-	return !!respItem?.completable
+	return !!respItem?.completableDinamicamente
 };
 
 export const validDocumentoDefinicionId = async (id: string) => {
@@ -41,35 +39,10 @@ export const validDocumentoDefinicionId = async (id: string) => {
 
 export const DocumentoSchema = z.object({
 	scoutId: z.string().refine(validScoutID),
-	documentoId: z.string().refine(validDocumentoCompletableId),
+	documentoId: z.string().refine(validDocumentoDefinicionId),
 	fechaPresentacion: z.date().optional(),
-	requiereFamiliar: z.boolean().default(false),
-	requiereFirma: z.boolean().default(false),
 	uploadId: z.string().regex(nanoIdRegex).optional(),
 }) satisfies z.Schema<IDocumento>;
-
-const parseJsonPreprocessor = (value: any, ctx: z.RefinementCtx) => {
-	if (typeof value === 'string') {
-		console.log({ value });
-		try {
-			return JSON.parse(value);
-		} catch (e) {
-			ctx.addIssue({
-				code: ZodIssueCode.custom,
-				message: (e as Error).message,
-			});
-		}
-	}
-	return value;
-};
-
-
-
-
-// retiroData: z.preprocess(parseJsonPreprocessor, z.object({
-// 	solo: z.boolean().optional(),
-// 	personas: z.array(z.string()).optional()
-// }).optional()).optional()
 
 const stringToJSONSchema = z.string()
 	.transform((str, ctx): z.infer<ReturnType<any>> => {
@@ -80,6 +53,18 @@ const stringToJSONSchema = z.string()
 			return z.NEVER
 		}
 	})
+
+const RetiroPersonaManualSchema = z.object({
+	nombre: z.string().min(1),
+	apellido: z.string().min(1),
+	dni: z.string().min(1),
+	parentesco: z.string().min(1),
+});
+
+const SaludDataSchema = z.record(
+	z.string(),
+	z.union([z.string(), z.number(), z.boolean()]).transform((value) => String(value)),
+);
 
 export const FillDataSchema = z.object({
 	scoutId: z.string().refine(validScoutID).optional(),
@@ -108,12 +93,13 @@ export const FillDataSchema = z.object({
 	tipoEvento: z.enum(VALID_TIPOS_EVENTO).optional(),
 	retiroData: stringToJSONSchema.pipe(z.object({
 		solo: z.boolean().optional(),
-		personas: z.array(z.string()).optional()
+		personas: z.array(z.union([z.string(), RetiroPersonaManualSchema])).optional()
 	})).optional(),
+	saludData: stringToJSONSchema.pipe(SaludDataSchema).optional(),
 }).superRefine(async ({ documentoId, familiarId }, ctx) => {
 	const respItem = await prismaClient.documento.findUnique({ where: { uuid: documentoId } });
 	if (!respItem) return
-	if (respItem.requiereFamiliar) {
+	if (respItem.requiereDatosFamiliar) {
 		if (!familiarId) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
@@ -141,13 +127,13 @@ export const SignDocumentSchema = z.object({
 }).superRefine(async ({ body: { documentoId }, files }, ctx) => {
 	const respItem = await prismaClient.documento.findUnique({ where: { uuid: documentoId } });
 	if (!respItem) return
-	if (respItem.requiereFirma) {
+	if (respItem.requiereFirmaFamiliar) {
 		if (!files?.signature) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
 				path: ["files", "signature"],
 				fatal: true,
-				message: "La firma es requerida para el documento",
+				message: "La firma del familiar es requerida para el documento",
 			});
 		}
 	}
@@ -159,18 +145,19 @@ export const UploadDocumentSchema = z.object({
 });
 
 export const GetDocumentosPendientesSchema = z.object({
-	query: z.object({
-		familiarId: z.string().refine(validFamiliarID, { message: "Familiar no encontrado" }),
+	query: QuerySearchSchema.extend({
+		familiarId: z.string().optional().refine(
+			async (id) => (id ? validFamiliarID(id) : true),
+			{ message: "Familiar no encontrado" },
+		),
+		soloCompletable: z.enum(["true", "false"]).optional(),
 	}),
 });
 
 export const GetDocumentosSchema = z.object({
 	query: QuerySearchSchema.extend({
-		// equipo: IdSchema.max(10).regex(numberReg).optional(),
-		// nombre: z.string().max(85).regex(nameRegex).optional(),
-		// funcion: z.enum(VALID_FUNCTIONS).optional(),
-		// sexo: z.enum(VALID_SEX).optional(),
-		// progresion: z.enum(VALID_PROGRESSIONS).optional(),
+		nombre: z.string().max(85).optional(),
+		requiereRenovacionAnual: z.enum(["true", "false"]).optional(),
 		tiempoDesde: z.string().regex(ISODateStringReg).optional(),
 		tiempoHasta: z.string().regex(ISODateStringReg).optional(),
 	}),

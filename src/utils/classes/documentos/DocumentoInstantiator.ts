@@ -36,6 +36,7 @@ export type FillDocumentoData = {
     avalAclaracion?: string
     avalDni?: string
     avalFuncionGrupoScout?: string
+    saludData?: Record<string, string>
     pago?: {
         monto: number
         concepto: string
@@ -48,7 +49,7 @@ export const PDFDocumentInstantiator: Record<PDFDocumentsEnum, PdfModelFunc> = {
     [PDFDocumentsEnum.CaratulaLegajo]: ({ docData, scoutId, documentoFilled }: FillDocumentoData) => {
         return new CaratulaLegajo({
             documentName: docData.nombre,
-            fileUploadId: docData.fileUploadId!,
+            googleDriveFileId: docData.googleDriveFileId!,
             documentoFilled: documentoFilled?.data,
             scoutId,
         });
@@ -56,7 +57,7 @@ export const PDFDocumentInstantiator: Record<PDFDocumentsEnum, PdfModelFunc> = {
     [PDFDocumentsEnum.AutorizacionUsoImagen]: ({ docData, signature, theme, cicloActividades, scoutId, familiarId, documentoFilled }: FillDocumentoData) => {
         return new AutorizacionUsoImagen({
             documentName: docData.nombre,
-            fileUploadId: docData.fileUploadId!,
+            googleDriveFileId: docData.googleDriveFileId!,
             cicloActividades: cicloActividades!,
             scoutId,
             familiarId: familiarId!,
@@ -70,7 +71,7 @@ export const PDFDocumentInstantiator: Record<PDFDocumentsEnum, PdfModelFunc> = {
     [PDFDocumentsEnum.AutorizacionRetiro]: ({ docData, signature, theme, retiroData, scoutId, familiarId, documentoFilled }: FillDocumentoData) => {
         return new AutorizacionRetiro({
             documentName: docData.nombre,
-            fileUploadId: docData.fileUploadId!,
+            googleDriveFileId: docData.googleDriveFileId!,
             scoutId,
             familiarId: familiarId!,
             retiroData: retiroData!,
@@ -84,7 +85,7 @@ export const PDFDocumentInstantiator: Record<PDFDocumentsEnum, PdfModelFunc> = {
     [PDFDocumentsEnum.AutorizacionIngresoMenores]: ({ docData, signature, theme, scoutId, familiarId, documentoFilled, aclaraciones }: FillDocumentoData) => {
         return new AutorizacionIngresoMenores({
             documentName: docData.nombre,
-            fileUploadId: docData.fileUploadId!,
+            googleDriveFileId: docData.googleDriveFileId!,
             scoutId,
             familiarId: familiarId!,
             aclaraciones: aclaraciones!,
@@ -98,7 +99,7 @@ export const PDFDocumentInstantiator: Record<PDFDocumentsEnum, PdfModelFunc> = {
     [PDFDocumentsEnum.AutorizacionSalidasCercanas]: ({ docData, signature, theme, scoutId, familiarId, documentoFilled, cicloActividades = "2025", rangoDistanciaPermiso = "5 Kilometros" }: FillDocumentoData) => {
         return new AutorizacionSalidasCercanas({
             documentName: docData.nombre,
-            fileUploadId: docData.fileUploadId!,
+            googleDriveFileId: docData.googleDriveFileId!,
             scoutId,
             familiarId: familiarId!,
             cicloActividades,
@@ -113,7 +114,7 @@ export const PDFDocumentInstantiator: Record<PDFDocumentsEnum, PdfModelFunc> = {
     [PDFDocumentsEnum.AutorizacionEventos]: ({ docData, signature, theme, scoutId, familiarId, documentoFilled, fechaEventoComienzo, fechaEventoFin, lugarEvento, tipoEvento }: FillDocumentoData) => {
         return new AutorizacionEventos({
             documentName: docData.nombre,
-            fileUploadId: docData.fileUploadId!,
+            googleDriveFileId: docData.googleDriveFileId!,
             scoutId,
             familiarId: familiarId!,
             fechaEventoComienzo: new Date(fechaEventoComienzo!),
@@ -127,19 +128,20 @@ export const PDFDocumentInstantiator: Record<PDFDocumentsEnum, PdfModelFunc> = {
             },
         });
     },
-    [PDFDocumentsEnum.DeclaracionJuradaSalud]: ({ docData, scoutId, familiarId, documentoFilled }: FillDocumentoData) => {
+    [PDFDocumentsEnum.DeclaracionJuradaSalud]: ({ docData, scoutId, familiarId, documentoFilled, saludData }: FillDocumentoData) => {
         return new DeclaracionJuradaSalud({
             documentName: docData.nombre,
-            fileUploadId: docData.fileUploadId!,
+            googleDriveFileId: docData.googleDriveFileId!,
             scoutId,
             familiarId,
+            saludData,
             documentoFilled: documentoFilled?.data,
         });
     },
     [PDFDocumentsEnum.DeclaracionJuradaParticipacionMayores18]: ({ docData, scoutId, documentoFilled, fechaEventoComienzo, fechaEventoFin, lugarEvento, tipoEvento, transporteContratadoOpcion, transporteAlternativoDescripcion, transporteLlegadaDiaHorario, transporteRetiroDiaHorario, transporteCelularContacto, avalAclaracion, avalDni, avalFuncionGrupoScout }: FillDocumentoData) => {
         return new DeclaracionJuradaParticipacionMayores18({
             documentName: docData.nombre,
-            fileUploadId: docData.fileUploadId!,
+            googleDriveFileId: docData.googleDriveFileId!,
             scoutId,
             fechaEventoComienzo: fechaEventoComienzo ? new Date(fechaEventoComienzo) : undefined,
             fechaEventoFin: fechaEventoFin ? new Date(fechaEventoFin) : undefined,
@@ -159,7 +161,7 @@ export const PDFDocumentInstantiator: Record<PDFDocumentsEnum, PdfModelFunc> = {
     [PDFDocumentsEnum.ReciboPago]: ({ docData, familiarId, documentoFilled, fechaPago, pago, numeroRecibo }: FillDocumentoData) => {
         return new ReciboPago({
             documentName: docData.nombre,
-            fileUploadId: docData.fileUploadId!,
+            googleDriveFileId: docData.googleDriveFileId!,
             familiarId: familiarId!,
             fechaPago: new Date(fechaPago!),
             pago: pago!,

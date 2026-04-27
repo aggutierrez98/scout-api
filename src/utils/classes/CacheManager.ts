@@ -1,6 +1,6 @@
 import { createClient } from "redis";
 import { SecretsManager } from "./SecretsManager";
-type CacheValue = any | null;
+type CacheValue = unknown | null;
 
 const MAX_REDIS_CONNECTION_RETRIES = 20
 const MAX_REDIS_CONNECTION_TIMEOUT_MS = 10000
@@ -14,7 +14,7 @@ export class CacheManager {
 		this.client = createClient({
 			url: SecretsManager.getInstance().getRedisURI(),
 			socket: {
-				reconnectStrategy: function (retries) {
+				reconnectStrategy: (retries) => {
 					if (retries > MAX_REDIS_CONNECTION_RETRIES) {
 						console.error("Demasiados intentos de reconexión. La conexión del Cache Manager fue terminada");
 						return new Error("Too many retries.");
@@ -55,7 +55,7 @@ export class CacheManager {
 			await this.connectIfNecessary();
 			await this.client.ping();
 			return true;
-		} catch (error) {
+		} catch (_error) {
 			return false;
 		}
 	}
@@ -89,6 +89,13 @@ export class CacheManager {
 		this.client.del(key);
 	}
 
+	async clearByPrefix(prefix: string) {
+		await this.connectIfNecessary();
+		const keys = await this.client.keys(`${prefix}*`);
+		if (keys.length === 0) return;
+		await this.client.del(keys);
+	}
+
 	private stringifyValueForStoring(value: CacheValue): string {
 		return JSON.stringify(value);
 	}
@@ -96,7 +103,7 @@ export class CacheManager {
 	private transformValueFromStorageFormat(value: string): CacheValue | null {
 		try {
 			return JSON.parse(value);
-		} catch (error) {
+		} catch (_error) {
 			return null;
 		}
 	}

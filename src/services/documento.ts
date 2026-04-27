@@ -8,6 +8,7 @@ import {
 } from "../types";
 import { nanoid } from "nanoid";
 import { AppError, HttpCode } from "../utils";
+import type { Prisma } from "@prisma/client";
 import { getFileInS3, uploadToS3 } from "../utils/lib/s3.util";
 import { PdfDocument } from '../utils/classes/documentos/PdfDocument';
 import logger from "../utils/classes/Logger";
@@ -15,6 +16,7 @@ import { FillDocumentoData, resolvePdfDocumentInstantiator } from "../utils/clas
 import { prismaClient } from "../utils/lib/prisma-client";
 import { mapDocumentoPresentado, mapDocumentoDefinicion } from "../mappers/documentoPresentado";
 import { scanAuthorizationDocument, AuthorizationDocumentScanResult } from "../utils/lib/gemini";
+import type { ScopingContext } from "../utils/helpers/buildScopingContext";
 
 
 type getQueryParams = {
@@ -23,7 +25,7 @@ type getQueryParams = {
 	filters: {
 		nombre?: string;
 		scoutId?: string;
-		vence?: string;
+		requiereRenovacionAnual?: string;
 		tiempoDesde?: Date;
 		tiempoHasta?: Date;
 		equipos?: string[];
@@ -34,6 +36,31 @@ type getQueryParams = {
 	};
 };
 
+type DocumentoPendienteEstado = "FALTANTE" | "VENCIDO_ANUAL";
+
+type DocumentoPendienteData = {
+	documentoId: string;
+	documentoNombre: string;
+	scoutId: string;
+	scoutNombre: string;
+	scoutApellido: string;
+	estado: DocumentoPendienteEstado;
+	requiereDatosFamiliar: boolean;
+	// Compatibilidad hacia atrás para consumidores viejos.
+	requiereFamiliar: boolean;
+	requiereRenovacionAnual: boolean;
+	completableDinamicamente: boolean;
+	anioUltimaPresentacion: number | null;
+};
+
+type GetDocumentosPendientesParams = {
+	scopingContext: ScopingContext;
+	familiarId?: string;
+	soloCompletable?: boolean;
+	offset?: number;
+	limit?: number;
+};
+
 interface IDocumentoService {
 	insertDocumento: (documento: IDocumento) => Promise<IDocumentoEntregado | null>;
 	getDocumentos: (params: getQueryParams) => Promise<IDocumentoEntregado[]>;
@@ -42,6 +69,158 @@ interface IDocumentoService {
 }
 
 export class DocumentoService implements IDocumentoService {
+	private getCalendarYearArgentina = (date: Date) =>
+		Number(
+			new Intl.DateTimeFormat("en-US", {
+				timeZone: "America/Argentina/Buenos_Aires",
+				year: "numeric",
+			}).format(date),
+		);
+
+	private getCurrentCalendarYearArgentina = () =>
+		this.getCalendarYearArgentina(new Date());
+
+	private resolveScoutsForPending = async ({
+		scopingContext,
+		familiarId,
+	}: {
+		scopingContext: ScopingContext;
+		familiarId?: string;
+	}) => {
+		const andConditions: Prisma.ScoutWhereInput[] = [];
+
+		if (scopingContext.scope === "FAMILIAR" && !scopingContext.familiarId) {
+			return [];
+		}
+
+		if (scopingContext.scope === "RAMA") {
+			if (!scopingContext.rama) return [];
+			andConditions.push({ rama: scopingContext.rama });
+		}
+
+		const familiarFilter =
+			scopingContext.scope === "FAMILIAR"
+				? scopingContext.familiarId
+				: familiarId;
+
+		if (familiarFilter) {
+			andConditions.push({
+				familiarScout: { some: { familiarId: familiarFilter } },
+			});
+		}
+
+		return prismaClient.scout.findMany({
+			where: andConditions.length ? { AND: andConditions } : undefined,
+			select: {
+				uuid: true,
+				nombre: true,
+				apellido: true,
+			},
+		});
+	};
+
+	private computePendingDocumentsForScouts = async ({
+		scouts,
+		soloCompletable = false,
+	}: {
+		scouts: Array<{ uuid: string; nombre: string; apellido: string }>;
+		soloCompletable?: boolean;
+	}): Promise<DocumentoPendienteData[]> => {
+		if (scouts.length === 0) return [];
+
+		const docsRequeridos = await prismaClient.documento.findMany({
+			where: {
+				requeridoParaIngreso: true,
+				...(soloCompletable ? { completableDinamicamente: true } : {}),
+			},
+			select: {
+				uuid: true,
+				nombre: true,
+				requiereDatosFamiliar: true,
+				requiereRenovacionAnual: true,
+				completableDinamicamente: true,
+			},
+		});
+
+		if (docsRequeridos.length === 0) return [];
+
+		const scoutIds = scouts.map((scout) => scout.uuid);
+		const docsIds = docsRequeridos.map((doc) => doc.uuid);
+		const entregas = await prismaClient.documentoPresentado.findMany({
+			where: {
+				scoutId: { in: scoutIds },
+				documentoId: { in: docsIds },
+			},
+			select: {
+				scoutId: true,
+				documentoId: true,
+				fechaPresentacion: true,
+			},
+		});
+
+		const entregasPorScoutYDocumento = new Map<string, Date[]>();
+		for (const entrega of entregas) {
+			if (!entrega.scoutId) continue;
+			const key = `${entrega.scoutId}::${entrega.documentoId}`;
+			const existing = entregasPorScoutYDocumento.get(key) ?? [];
+			existing.push(new Date(entrega.fechaPresentacion));
+			entregasPorScoutYDocumento.set(key, existing);
+		}
+
+		const currentYear = this.getCurrentCalendarYearArgentina();
+		const results: DocumentoPendienteData[] = [];
+
+		for (const scout of scouts) {
+			for (const doc of docsRequeridos) {
+				const key = `${scout.uuid}::${doc.uuid}`;
+				const fechas = entregasPorScoutYDocumento.get(key) ?? [];
+				const aniosPresentados = fechas.map((fecha) =>
+					this.getCalendarYearArgentina(fecha),
+				);
+				const anioUltimaPresentacion =
+					aniosPresentados.length > 0 ? Math.max(...aniosPresentados) : null;
+
+				let estado: DocumentoPendienteEstado | null = null;
+
+				if (doc.requiereRenovacionAnual) {
+					if (anioUltimaPresentacion === null || anioUltimaPresentacion < currentYear) {
+						estado =
+							anioUltimaPresentacion === null
+								? "FALTANTE"
+								: "VENCIDO_ANUAL";
+					}
+				} else if (fechas.length === 0) {
+					estado = "FALTANTE";
+				}
+
+				if (!estado) continue;
+
+				results.push({
+					documentoId: doc.uuid,
+					documentoNombre: doc.nombre,
+					scoutId: scout.uuid,
+					scoutNombre: scout.nombre,
+					scoutApellido: scout.apellido,
+					estado,
+					requiereDatosFamiliar: doc.requiereDatosFamiliar,
+					requiereFamiliar: doc.requiereDatosFamiliar,
+					requiereRenovacionAnual: doc.requiereRenovacionAnual,
+					completableDinamicamente: doc.completableDinamicamente,
+					anioUltimaPresentacion,
+				});
+			}
+		}
+
+		return results.sort((a, b) => {
+			const scoutCompare = `${a.scoutApellido} ${a.scoutNombre}`.localeCompare(
+				`${b.scoutApellido} ${b.scoutNombre}`,
+				"es",
+			);
+			if (scoutCompare !== 0) return scoutCompare;
+			return a.documentoNombre.localeCompare(b.documentoNombre, "es");
+		});
+	};
+
 	insertDocumento = async ({ documentoId, fechaPresentacion, scoutId, uploadId }: IDocumento) => {
 
 		const uuid = nanoid(10);
@@ -57,11 +236,12 @@ export class DocumentoService implements IDocumentoService {
 				documento: {
 					select: {
 						nombre: true,
-						vence: true,
-						completable: true,
-						fileUploadId: true,
-						requiereFamiliar: true,
-						requiereFirma: true
+						requiereRenovacionAnual: true,
+						requeridoParaIngreso: true,
+						completableDinamicamente: true,
+						googleDriveFileId: true,
+						requiereDatosFamiliar: true,
+						requiereFirmaFamiliar: true
 					},
 				},
 				scout: {
@@ -74,8 +254,12 @@ export class DocumentoService implements IDocumentoService {
 		});
 
 		const docName = responseInsert.documento.nombre.split(" ").join("_")
-		const fileName = `${scoutId}/${docName}_${uploadId}.pdf`
-		const fileInS3 = await getFileInS3(fileName)
+		const fileName = uploadId
+			? uploadId.includes("/")
+				? uploadId
+				: `${scoutId}/${docName}_${uploadId}.pdf`
+			: null;
+		const fileInS3 = fileName ? await getFileInS3(fileName) : undefined;
 		return {
 			...mapDocumentoPresentado(responseInsert),
 			fileUrl: fileInS3
@@ -92,7 +276,7 @@ export class DocumentoService implements IDocumentoService {
 			progresiones,
 			equipos,
 			ramas,
-			vence,
+			requiereRenovacionAnual,
 			tiempoDesde,
 			tiempoHasta,
 			scoutId,
@@ -107,11 +291,12 @@ export class DocumentoService implements IDocumentoService {
 				documento: {
 					select: {
 						nombre: true,
-						vence: true,
-						completable: true,
-						fileUploadId: true,
-						requiereFamiliar: true,
-						requiereFirma: true
+						requiereRenovacionAnual: true,
+						requeridoParaIngreso: true,
+						completableDinamicamente: true,
+						googleDriveFileId: true,
+						requiereDatosFamiliar: true,
+						requiereFirmaFamiliar: true
 					},
 				},
 				scout: {
@@ -141,7 +326,7 @@ export class DocumentoService implements IDocumentoService {
 						: undefined,
 				},
 				documento: {
-					vence: vence ? vence === "true" ? true : false : undefined,
+					requiereRenovacionAnual: requiereRenovacionAnual ? requiereRenovacionAnual === "true" ? true : false : undefined,
 				},
 				fechaPresentacion: {
 					lte: tiempoHasta,
@@ -189,11 +374,12 @@ export class DocumentoService implements IDocumentoService {
 					documento: {
 						select: {
 							nombre: true,
-							vence: true,
-							completable: true,
-							fileUploadId: true,
-							requiereFamiliar: true,
-							requiereFirma: true
+							requiereRenovacionAnual: true,
+							requeridoParaIngreso: true,
+							completableDinamicamente: true,
+							googleDriveFileId: true,
+							requiereDatosFamiliar: true,
+							requiereFirmaFamiliar: true
 						},
 					},
 					scout: {
@@ -217,11 +403,12 @@ export class DocumentoService implements IDocumentoService {
 				documento: {
 					select: {
 						nombre: true,
-						vence: true,
-						completable: true,
-						fileUploadId: true,
-						requiereFamiliar: true,
-						requiereFirma: true
+						requiereRenovacionAnual: true,
+						requeridoParaIngreso: true,
+						completableDinamicamente: true,
+						googleDriveFileId: true,
+						requiereDatosFamiliar: true,
+						requiereFirmaFamiliar: true
 					},
 				},
 				scout: {
@@ -259,6 +446,7 @@ export class DocumentoService implements IDocumentoService {
 				avalAclaracion,
 				avalDni,
 				avalFuncionGrupoScout,
+				saludData,
 				pago,
 				numeroRecibo,
 				aclaraciones,
@@ -274,10 +462,10 @@ export class DocumentoService implements IDocumentoService {
 
 			const mappedDocData = mapDocumentoDefinicion(docData);
 
-			if (!mappedDocData.fileUploadId || !mappedDocData.completable) throw new AppError({
+			if (!mappedDocData.googleDriveFileId || !mappedDocData.completableDinamicamente) throw new AppError({
 				name: "BAD_REQUEST",
 				httpCode: HttpCode.BAD_REQUEST,
-				description: "El documento enviado no es completable"
+				description: "El documento enviado no es completable dinámicamente"
 			})
 
 			const pdfDocumentInstantiator = resolvePdfDocumentInstantiator(mappedDocData.nombre);
@@ -309,6 +497,7 @@ export class DocumentoService implements IDocumentoService {
 				avalAclaracion,
 				avalDni,
 				avalFuncionGrupoScout,
+				saludData,
 				pago,
 				numeroRecibo,
 				aclaraciones,
@@ -351,7 +540,7 @@ export class DocumentoService implements IDocumentoService {
 					documento: {
 						select: {
 							nombre: true,
-							vence: true,
+							requiereRenovacionAnual: true,
 						},
 					},
 					scout: {
@@ -414,66 +603,36 @@ export class DocumentoService implements IDocumentoService {
 		}
 	}
 
-	getDocumentosPendientes = async (familiarId: string) => {
-		const familiar = await prismaClient.familiar.findUnique({
-			where: { uuid: familiarId },
-			include: {
-				padreScout: {
-					include: {
-						scout: {
-							select: { uuid: true, nombre: true, apellido: true },
-						},
-					},
-				},
-			},
+	getDocumentosPendientes = async ({
+		scopingContext,
+		familiarId,
+		soloCompletable = false,
+		offset,
+		limit,
+	}: GetDocumentosPendientesParams) => {
+		const scouts = await this.resolveScoutsForPending({
+			scopingContext,
+			familiarId,
 		});
 
-		if (!familiar) return [];
-
-		const startOfYear = new Date(new Date().getFullYear(), 0, 1);
-		const allCompletable = await prismaClient.documento.findMany({
-			where: { completable: true },
+		const resultados = await this.computePendingDocumentsForScouts({
+			scouts,
+			soloCompletable,
 		});
 
-		const results: {
-			documentoId: string;
-			documentoNombre: string;
-			scoutId: string;
-			scoutNombre: string;
-			scoutApellido: string;
-			requiereFamiliar: boolean;
-		}[] = [];
+		const hasPagination =
+			typeof offset === "number" || typeof limit === "number";
 
-		for (const { scout } of familiar.padreScout) {
-			const submitted = await prismaClient.documentoPresentado.findMany({
-				where: { scoutId: scout.uuid },
-				select: { documentoId: true, fechaPresentacion: true },
-			});
+		if (!hasPagination) return resultados;
 
-			for (const doc of allCompletable) {
-				const entregas = submitted.filter((s) => s.documentoId === doc.uuid);
-				const esPendiente = doc.vence
-					? !entregas.some(
-						(s) =>
-							s.fechaPresentacion !== null &&
-							new Date(s.fechaPresentacion) >= startOfYear,
-					)
-					: entregas.length === 0;
+		const safeOffset = Number.isFinite(offset) && (offset as number) > 0
+			? Math.floor(offset as number)
+			: 0;
+		const safeLimit = Number.isFinite(limit) && (limit as number) > 0
+			? Math.floor(limit as number)
+			: resultados.length;
 
-				if (esPendiente) {
-					results.push({
-						documentoId: doc.uuid,
-						documentoNombre: doc.nombre,
-						scoutId: scout.uuid,
-						scoutNombre: scout.nombre,
-						scoutApellido: scout.apellido,
-						requiereFamiliar: doc.requiereFamiliar,
-					});
-				}
-			}
-		}
-
-		return results;
+		return resultados.slice(safeOffset, safeOffset + safeLimit);
 	};
 
 	scanDocumento = async (pdfBuffer: Buffer): Promise<AuthorizationDocumentScanResult> => {
@@ -517,11 +676,12 @@ export class DocumentoService implements IDocumentoService {
 				documento: {
 					select: {
 						nombre: true,
-						vence: true,
-						completable: true,
-						fileUploadId: true,
-						requiereFamiliar: true,
-						requiereFirma: true,
+						requiereRenovacionAnual: true,
+						requeridoParaIngreso: true,
+						completableDinamicamente: true,
+						googleDriveFileId: true,
+						requiereDatosFamiliar: true,
+						requiereFirmaFamiliar: true,
 					},
 				},
 				scout: {

@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { CacheManager } from "../utils/classes/CacheManager";
 import { AppError, HttpCode } from "../utils/classes/AppError";
 
@@ -9,13 +9,30 @@ const cleanCacheMiddleware = async (
 	res: Response,
 	next: NextFunction,
 ) => {
-	const cacheKey = `${req.originalUrl.split("api/")[1]}`;
+	const cacheKey = `${req.originalUrl.split("api/")[1] ?? ""}`;
+	const resourcePrefix = cacheKey.split(/[/?]/)[0] ?? "";
 	try {
+		let cacheWasCleaned = false;
+		const cleanCache = async () => {
+			if (cacheWasCleaned) return;
+			cacheWasCleaned = true;
+
+			if (cacheKey) await cacheManager.clearData(cacheKey);
+			if (resourcePrefix) await cacheManager.clearByPrefix(resourcePrefix);
+		};
+
 		const oldJSON = res.json;
 		res.json = (body) => {
-			cacheManager.clearData(cacheKey);
+			cleanCache().catch(() => {});
 			return oldJSON.call(res, body);
 		};
+
+		const oldSend = res.send;
+		res.send = (body) => {
+			cleanCache().catch(() => {});
+			return oldSend.call(res, body);
+		};
+
 		next();
 	} catch (error) {
 		next(

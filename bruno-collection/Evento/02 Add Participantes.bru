@@ -1,0 +1,25 @@
+meta {
+  name: Add Participantes
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/evento/:id/participantes
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: evento-uuid-aqui
+}
+
+body:json {
+  {
+    "rama": "SCOUTS"
+  }
+}

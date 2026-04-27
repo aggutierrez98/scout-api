@@ -1,4 +1,4 @@
-import { DocDataXLSX, DocumentoXLSX } from "./documento";
+import { DocumentoDefinitionSpreadsheetRow, DocumentoPresentadoSpreadsheetRow } from "./documento";
 import { EntregaXLSX } from "./entrega";
 import { FamiliarXLSX } from "./familiar";
 import { PagoXLSX } from "./pago";
@@ -53,7 +53,7 @@ export type SpreadsheetDataMap = {
 	entregas: EntregaXLSX[];
 	usuarios: UsuarioXLSX[];
 	pagos: PagoXLSX[];
-	documentos: DocumentoXLSX[];
-	'docs-data': DocDataXLSX[];
+	documentos: DocumentoPresentadoSpreadsheetRow[];
+	'docs-data': DocumentoDefinitionSpreadsheetRow[];
 	equipos: EquipoXLSX[];
 };

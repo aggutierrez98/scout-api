@@ -15,6 +15,7 @@ const WebhookComprobanteDatosSchema = z.object({
   whatsapp_chat_id: z.string(),
   whatsapp_mensaje_texto: z.string().nullable(),
   whatsapp_timestamp: z.string(),
+  scoutId: z.string().nullable().optional(),
 });
 
 export const PostWebhookComprobanteSchema = z.object({

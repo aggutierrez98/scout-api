@@ -1,0 +1,39 @@
+meta {
+  name: Create Evento
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{base_url}}/api/evento
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "nombre": "Campamento de otoño",
+    "descripcion": "Salida de rama con pernocte",
+    "tipoEventoId": "tipo-evento-uuid-aqui",
+    "lugarNombre": "Predio Scout",
+    "lugarDireccion": "Calle 123",
+    "lugarLocalidad": "CABA",
+    "lugarPartido": "Comuna 12",
+    "lugarProvincia": "Buenos Aires",
+    "lugarLatitud": -34.57,
+    "lugarLongitud": -58.44,
+    "centroSaludCercanoNombre": "Hospital cercano",
+    "centroSaludCercanoDireccion": "Av. Salud 1000",
+    "centroSaludCercanoLocalidad": "CABA",
+    "comisariaCercanaNombre": "Comisaría 1",
+    "comisariaCercanaDireccion": "Av. Seguridad 200",
+    "comisariaCercanaLocalidad": "CABA",
+    "fechaHoraInicio": "2026-05-15T12:00:00.000Z",
+    "fechaHoraFin": "2026-05-17T18:00:00.000Z",
+    "costo": 25000
+  }
+}

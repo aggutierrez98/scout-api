@@ -1,10 +1,11 @@
 import { nanoid } from "nanoid";
-import { IEvento, IAddParticipantes } from "../types";
+import type { IEvento, IAddParticipantes, NominaDocumentFormat } from "../types";
 import { prismaClient } from "../utils/lib/prisma-client";
 import { mapEvento, mapEventoParticipante } from "../mappers/evento";
 import { NotificacionService } from "./notificacion";
 import { AppError, HttpCode } from "../utils";
 import type { ScopingContext } from "../utils/helpers/buildScopingContext";
+import { NominaParticipantes } from "../utils/classes/documentos/NominaParticipantes";
 
 type queryParams = {
 	limit?: number;
@@ -23,7 +24,7 @@ export class EventoService {
 		participantes: {
 			include: {
 				scout: {
-					select: { uuid: true, nombre: true, apellido: true },
+					select: { uuid: true, nombre: true, apellido: true, funcion: true },
 				},
 			},
 		},
@@ -61,6 +62,18 @@ export class EventoService {
 			include: this.eventoInclude,
 		});
 		return item ? mapEvento(item) : null;
+	};
+
+	exportNominaDocumento = async (id: string, { format = "docx" }: { format?: NominaDocumentFormat } = {}) => {
+		const nominaParticipantes = new NominaParticipantes({ eventoId: id });
+		await nominaParticipantes.getData();
+		await nominaParticipantes.fill({ format });
+
+		return {
+			buffer: nominaParticipantes.dataBuffer,
+			fileName: nominaParticipantes.fileName,
+			contentType: nominaParticipantes.contentType,
+		};
 	};
 
 	getMisEventos = async (userId: string) => {
@@ -150,7 +163,29 @@ export class EventoService {
 		return mapEvento(item);
 	};
 
-	addParticipantes = async (eventoId: string, { scoutId, equipoId, rama, tipoParticipante }: IAddParticipantes, scopingContext?: ScopingContext) => {
+	private getTipoParticipantePorScout = (funcion?: string | null) => {
+		const funcionNormalizada = funcion?.trim().toUpperCase() || "";
+
+		if (!funcionNormalizada || funcionNormalizada === "JOVEN") {
+			return "JOVEN_PROTAGONISTA";
+		}
+
+		if (
+			funcionNormalizada.includes("JEFE")
+			|| funcionNormalizada.includes("SUBJEFE")
+			|| funcionNormalizada.includes("AYUDANTE")
+			|| funcionNormalizada.includes("EDUCADOR")
+			|| funcionNormalizada.includes("DIRIGENTE")
+			|| funcionNormalizada.includes("COLABORADOR")
+			|| funcionNormalizada.includes("ACOMPAÑANTE")
+		) {
+			return "EDUCADOR";
+		}
+
+		return "JOVEN_PROTAGONISTA";
+	};
+
+	addParticipantes = async (eventoId: string, { scoutId, equipoId, rama }: IAddParticipantes, scopingContext?: ScopingContext) => {
 		const evento = await prismaClient.evento.findUnique({
 			where: { uuid: eventoId },
 			select: { uuid: true, nombre: true },
@@ -158,31 +193,29 @@ export class EventoService {
 
 		if (!evento) return [];
 
-		let scoutIds: string[] = [];
+		let scouts: Array<{ uuid: string; rama: string | null; funcion: string | null }> = [];
 
 		if (scoutId) {
-			scoutIds = [scoutId];
+			scouts = await prismaClient.scout.findMany({
+				where: { uuid: scoutId, estado: "ACTIVO" },
+				select: { uuid: true, rama: true, funcion: true },
+			});
 		} else if (equipoId) {
-			const scouts = await prismaClient.scout.findMany({
+			scouts = await prismaClient.scout.findMany({
 				where: { equipoId, estado: "ACTIVO" },
-				select: { uuid: true },
+				select: { uuid: true, rama: true, funcion: true },
 			});
-			scoutIds = scouts.map((s) => s.uuid);
 		} else if (rama) {
-			const scouts = await prismaClient.scout.findMany({
+			scouts = await prismaClient.scout.findMany({
 				where: { rama, estado: "ACTIVO" },
-				select: { uuid: true },
+				select: { uuid: true, rama: true, funcion: true },
 			});
-			scoutIds = scouts.map((s) => s.uuid);
 		}
 
+		const scoutIds = scouts.map((s) => s.uuid);
 		if (scoutIds.length === 0) return [];
 
-		if (scopingContext?.scope === 'RAMA' && scopingContext.rama) {
-			const scouts = await prismaClient.scout.findMany({
-				where: { uuid: { in: scoutIds } },
-				select: { uuid: true, rama: true },
-			});
+		if (scopingContext?.scope === "RAMA" && scopingContext.rama) {
 			const outsideRama = scouts.filter((s) => s.rama !== scopingContext.rama);
 			if (outsideRama.length > 0) {
 				throw new AppError({
@@ -198,20 +231,35 @@ export class EventoService {
 			select: { scoutId: true },
 		});
 		const existentesSet = new Set(existentes.map((e) => e.scoutId));
-		const nuevosScoutIds = scoutIds.filter((sid) => !existentesSet.has(sid));
+		const scoutsNuevos = scouts.filter((s) => !existentesSet.has(s.uuid));
 
-		if (nuevosScoutIds.length > 0) {
+		if (scoutsNuevos.length > 0) {
 			await prismaClient.eventoParticipante.createMany({
-				data: nuevosScoutIds.map((sid) => ({
+				data: scoutsNuevos.map((scoutNuevo) => ({
 					uuid: nanoid(10),
 					eventoId,
-					scoutId: sid,
-					tipoParticipante,
+					scoutId: scoutNuevo.uuid,
+					tipoParticipante: this.getTipoParticipantePorScout(scoutNuevo.funcion),
 				})),
 			});
 		}
 
-		this.notificarParticipantes({ eventoId, eventoNombre: evento.nombre, scoutIds, tipoParticipante }).catch(() => {});
+		const notificacionesPorTipo = new Map<string, string[]>();
+		for (const scoutNuevo of scoutsNuevos) {
+			const tipo = this.getTipoParticipantePorScout(scoutNuevo.funcion);
+			const ids = notificacionesPorTipo.get(tipo) || [];
+			ids.push(scoutNuevo.uuid);
+			notificacionesPorTipo.set(tipo, ids);
+		}
+
+		for (const [tipo, ids] of notificacionesPorTipo.entries()) {
+			this.notificarParticipantes({
+				eventoId,
+				eventoNombre: evento.nombre,
+				scoutIds: ids,
+				tipoParticipante: tipo,
+			}).catch(() => {});
+		}
 
 		const participantes = await prismaClient.eventoParticipante.findMany({
 			where: { eventoId, scoutId: { in: scoutIds } },
@@ -219,11 +267,35 @@ export class EventoService {
 		return participantes.map(mapEventoParticipante);
 	};
 
-	removeParticipante = async (participanteId: string) => {
-		const item = await prismaClient.eventoParticipante.delete({
-			where: { uuid: participanteId },
+	removeParticipante = async (eventoId: string, participanteId: string) => {
+		const item = await prismaClient.eventoParticipante.findFirst({
+			where: {
+				eventoId,
+				OR: [{ uuid: participanteId }, { scoutId: participanteId }],
+			},
 		});
+
+		if (!item) {
+			throw new AppError({
+				name: "NOT_FOUND",
+				description: "Participante no encontrado para este evento",
+				httpCode: HttpCode.NOT_FOUND,
+			});
+		}
+
+		await prismaClient.eventoParticipante.delete({
+			where: { uuid: item.uuid },
+		});
+
 		return mapEventoParticipante(item);
+	};
+
+	removeAllParticipantes = async (eventoId: string) => {
+		const { count } = await prismaClient.eventoParticipante.deleteMany({
+			where: { eventoId },
+		});
+
+		return { removed: count };
 	};
 
 	private notificarParticipantes = async ({

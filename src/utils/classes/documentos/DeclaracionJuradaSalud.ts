@@ -10,6 +10,7 @@ const datosGrupo = SecretsManager.getInstance().getDatosGrupo();
 interface ConstructorProps extends BaseConstructorProps {
     scoutId?: string
     familiarId?: string
+    saludData?: Record<string, string>
 }
 
 interface Data {
@@ -17,6 +18,7 @@ interface Data {
     familiarId?: string
     scout?: Scout
     familiar?: Familiar
+    saludData?: Record<string, string>
 }
 
 const BLANK_HEALTH_FIELDS = [
@@ -93,9 +95,9 @@ const getResponsablePhones = ({
 export class DeclaracionJuradaSalud extends PdfDocument {
     data: Data
 
-    constructor({ scoutId, familiarId, data, ...props }: ConstructorProps) {
+    constructor({ scoutId, familiarId, saludData, data, ...props }: ConstructorProps) {
         super(props)
-        this.data = { scoutId, familiarId, ...data }
+        this.data = { scoutId, familiarId, saludData, ...data }
         this.options = {
             fontColor: "#000000",
             fontFamily: StandardFonts.Helvetica,
@@ -140,15 +142,18 @@ export class DeclaracionJuradaSalud extends PdfDocument {
         const scout = this.data.scout!;
         const familiar = this.data.familiar!;
         const fechaNacimientoScout = splitDate(scout.fechaNacimiento);
+        const fechaFirmaResponsable = splitDate(new Date());
         const { telefonoEmergencia1, telefonoEmergencia2 } = getResponsablePhones({
             familiarTelefono: familiar.telefono,
             scoutTelefono: scout.telefono,
         });
         const nombreResponsable = `${familiar.nombre} ${familiar.apellido}`;
         const domicilioScout = [scout.direccion, scout.localidad].filter(Boolean).join("\n");
+        const saludData = this.data.saludData ?? {};
 
         return {
             ...getBlankHealthFields(),
+            ...saludData,
             personal_apellido: scout.apellido,
             personal_nombre: scout.nombre,
             personal_fecha_nacimiento_dia: fechaNacimientoScout.day,
@@ -162,8 +167,12 @@ export class DeclaracionJuradaSalud extends PdfDocument {
             personal_tel_emergencia_1: telefonoEmergencia1,
             personal_tel_emergencia_2: telefonoEmergencia2,
             responsable_nombre: nombreResponsable,
+            responsable_firma: saludData.responsable_firma || nombreResponsable,
             responsable_aclaracion: nombreResponsable,
             responsable_dni: familiar.dni,
+            responsable_fecha_dia: saludData.responsable_fecha_dia || fechaFirmaResponsable.day,
+            responsable_fecha_mes: saludData.responsable_fecha_mes || fechaFirmaResponsable.month,
+            responsable_fecha_anio: saludData.responsable_fecha_anio || fechaFirmaResponsable.year,
         };
     }
 

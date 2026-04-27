@@ -49,3 +49,27 @@ export interface NominaSyncResult {
 	errores: number;
 	timestamp: string;
 }
+
+export interface NominaParticipanteDocumento {
+	numero: string;
+	nombreApellido: string;
+	fechaNacimiento: string;
+	dni: string;
+	religion: string;
+	telefono: string;
+	categoriaMiembro: string;
+}
+
+export interface NominaDocumentoData {
+	rama: string;
+	denominacionEncuentro: string;
+	fecha: string;
+	lugar: string;
+	grupoNombre: string;
+	grupoNumero: string;
+	distrito: string;
+	zona: string;
+	participantes: NominaParticipanteDocumento[];
+}
+
+export type NominaDocumentFormat = "docx" | "pdf";

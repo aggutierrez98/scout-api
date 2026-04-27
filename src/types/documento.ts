@@ -6,8 +6,6 @@ export interface IDocumento {
     fechaPresentacion?: Date;
     uploadId?: string
     fileUrl?: string
-    requiereFirma?: boolean
-    requiereFamiliar?: boolean
 }
 
 export interface IDocumentoEntregado {
@@ -24,24 +22,38 @@ export interface IDocumentoEntregado {
 export interface IDocumentoData {
     id: string;
     nombre: string;
-    vence: boolean;
-    completable: boolean;
-    fileUploadId: string | null
-    requiereFirma: boolean
-    requiereFamiliar: boolean
+    requiereRenovacionAnual: boolean;
+    requeridoParaIngreso: boolean;
+    completableDinamicamente: boolean;
+    googleDriveFileId: string | null
+    requiereFirmaFamiliar: boolean
+    requiereDatosFamiliar: boolean
 }
 
-export type DocumentoXLSX = {
+export type DocumentoPresentadoSpreadsheetRow = {
     Fecha: string
     Scout: string
     Documento: string
 }
 
-export type DocDataXLSX = {
-    Nombre: string
-    Vence: "Si" | "No"
-    Completable: "Si" | "No"
-    "Requiere firma"?: "Si" | "No"
-    "Requiere familiar"?: "Si" | "No"
-    "Id carga de archivo"?: string
+export type DocumentoSpreadsheetBoolean = "Si" | "No" | "";
+
+export type DocumentoDefinitionSpreadsheetRow = {
+    "Nombre del documento": string
+    "Requiere renovacion anual": DocumentoSpreadsheetBoolean
+    "Requerido para ingreso"?: DocumentoSpreadsheetBoolean
+    "Completable dinamicamente": DocumentoSpreadsheetBoolean
+    "Id carga de archivo en google drive"?: string
+    "Requiere firma del familiar"?: DocumentoSpreadsheetBoolean
+    "Requiere datos del familiar"?: DocumentoSpreadsheetBoolean
+}
+
+export interface DocumentoSeedDefinition {
+    nombre: string;
+    requiereRenovacionAnual: boolean;
+    requeridoParaIngreso: boolean;
+    completableDinamicamente: boolean;
+    googleDriveFileId: string | null;
+    requiereFirmaFamiliar: boolean;
+    requiereDatosFamiliar: boolean;
 }

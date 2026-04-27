@@ -3,6 +3,7 @@ import { AppError, HttpCode } from "../utils/classes/AppError";
 import { AuthService } from "../services/auth";
 import { generateToken, verifyToken } from "../utils/lib/jwt.util";
 import { NotificacionService } from "../services/notificacion";
+import { SecretsManager } from "../utils/classes/SecretsManager";
 
 export class AuthController {
     public authService;
@@ -11,6 +12,22 @@ export class AuthController {
     constructor({ authService }: { authService: AuthService }) {
         this.authService = authService;
         this.notificacionService = new NotificacionService();
+    }
+
+    private getDatosGrupoSafe = () => {
+        try {
+            const secretsManager = SecretsManager.getInstance();
+            if (secretsManager.isReady()) {
+                return secretsManager.getDatosGrupo();
+            }
+        } catch (_e) {}
+
+        return {
+            nombre: "Madre Teresa",
+            numero: "58",
+            distrito: "2",
+            zona: "9",
+        };
     }
 
     login = async (req: Request, res: Response, next: NextFunction) => {
@@ -113,7 +130,8 @@ export class AuthController {
                     role: user.role,
                     scout: user.scout,
                     familiar: user.familiar,
-                    username: user.username
+                    username: user.username,
+                    datosGrupo: this.getDatosGrupoSafe(),
                 })
             }
         } catch (e) {
@@ -138,7 +156,8 @@ export class AuthController {
                 username: user.username,
                 role: user.role,
                 scout: user.scout,
-                familiar: user.familiar
+                familiar: user.familiar,
+                datosGrupo: this.getDatosGrupoSafe(),
             })
         } catch (e) {
             next(e)

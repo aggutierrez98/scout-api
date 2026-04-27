@@ -3,13 +3,12 @@ import bodyParser from "body-parser";
 import compression from "compression";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
-import swaggerUi from "swagger-ui-express";
 import { config } from "dotenv";
-import cors from "cors";
+import cors, { type CorsOptions } from "cors";
 config();
 import { checkSession, errorMiddleware, morganMiddleware } from "./middlewares";
 import { tooBusy } from "./middlewares/tooBusy";
-import { ACCEPTED_ORIGINS, PROXIES_NUMBER, shouldCompress } from "./utils";
+import { PROXIES_NUMBER, shouldCompress } from "./utils";
 import createScoutRouter from "./routes/scout";
 import { ScoutService } from "./services/scout";
 import { DocumentoService } from "./services/documento";
@@ -34,9 +33,7 @@ import { TipoEventoService } from "./services/tipoEvento";
 import createTipoEventoRouter from "./routes/tipoEvento";
 import { EventoService } from "./services/evento";
 import createEventoRouter from "./routes/evento";
-// import recordarCumpleaños from "./whatsapp/recordarCumpleaños";
-import swaggerSpecJSON from "./docs/spec.json";
-// import { WhatsAppSbot } from "./whatsapp/WhatsappSession";
+import createAdminRouter from "./routes/admin";
 import logger from "./utils/classes/Logger";
 import fileUpload from 'express-fileupload';
 import cron from "node-cron";
@@ -69,22 +66,21 @@ export default class Server {
 	}
 
 	middlewares() {
+		const corsOptions: CorsOptions = {
+			origin: true,
+			methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
+			exposedHeaders: ["Content-Disposition", "Content-Length"],
+			optionsSuccessStatus: 204,
+		};
+
 		this.app.use(
 			bodyParser.urlencoded({
 				extended: true,
 			}),
 		);
 
-		// this.app.use(
-		// 	cors({
-		// 		origin: (origin, callback) => {
-		// 			if (!origin) callback(null, true);
-		// 			else if (ACCEPTED_ORIGINS.length === 0 || ACCEPTED_ORIGINS.includes(origin)) callback(null, true);
-		// 			else callback(new Error("Not allowed by CORS"));
-		// 		},
-		// 	}),
-		// );
-		this.app.use(cors())
+		this.app.use(cors(corsOptions));
+		this.app.options("*", cors(corsOptions));
 
 		this.app.use(express.json());
 		this.app.use(bodyParser.json({ limit: "50kb" }));
@@ -100,7 +96,9 @@ export default class Server {
 		// // 		maxAge: 1000 * 60 * 60 * 24, // 1 day
 		// // 	}
 		// // }));
-		this.app.use(helmet());
+		this.app.use(helmet({
+			crossOriginResourcePolicy: false,
+		}));
 		this.app.use(compression({ filter: shouldCompress }));
 		if (process.env.NODE_ENV === "production") {
 			this.app.use(this.limiter);
@@ -108,7 +106,6 @@ export default class Server {
 		}
 		this.app.use(morganMiddleware);
 		this.app.use("/health", (_, res) => { res.send("OK") });
-		this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpecJSON));
 		this.app.use("/api", this.loadRoutes());
 		this.app.use(errorMiddleware);
 	}
@@ -156,6 +153,8 @@ export default class Server {
 
 		const eventoService = new EventoService();
 		router.use("/evento", checkSession, createEventoRouter(eventoService));
+
+		router.use("/admin", checkSession, createAdminRouter());
 
 		return router;
 	}

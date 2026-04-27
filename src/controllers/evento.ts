@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { AppError, HttpCode } from "../utils/classes/AppError";
 import { EventoService } from "../services/evento";
+import { ROLES } from "../types";
 import type { ScopingContext } from "../utils/helpers/buildScopingContext";
 
 export class EventoController {
@@ -49,6 +50,27 @@ export class EventoController {
 		}
 	};
 
+	exportNomina = async (req: Request, res: Response, next: NextFunction) => {
+		try {
+			const currentUser = res.locals.currentUser;
+			if (!currentUser || currentUser.role !== ROLES.ADMINISTRADOR) {
+				throw new AppError({
+					name: "UNAUTHORIZED",
+					httpCode: HttpCode.FORBIDDEN,
+					description: "Solo un administrador puede exportar la nómina del evento",
+				});
+			}
+
+			const format = req.query.pdf === "true" ? "pdf" : "docx";
+			const response = await this.eventoService.exportNominaDocumento(req.params.id, { format });
+			res.setHeader("Content-Type", response.contentType);
+			res.setHeader("Content-Disposition", `attachment; filename="${response.fileName}"`);
+			res.send(response.buffer);
+		} catch (e) {
+			next(e);
+		}
+	};
+
 	insertItem = async ({ body }: Request, res: Response, next: NextFunction) => {
 		try {
 			const response = await this.eventoService.insertEvento(body);
@@ -88,7 +110,16 @@ export class EventoController {
 
 	removeParticipante = async ({ params }: Request, res: Response, next: NextFunction) => {
 		try {
-			const response = await this.eventoService.removeParticipante(params.participanteId);
+			const response = await this.eventoService.removeParticipante(params.id, params.participanteId);
+			res.send(response);
+		} catch (e) {
+			next(e);
+		}
+	};
+
+	removeAllParticipantes = async ({ params }: Request, res: Response, next: NextFunction) => {
+		try {
+			const response = await this.eventoService.removeAllParticipantes(params.id);
 			res.send(response);
 		} catch (e) {
 			next(e);

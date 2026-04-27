@@ -1,0 +1,24 @@
+meta {
+  name: Get Pagos Pendientes
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{base_url}}/api/pago/pendientes
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:query {
+  ~rama: SCOUTS
+  ~scoutNombre: juan perez
+  ~familiaClave: familia::abc|def
+  ~estado: PENDIENTE
+  ~offset: 0
+  ~limit: 20
+}

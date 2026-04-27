@@ -1,0 +1,26 @@
+meta {
+  name: Update Evento
+  type: http
+  seq: 9
+}
+
+put {
+  url: {{base_url}}/api/evento/:id
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: evento-uuid-aqui
+}
+
+body:json {
+  {
+    "nombre": "Campamento de otoño (actualizado)",
+    "costo": 28000
+  }
+}

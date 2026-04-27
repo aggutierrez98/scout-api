@@ -1,0 +1,19 @@
+meta {
+  name: Activar Reglas Pago
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{base_url}}/api/pago/reglas/:id/activar
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: ciclo-reglas-uuid
+}

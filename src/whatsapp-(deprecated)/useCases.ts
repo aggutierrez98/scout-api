@@ -448,7 +448,7 @@ export const obtenerDocumentosFaltantes = async (nombreScout: string) => {
             await prisma.documento.findMany({
                 where: {
                     //Validar vencido solo vencido
-                    vence: true,
+                    requiereRenovacionAnual: true,
                     documentoPresentado: {
                         none: {
                             AND: [

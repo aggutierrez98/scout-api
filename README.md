@@ -52,10 +52,10 @@ Papeles administrativos requeridos por scout:
 - Ficha médica, autorizaciones, DNI, certificado médico, ficha de inscripción
 
 Propiedades relevantes:
-- `vence`: si tiene fecha de vencimiento
-- `completable`: si se puede generar automáticamente desde la API
-- `requiereFamiliar`: si necesita datos del familiar
-- `requiereFirma`: si necesita firma escaneada
+- `requiereRenovacionAnual`: si el documento debe volver a presentarse cada año
+- `completableDinamicamente`: si se puede generar automáticamente desde la API a partir de una plantilla
+- `requiereDatosFamiliar`: si necesita datos del familiar
+- `requiereFirmaFamiliar`: si necesita firma del familiar
 
 #### Entregas
 
@@ -312,8 +312,8 @@ Ejemplos: `create_pago`, `read_scout`, `delete_documento`, `modify_entrega`.
 | Método | Path | Auth | Descripción |
 |---|---|---|---|
 | `POST` | `/api/auth` | Sin auth | Login — devuelve JWT |
-| `GET` | `/api/auth/renew` | Bearer | Renovar JWT |
-| `GET` | `/api/auth/me` | Bearer | Datos del usuario autenticado |
+| `GET` | `/api/auth/renew` | Bearer | Renovar JWT + `datosGrupo` |
+| `GET` | `/api/auth/me` | Bearer | Datos del usuario autenticado + `datosGrupo` (`nombre`, `numero`, `distrito`, `zona`) |
 | `GET` | `/api/auth/notifications` | Bearer | Notificaciones del usuario (legacy) |
 | `GET` | `/api/auth/users` | Bearer (ADMIN) | Listar usuarios (filtro `?nombre=`) |
 | `GET` | `/api/auth/users/:id` | Bearer (ADMIN) | Obtener usuario por UUID |
@@ -366,12 +366,38 @@ Ejemplos: `create_pago`, `read_scout`, `delete_documento`, `modify_entrega`.
 | `INSG_GUIA` | Entrega de insignia de Guia de patrulla |
 | `INSG_SUBGUIA` | Entrega de insignia de Subguia de patrulla |
 
+### Evento — `/api/evento`
+
+| Método | Path | Descripción |
+|---|---|---|
+| `GET` | `/api/evento` | Listar eventos |
+| `GET` | `/api/evento/mis-eventos` | Listar eventos del usuario autenticado (por participación) |
+| `GET` | `/api/evento/:id` | Obtener evento |
+| `GET` | `/api/evento/:id/nomina?pdf=true|false` | Exportar nómina del evento (`pdf=true` devuelve PDF, default DOCX). **Solo ADMINISTRADOR** |
+| `POST` | `/api/evento` | Crear evento |
+| `PUT` | `/api/evento/:id` | Actualizar evento |
+| `DELETE` | `/api/evento/:id` | Eliminar evento |
+| `POST` | `/api/evento/:id/participantes` | Agregar participantes |
+| `DELETE` | `/api/evento/:id/participantes` | Quitar todos los participantes |
+| `DELETE` | `/api/evento/:id/participantes/:participanteId` | Quitar participante |
+
+### TipoEvento — `/api/tipo-evento`
+
+| Método | Path | Descripción |
+|---|---|---|
+| `GET` | `/api/tipo-evento` | Listar tipos de evento |
+| `GET` | `/api/tipo-evento/:id` | Obtener tipo de evento |
+| `POST` | `/api/tipo-evento` | Crear tipo de evento |
+| `PUT` | `/api/tipo-evento/:id` | Actualizar tipo de evento |
+| `DELETE` | `/api/tipo-evento/:id` | Eliminar tipo de evento |
+
 ### Documento — `/api/documento`
 
 | Método | Path | Descripción |
 |---|---|---|
 | `GET` | `/api/documento` | Listar documentos presentados |
 | `GET` | `/api/documento/data` | Catálogo de tipos de documentos |
+| `GET` | `/api/documento/pendientes` | Listar documentos pendientes/requeridos para ingreso (faltantes o vencidos anuales), aplicando alcance por rol (ALL/RAMA/FAMILIAR). Soporta `?familiarId=`, `?soloCompletable=true`, `?offset=` y `?limit=`. |
 | `GET` | `/api/documento/:id` | Obtener documento. `?download=true` devuelve URL firmada de S3 |
 | `POST` | `/api/documento` | Registrar documento presentado |
 | `POST` | `/api/documento/:id/archivo` | Subir archivo (PDF o JPEG) a documento existente — campo `archivo` (multipart) |
@@ -381,6 +407,42 @@ Ejemplos: `create_pago`, `read_scout`, `delete_documento`, `modify_entrega`.
 | `POST` | `/api/documento/scan` | Escanear PDF con Gemini OCR (sin persistir) |
 | `POST` | `/api/documento/scan/confirm` | Confirmar escaneo y persistir en BD + S3 |
 | `DELETE` | `/api/documento/:id` | Eliminar documento |
+
+#### Cambios recientes en `/api/documento/fill`
+
+- `retiroData.personas` ahora acepta:
+  - `string[]` (IDs de familiares, comportamiento anterior), o
+  - `Array<{ nombre, apellido, dni, parentesco }>` para carga manual.
+- Se agregó `saludData` (JSON object stringificado en multipart) para completar campos extra en **Declaración Jurada de Salud**.
+- `GET /api/documento/pendientes` usa alcance por rol:
+  - `ADMINISTRADOR`: todos los scouts.
+  - roles de rama (`AYUDANTE_RAMA`, `SUBJEFE_RAMA`, `JEFE_RAMA`): scouts de su rama.
+  - `PADRE_REPRESENTANTE`: scouts asociados al familiar del usuario.
+- El endpoint devuelve pendientes por estado:
+  - `FALTANTE`: nunca presentado.
+  - `VENCIDO_ANUAL`: documento con renovación anual cuyo año presentado es menor al año calendario actual (Argentina).
+
+#### Seed de definiciones documentales (`docs-data`)
+
+El script `/Users/aggutierrez/Development/projects/scouts/scout-api/src/bin/seed/loadDocumentos.ts` toma la hoja `docs-data` de Google Sheets como fuente de verdad para el catálogo de tipos de documento.
+
+Formato esperado de columnas:
+
+- `Nombre del documento`
+- `Requiere renovacion anual`
+- `Requerido para ingreso`
+- `Completable dinamicamente`
+- `Id carga de archivo en google drive`
+- `Requiere firma del familiar`
+- `Requiere datos del familiar`
+
+#### Cron de recordatorio de documentos pendientes
+
+- Frecuencia: semanal, todos los sábados a las **10:00 AM** (`America/Argentina/Buenos_Aires`).
+- Tipo de aviso: `DOCUMENTO_PENDIENTE`.
+- Destinatarios: usuarios asociados a familiares de scouts con documentos faltantes o vencidos.
+
+La carga de `DocumentoPresentado` se resuelve aparte desde la hoja `documentos`, haciendo match por nombre normalizado contra el catálogo ya sincronizado. El seed actual actualiza/crea documentos por nombre normalizado y recarga `DocumentoPresentado`, pero no elimina automáticamente definiciones existentes en BD que no aparezcan en `docs-data`.
 
 ### Pago — `/api/pago`
 
@@ -392,6 +454,18 @@ Ejemplos: `create_pago`, `read_scout`, `delete_documento`, `modify_entrega`.
 | `POST` | `/api/pago/import` | Importar pagos desde CSV |
 | `PUT` | `/api/pago/:id` | Actualizar pago |
 | `DELETE` | `/api/pago/:id` | Eliminar pago |
+
+#### Motor de reglas/pedientes (`/api/pago`)
+
+| Método | Path | Descripción |
+|---|---|---|
+| `GET` | `/api/pago/reglas/activa` | Obtener ciclo/reglas activas |
+| `POST` | `/api/pago/reglas` | Crear borrador de reglas |
+| `PUT` | `/api/pago/reglas/:id` | Actualizar reglas de un ciclo |
+| `POST` | `/api/pago/reglas/:id/activar` | Activar ciclo y recalcular obligaciones |
+| `GET` | `/api/pago/pendientes` | Listar obligaciones pendientes/incompletas (`rama`, `scoutNombre`, `familiaClave`, `estado`, `offset`, `limit`) |
+| `GET` | `/api/pago/pendientes/:id` | Obtener detalle de obligación |
+| `POST` | `/api/pago/pendientes/:id/perdonar` | Condonar deuda con auditoría |
 
 ### Equipo — `/api/equipo`
 
@@ -408,18 +482,19 @@ Ejemplos: `create_pago`, `read_scout`, `delete_documento`, `modify_entrega`.
 | Método | Path | Auth | Descripción |
 |---|---|---|---|
 | `GET` | `/api/notificacion` | Bearer | Notificaciones del usuario autenticado (`?leida=`, `?limit=`, `?offset=`) |
-| `POST` | `/api/notificacion/aviso` | Bearer | Crear aviso y enviarlo a usuarios (push + in-app) |
-| `PUT` | `/api/notificacion/:id/read` | Bearer | Marcar notificación como leída |
+| `GET` | `/api/notificacion/:id` | Bearer | Obtener notificación puntual del usuario |
+| `POST` | `/api/notificacion` | Bearer | Crear aviso y enviarlo a usuarios (push + in-app) |
+| `PUT` | `/api/notificacion/:id` | Bearer | Marcar notificación como leída |
 | `PUT` | `/api/notificacion/read-all` | Bearer | Marcar todas como leídas |
 | `GET` | `/api/notificacion/avisos` | Bearer (ADMIN) | Listar avisos con filtros (`?tipo=`, `?fechaDesde=`, `?fechaHasta=`, `?userId=`) |
 | `GET` | `/api/notificacion/avisos/:id/destinatarios` | Bearer (ADMIN) | Listar destinatarios de un aviso con estado de lectura |
 
-### PushToken — `/api/push-token`
+### PushToken — `/api/notificacion/push-token`
 
 | Método | Path | Descripción |
 |---|---|---|
-| `POST` | `/api/push-token` | Registrar token de push (`platform`: `"EXPO"` \| `"WEB"`, `token`: string) |
-| `DELETE` | `/api/push-token` | Desregistrar token de push |
+| `POST` | `/api/notificacion/push-token` | Registrar token de push (`platform`: `"EXPO"` \| `"WEB"`, `token`: string) |
+| `DELETE` | `/api/notificacion/push-token` | Desregistrar token de push |
 
 ### Otros
 
@@ -433,12 +508,38 @@ Ejemplos: `create_pago`, `read_scout`, `delete_documento`, `modify_entrega`.
 
 ---
 
+## 🧪 Cobertura Bruno (colección HTTP)
+
+Colección: `/Users/aggutierrez/Development/projects/scouts/scout-api/bruno-collection/`
+
+Actualizaciones incorporadas:
+
+- `Documento/12 Get Documentos Pendientes.bru`
+- `Pago/07 Get Reglas Pago Activa.bru`
+- `Pago/08 Crear Reglas Pago.bru`
+- `Pago/09 Actualizar Reglas Pago.bru`
+- `Pago/10 Activar Reglas Pago.bru`
+- `Pago/11 Get Pagos Pendientes.bru`
+- `Pago/12 Get Pago Pendiente Detalle.bru`
+- `Pago/13 Perdonar Pago Pendiente.bru`
+- `Evento/05 Get Eventos.bru`
+- `Evento/06 Get Mis Eventos.bru`
+- `Evento/07 Get Evento.bru`
+- `Evento/08 Create Evento.bru`
+- `Evento/09 Update Evento.bru`
+- `Evento/10 Delete Evento.bru`
+- `TipoEvento/*` (folder nuevo con CRUD completo)
+- `Notificacion/07 Get Notificacion.bru`
+- `PushToken/01` y `PushToken/02` corregidos a `/api/notificacion/push-token`
+
+---
+
 ## 🔔 Sistema de Notificaciones y Push
 
 ### Flujo completo
 
 ```
-Admin crea Aviso (POST /api/notificacion/aviso)
+Admin crea Aviso (POST /api/notificacion)
     ↓
 Se crean registros Notificacion (in-app) para cada userId
     ↓
@@ -458,14 +559,15 @@ pushNotificationService.sendPushToUsers() [fire-and-forget]
 
 | Endpoint | Descripción |
 |---|---|
-| `POST /api/notificacion/aviso` | Crear aviso + trigger push |
+| `POST /api/notificacion` | Crear aviso + trigger push |
 | `GET /api/notificacion` | Inbox del usuario (`?leida=`, paginado) |
-| `PUT /api/notificacion/:id/read` | Marcar como leída |
+| `GET /api/notificacion/:id` | Obtener una notificación puntual |
+| `PUT /api/notificacion/:id` | Marcar como leída |
 | `PUT /api/notificacion/read-all` | Marcar todas como leídas |
 | `GET /api/notificacion/avisos` | Lista de avisos enviados (solo ADMIN) |
 | `GET /api/notificacion/avisos/:id/destinatarios` | Destinatarios con estado de lectura (solo ADMIN) |
-| `POST /api/push-token` | Registrar token (`platform`, `token`) |
-| `DELETE /api/push-token` | Desregistrar token |
+| `POST /api/notificacion/push-token` | Registrar token (`platform`, `token`) |
+| `DELETE /api/notificacion/push-token` | Desregistrar token |
 
 ### Variables de entorno (en Infisical)
 
@@ -1108,3 +1210,63 @@ El archivo `pm2.config.js` está configurado para gestionar el proceso en produc
 ## 📞 Soporte
 
 Para dudas o problemas, contactar al administrador del proyecto.
+
+---
+
+## 💳 Motor de reglas de pagos (ciclo 2026+)
+
+Se agregó un motor configurable por ciclo para calcular deudas esperadas, imputar pagos reales y mantener estado en tiempo real.
+
+### Nuevas entidades Prisma
+
+- `CicloReglasPago`
+- `ReglaAfiliacion`
+- `ReglaCuotaMensual`
+- `ReglaDescuentoPagoAnual`
+- `ReglaDescuentoFamiliar`
+- `ObligacionPago`
+- `ImputacionPago`
+- `CondonacionPago`
+- `SaldoAFavor`
+
+### Familias de cobro
+
+La `familiaClave` se calcula como componente conexa del grafo `FamiliarScout` (Scout↔Familiar), evitando duplicar deuda cuando hay múltiples tutores para el mismo núcleo.
+
+### Estados de obligación
+
+- `PENDIENTE`: no tiene pagos imputados ni condonaciones.
+- `INCOMPLETO`: tiene pago parcial y/o condonación parcial.
+- `AL_DIA`: deuda cubierta por imputación/condonación.
+
+### Endpoints nuevos de pagos
+
+- `GET /api/pago/reglas/activa`
+- `POST /api/pago/reglas`
+- `PUT /api/pago/reglas/:id`
+- `POST /api/pago/reglas/:id/activar`
+- `GET /api/pago/pendientes`
+- `GET /api/pago/pendientes/:id`
+- `POST /api/pago/pendientes/:id/perdonar`
+
+El endpoint existente `POST /api/pago` ahora dispara imputación automática y actualiza `SaldoAFavor`.
+
+### Permisos
+
+- Editar reglas / perdonar: `JEFE_GRUPO`, `SUBJEFE_GRUPO`, `ADMINISTRADOR`
+- Ver pendientes global: `JEFE_GRUPO`, `SUBJEFE_GRUPO`, `ADMINISTRADOR`
+- Ver pendientes por rama: `AYUDANTE_RAMA`, `JEFE_RAMA`, `SUBJEFE_RAMA` (solo su rama)
+- Ver pendientes familiar: `PADRE_REPRESENTANTE` (solo scouts vinculados)
+
+### Operación y backfill
+
+Script operativo agregado:
+
+```bash
+npm run pagos:migrar-reglas:dev
+```
+
+Acciones:
+1. Regenera obligaciones del ciclo activo
+2. Reimputa pagos existentes
+3. Reporta inconsistencias para revisión manual

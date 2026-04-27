@@ -24,11 +24,6 @@ const validEquipoId = async (id: string) => {
 	return !!item;
 };
 
-const validParticipanteId = async (id: string) => {
-	const item = await prismaClient.eventoParticipante.findUnique({ where: { uuid: id } });
-	return !!item;
-};
-
 export const EventoBodySchema = z.object({
 	nombre: z.string().min(1).max(200),
 	descripcion: z.string().min(1),
@@ -40,6 +35,12 @@ export const EventoBodySchema = z.object({
 	lugarProvincia: z.string().min(1).max(100),
 	lugarLatitud: z.number().optional().nullable(),
 	lugarLongitud: z.number().optional().nullable(),
+	centroSaludCercanoNombre: z.string().min(1).max(200),
+	centroSaludCercanoDireccion: z.string().min(1).max(300),
+	centroSaludCercanoLocalidad: z.string().min(1).max(100),
+	comisariaCercanaNombre: z.string().min(1).max(200),
+	comisariaCercanaDireccion: z.string().min(1).max(300),
+	comisariaCercanaLocalidad: z.string().min(1).max(100),
 	fechaHoraInicio: z.string().pipe(z.coerce.date()),
 	fechaHoraFin: z.string().pipe(z.coerce.date()),
 	costo: z.number().nonnegative().optional().nullable(),
@@ -56,6 +57,15 @@ export const GetEventosSchema = z.object({
 export const GetEventoSchema = z.object({
 	params: z.object({
 		id: IdSchema.refine(validEventoId, "Evento no encontrado"),
+	}),
+});
+
+export const GetEventoNominaSchema = z.object({
+	params: z.object({
+		id: IdSchema.refine(validEventoId, "Evento no encontrado"),
+	}),
+	query: z.object({
+		pdf: z.enum(["true", "false"]).optional(),
 	}),
 });
 
@@ -84,7 +94,7 @@ export const PostParticipantesSchema = z.object({
 		scoutId: IdSchema.refine(validScoutId, "Scout no encontrado").optional(),
 		equipoId: IdSchema.refine(validEquipoId, "Equipo no encontrado").optional(),
 		rama: z.enum(VALID_RAMAS).optional(),
-		tipoParticipante: z.enum(VALID_TIPOS_PARTICIPANTE),
+		tipoParticipante: z.enum(VALID_TIPOS_PARTICIPANTE).optional(),
 	}).refine(
 		(data) => data.scoutId || data.equipoId || data.rama,
 		"Debe proveer scoutId, equipoId o rama",
@@ -94,6 +104,12 @@ export const PostParticipantesSchema = z.object({
 export const DeleteParticipanteSchema = z.object({
 	params: z.object({
 		id: IdSchema.refine(validEventoId, "Evento no encontrado"),
-		participanteId: IdSchema.refine(validParticipanteId, "Participante no encontrado"),
+		participanteId: IdSchema,
+	}),
+});
+
+export const DeleteParticipantesSchema = z.object({
+	params: z.object({
+		id: IdSchema.refine(validEventoId, "Evento no encontrado"),
 	}),
 });

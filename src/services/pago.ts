@@ -7,6 +7,7 @@ import { mapPartialScout } from "../mappers/scout";
 import { ReciboPago } from "../utils/classes/documentos/ReciboPago";
 import { getFileInS3 } from "../utils/lib/s3.util";
 import logger from "../utils/classes/Logger";
+import { ServicioImputacionPago } from "./servicioImputacionPago";
 
 type queryParams = {
 	limit?: number;
@@ -37,6 +38,7 @@ interface IPagoService {
 }
 
 export class PagoService implements IPagoService {
+	private servicioImputacionPago = new ServicioImputacionPago();
 	insertPago = async (pago: IPago) => {
 		const responseInsert = await prismaClient.pago.create({
 			data: {
@@ -55,6 +57,9 @@ export class PagoService implements IPagoService {
 			concepto: responseInsert.concepto,
 			fechaPago: responseInsert.fechaPago,
 		}).catch(err => logger.error(`Error generando recibo para pago ${responseInsert.uuid}: ${err}`));
+
+		this.servicioImputacionPago.imputarPago(responseInsert.uuid)
+			.catch((err) => logger.error(`Error imputando pago ${responseInsert.uuid}: ${err}`));
 
 		return mapPago(responseInsert) as any;
 	};
@@ -94,10 +99,10 @@ export class PagoService implements IPagoService {
 		// Buscar plantilla del documento ReciboPago
 		const documento = await prismaClient.documento.findFirst({
 			where: { nombre: PDFDocumentsEnum.ReciboPago },
-			select: { nombre: true, fileUploadId: true },
+			select: { nombre: true, googleDriveFileId: true },
 		});
 
-		if (!documento?.fileUploadId || !familiarId) {
+		if (!documento?.googleDriveFileId || !familiarId) {
 			// Crear el registro sin PDF si faltan datos requeridos
 			await prismaClient.reciboPago.create({
 				data: { uuid: nanoid(10), numeroRecibo, pagoId: pagoUuid },
@@ -113,7 +118,7 @@ export class PagoService implements IPagoService {
 		// Generar PDF y subir a S3
 		const recibo = new ReciboPago({
 			documentName: documento.nombre,
-			fileUploadId: documento.fileUploadId,
+			googleDriveFileId: documento.googleDriveFileId,
 			familiarId,
 			fechaPago,
 			pago: { monto, concepto },
@@ -399,7 +404,7 @@ export class PagoService implements IPagoService {
 			}
 
 			try {
-				await prismaClient.pago.create({
+				const pagoCreado = await prismaClient.pago.create({
 					data: {
 						uuid: nanoid(10),
 						concepto: conceptoStr.substring(0, 50).toUpperCase(),
@@ -409,6 +414,9 @@ export class PagoService implements IPagoService {
 						fechaPago,
 						rendido: metodoPago === "TRANSFERENCIA",
 					},
+				});
+				await this.servicioImputacionPago.imputarPago(pagoCreado.uuid).catch((err) => {
+					logger.error(`Error imputando pago importado ${pagoCreado.uuid}: ${err}`);
 				});
 				createdCount++;
 			} catch {

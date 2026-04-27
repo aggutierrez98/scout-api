@@ -1,0 +1,15 @@
+meta {
+  name: Get Mis Eventos
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/api/evento/mis-eventos
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}

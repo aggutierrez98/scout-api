@@ -11,6 +11,12 @@ export interface IEvento {
 	lugarProvincia: string;
 	lugarLatitud?: number | null;
 	lugarLongitud?: number | null;
+	centroSaludCercanoNombre: string;
+	centroSaludCercanoDireccion: string;
+	centroSaludCercanoLocalidad: string;
+	comisariaCercanaNombre: string;
+	comisariaCercanaDireccion: string;
+	comisariaCercanaLocalidad: string;
 	fechaHoraInicio: Date;
 	fechaHoraFin: Date;
 	costo?: number | null;
@@ -20,7 +26,7 @@ export interface IAddParticipantes {
 	scoutId?: string;
 	equipoId?: string;
 	rama?: RamasType;
-	tipoParticipante: string;
+	tipoParticipante?: string;
 }
 
 export interface IEventoData {
@@ -36,6 +42,12 @@ export interface IEventoData {
 	lugarProvincia: string;
 	lugarLatitud?: number | null;
 	lugarLongitud?: number | null;
+	centroSaludCercanoNombre?: string | null;
+	centroSaludCercanoDireccion?: string | null;
+	centroSaludCercanoLocalidad?: string | null;
+	comisariaCercanaNombre?: string | null;
+	comisariaCercanaDireccion?: string | null;
+	comisariaCercanaLocalidad?: string | null;
 	fechaHoraInicio: Date;
 	fechaHoraFin: Date;
 	costo?: number | null;
@@ -46,6 +58,6 @@ export interface IEventoData {
 		id: string;
 		scoutId: string;
 		tipoParticipante: string;
-		scout?: { id: string; nombre: string; apellido: string };
+		scout?: { id: string; nombre: string; apellido: string; funcion?: string | null };
 	}>;
 }

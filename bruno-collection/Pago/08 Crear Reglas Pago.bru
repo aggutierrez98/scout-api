@@ -1,0 +1,44 @@
+meta {
+  name: Crear Reglas Pago
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{base_url}}/api/pago/reglas
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "anio": 2026,
+    "fechaInicio": "2026-01-01T00:00:00.000Z",
+    "fechaFin": "2026-12-31T23:59:59.999Z",
+    "afiliacion": [
+      {
+        "funcionScout": "JOVEN",
+        "monto": 12000,
+        "obligatoria": true
+      }
+    ],
+    "cuotasMensuales": [
+      { "mes": 1, "montoBase": 15000, "cobrable": true },
+      { "mes": 2, "montoBase": 15000, "cobrable": true },
+      { "mes": 3, "montoBase": 15000, "cobrable": true }
+    ],
+    "descuentoPagoAnual": {
+      "habilitado": true,
+      "mesBonificado": 12
+    },
+    "descuentosFamiliares": [
+      { "cantidadMinima": 1, "cantidadMaxima": 1, "montoPorScout": 15000 },
+      { "cantidadMinima": 2, "cantidadMaxima": 2, "montoPorScout": 11000 },
+      { "cantidadMinima": 3, "cantidadMaxima": null, "montoPorScout": 7500 }
+    ]
+  }
+}

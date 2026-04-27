@@ -1,0 +1,23 @@
+meta {
+  name: Get Eventos
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/api/evento
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:query {
+  ~nombre: campamento
+  ~fechaDesde: 2026-01-01T00:00:00.000Z
+  ~fechaHasta: 2026-12-31T23:59:59.000Z
+  ~offset: 0
+  ~limit: 20
+}

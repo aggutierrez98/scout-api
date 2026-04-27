@@ -80,4 +80,5 @@ export const ADMIN_PERM = [
     "create_tipo-evento",
     "modify_tipo-evento",
     "delete_tipo-evento",
+    "create_admin",
 ]

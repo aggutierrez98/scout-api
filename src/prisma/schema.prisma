@@ -36,6 +36,17 @@ enum Rama {
   ROVERS
 }
 
+enum TipoObligacionPago {
+  AFILIACION
+  CUOTA_MENSUAL
+}
+
+enum EstadoObligacionPago {
+  PENDIENTE
+  INCOMPLETO
+  AL_DIA
+}
+
 model User {
   id             Int            @id @default(autoincrement())
   uuid           String         @unique
@@ -50,6 +61,7 @@ model User {
   invitationToken String?
   notificaciones  Notificacion[]
   pushTokens      PushToken[]
+  condonacionesPago CondonacionPago[]
 }
 
 model Scout {
@@ -79,6 +91,7 @@ model Scout {
   entregasObtenidas     EntregaRealizada[]
   familiarScout         FamiliarScout[]
   pagosRealizados       Pago[]
+  obligacionesPago      ObligacionPago[]
   eventosParticipante   EventoParticipante[]
   fechaCreacion         DateTime              @default(now())
   fechaActualizacion    DateTime              @updatedAt
@@ -91,11 +104,12 @@ model Documento {
   id                           Int                              @id @default(autoincrement())
   uuid                         String                           @unique
   nombre                       String
-  vence                        Boolean
-  completable                  Boolean
-  fileUploadId                 String?
-  requiereFamiliar             Boolean                          @default(false)
-  requiereFirma                Boolean                          @default(false)
+  requiereRenovacionAnual      Boolean                          @map("vence")
+  requeridoParaIngreso         Boolean                          @default(false) @map("requeridoIngreso")
+  completableDinamicamente     Boolean                          @map("completable")
+  googleDriveFileId            String?                          @map("fileUploadId")
+  requiereDatosFamiliar        Boolean                          @default(false) @map("requiereFamiliar")
+  requiereFirmaFamiliar        Boolean                          @default(false) @map("requiereFirma")
   documentoPresentado          DocumentoPresentado[]
   tipoEventoDocumentos         TipoEventoDocumento[]
   tipoEventoDocumentosParticipante TipoEventoDocumentoParticipante[]
@@ -131,8 +145,152 @@ model Pago {
   fechaPago     DateTime
   fechaCreacion DateTime    @default(now())
   reciboPago    ReciboPago?
+  imputaciones  ImputacionPago[]
 
   @@index([scoutId])
+}
+
+model CicloReglasPago {
+  id                   Int                        @id @default(autoincrement())
+  uuid                 String                     @unique
+  anio                 Int                        @unique
+  activo               Boolean                    @default(false)
+  fechaInicio          DateTime
+  fechaFin             DateTime
+  fechaCreacion        DateTime                   @default(now())
+  fechaActualizacion   DateTime                   @updatedAt
+  reglasAfiliacion     ReglaAfiliacion[]
+  reglasCuotaMensual   ReglaCuotaMensual[]
+  reglaDescuentoPagoAnual ReglaDescuentoPagoAnual?
+  reglasDescuentoFamiliar ReglaDescuentoFamiliar[]
+  obligacionesPago     ObligacionPago[]
+  saldosAFavor         SaldoAFavor[]
+}
+
+model ReglaAfiliacion {
+  id              Int             @id @default(autoincrement())
+  uuid            String          @unique
+  ciclo           CicloReglasPago @relation(fields: [cicloId], references: [uuid], onDelete: Cascade)
+  cicloId         String
+  funcionScout    String
+  monto           Float
+  obligatoria     Boolean         @default(true)
+  fechaCreacion   DateTime        @default(now())
+  fechaActualizacion DateTime     @updatedAt
+
+  @@unique([cicloId, funcionScout])
+  @@index([cicloId])
+}
+
+model ReglaCuotaMensual {
+  id                Int             @id @default(autoincrement())
+  uuid              String          @unique
+  ciclo             CicloReglasPago @relation(fields: [cicloId], references: [uuid], onDelete: Cascade)
+  cicloId           String
+  mes               Int
+  montoBase         Float
+  cobrable          Boolean         @default(true)
+  fechaCreacion     DateTime        @default(now())
+  fechaActualizacion DateTime       @updatedAt
+
+  @@unique([cicloId, mes])
+  @@index([cicloId])
+}
+
+model ReglaDescuentoPagoAnual {
+  id                Int             @id @default(autoincrement())
+  uuid              String          @unique
+  ciclo             CicloReglasPago @relation(fields: [cicloId], references: [uuid], onDelete: Cascade)
+  cicloId           String          @unique
+  habilitado        Boolean         @default(false)
+  mesBonificado     Int?
+  fechaCreacion     DateTime        @default(now())
+  fechaActualizacion DateTime       @updatedAt
+}
+
+model ReglaDescuentoFamiliar {
+  id                Int             @id @default(autoincrement())
+  uuid              String          @unique
+  ciclo             CicloReglasPago @relation(fields: [cicloId], references: [uuid], onDelete: Cascade)
+  cicloId           String
+  cantidadMinima    Int
+  cantidadMaxima    Int?
+  montoPorScout     Float
+  fechaCreacion     DateTime        @default(now())
+  fechaActualizacion DateTime       @updatedAt
+
+  @@index([cicloId])
+  @@unique([cicloId, cantidadMinima])
+}
+
+model ObligacionPago {
+  id                Int                   @id @default(autoincrement())
+  uuid              String                @unique
+  ciclo             CicloReglasPago       @relation(fields: [cicloId], references: [uuid], onDelete: Cascade)
+  cicloId           String
+  tipo              TipoObligacionPago
+  periodo           String
+  scout             Scout?                @relation(fields: [scoutId], references: [uuid], onDelete: SetNull)
+  scoutId           String?
+  familiaClave      String
+  montoEsperado     Float
+  montoCondonado    Float                 @default(0)
+  estado            EstadoObligacionPago  @default(PENDIENTE)
+  detalleCalculo    Json?
+  fechaCreacion     DateTime              @default(now())
+  fechaActualizacion DateTime             @updatedAt
+  imputaciones      ImputacionPago[]
+  condonaciones     CondonacionPago[]
+
+  @@index([cicloId, periodo])
+  @@index([familiaClave, estado])
+  @@index([scoutId, periodo])
+  @@unique([cicloId, tipo, periodo, scoutId])
+}
+
+model ImputacionPago {
+  id             Int           @id @default(autoincrement())
+  uuid           String        @unique
+  pago           Pago          @relation(fields: [pagoId], references: [uuid], onDelete: Cascade)
+  pagoId         String
+  obligacion     ObligacionPago @relation(fields: [obligacionId], references: [uuid], onDelete: Cascade)
+  obligacionId   String
+  montoImputado  Float
+  fecha          DateTime      @default(now())
+
+  @@index([pagoId])
+  @@index([obligacionId])
+}
+
+model CondonacionPago {
+  id                Int            @id @default(autoincrement())
+  uuid              String         @unique
+  obligacion        ObligacionPago @relation(fields: [obligacionId], references: [uuid], onDelete: Cascade)
+  obligacionId      String
+  montoCondonado    Float
+  motivo            String
+  condonadoPorUser  User?          @relation(fields: [condonadoPorUserId], references: [uuid], onDelete: SetNull)
+  condonadoPorUserId String?
+  fecha             DateTime       @default(now())
+
+  @@index([obligacionId])
+  @@index([condonadoPorUserId])
+}
+
+model SaldoAFavor {
+  id                Int             @id @default(autoincrement())
+  uuid              String          @unique
+  familiaClave      String
+  ciclo             CicloReglasPago @relation(fields: [cicloId], references: [uuid], onDelete: Cascade)
+  cicloId           String
+  montoDisponible   Float           @default(0)
+  origen            String?
+  fechaCreacion     DateTime        @default(now())
+  fechaActualizacion DateTime       @updatedAt
+
+  @@unique([familiaClave, cicloId])
+  @@index([familiaClave])
+  @@index([cicloId])
 }
 
 model ReciboPago {
@@ -295,6 +453,12 @@ model Evento {
   lugarProvincia     String
   lugarLatitud       Float?
   lugarLongitud      Float?
+  centroSaludCercanoNombre    String?
+  centroSaludCercanoDireccion String?
+  centroSaludCercanoLocalidad String?
+  comisariaCercanaNombre      String?
+  comisariaCercanaDireccion   String?
+  comisariaCercanaLocalidad   String?
   fechaHoraInicio    DateTime
   fechaHoraFin       DateTime
   costo              Float?

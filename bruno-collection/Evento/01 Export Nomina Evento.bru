@@ -1,0 +1,23 @@
+meta {
+  name: Export Nomina Evento
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/evento/:id/nomina
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: evento-uuid-aqui
+}
+
+params:query {
+  ~pdf: true
+}

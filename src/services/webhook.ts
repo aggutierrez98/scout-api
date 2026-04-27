@@ -13,28 +13,36 @@ export class WebhookService {
 			});
 		}
 
-		// 1. Buscar scout por teléfono
-		// Normalización: quitamos código de país Argentina (54) y ceros iniciales,
-		// quedándonos con los últimos 10 dígitos para comparar.
-		const normalizePhone = (phone: string) => {
-			const digits = phone.replace(/\D/g, "");
-			if (digits.startsWith("54")) return digits.slice(2);
-			if (digits.startsWith("0")) return digits.slice(1);
-			return digits.slice(-10);
-		};
+		const scoutSelect = { uuid: true, nombre: true, apellido: true, telefono: true } as const;
 
-		const remitenteSuffix = normalizePhone(datos.whatsapp_remitente);
+		// 1. Si whatsapp-comprobantes ya resolvió el scoutId, usarlo directamente
+		let scout = datos.scoutId
+			? await prismaClient.scout.findUnique({
+				where: { uuid: datos.scoutId },
+				select: scoutSelect,
+			})
+			: null;
 
-		const todosLosScouts = await prismaClient.scout.findMany({
-			where: { telefono: { not: null } },
-			select: { uuid: true, nombre: true, apellido: true, telefono: true },
-		});
+		// 2. Fallback: buscar por teléfono del remitente
+		if (!scout) {
+			const normalizePhone = (phone: string) => {
+				const digits = phone.replace(/\D/g, "");
+				if (digits.startsWith("54")) return digits.slice(2);
+				if (digits.startsWith("0")) return digits.slice(1);
+				return digits.slice(-10);
+			};
 
-		let scout = todosLosScouts.find((s) => {
-			return normalizePhone(s.telefono!) === remitenteSuffix;
-		}) ?? null;
+			const remitenteSuffix = normalizePhone(datos.whatsapp_remitente);
 
-		// 2. Si no encontró por teléfono, buscar por nombre_emisor
+			const todosLosScouts = await prismaClient.scout.findMany({
+				where: { telefono: { not: null } },
+				select: scoutSelect,
+			});
+
+			scout = todosLosScouts.find((s) => normalizePhone(s.telefono!) === remitenteSuffix) ?? null;
+		}
+
+		// 3. Fallback: buscar por nombre del emisor
 		if (!scout && datos.nombre_emisor) {
 			const palabras = datos.nombre_emisor.trim().split(/\s+/);
 
@@ -46,7 +54,7 @@ export class WebhookService {
 							{ apellido: { contains: palabra } },
 						],
 					},
-					select: { uuid: true, nombre: true, apellido: true, telefono: true },
+					select: scoutSelect,
 				});
 
 				if (encontrado) {
@@ -56,7 +64,7 @@ export class WebhookService {
 			}
 		}
 
-		// 3. Si no encontró scout → error
+		// 4. Si no se encontró por ningún método → error
 		if (!scout) {
 			throw new AppError({
 				name: "SCOUT_NO_ENCONTRADO",
@@ -65,11 +73,11 @@ export class WebhookService {
 			});
 		}
 
-		// 4. Construir el concepto
+		// 5. Construir el concepto
 		const conceptoBase = datos.concepto ?? `TRANSFERENCIA ${datos.banco_emisor ?? "DESCONOCIDO"}`;
 		const concepto = conceptoBase.toUpperCase().slice(0, 50);
 
-		// 5. Crear el pago
+		// 6. Crear el pago
 		const pago = await prismaClient.pago.create({
 			data: {
 				uuid: nanoid(10),
@@ -82,7 +90,7 @@ export class WebhookService {
 			},
 		});
 
-		// 6. Retornar resultado
+		// 7. Retornar resultado
 		return {
 			pagoId: pago.uuid,
 			scoutId: scout.uuid,

@@ -1,0 +1,19 @@
+meta {
+  name: Get Pago Pendiente Detalle
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{base_url}}/api/pago/pendientes/:id
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: obligacion-uuid-aqui
+}

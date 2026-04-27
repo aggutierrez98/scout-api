@@ -1,137 +1,81 @@
-# Crons del sistema
+# Crons del sistema (`scout-api`)
 
-Todos los crons se registran en `src/crons/index.ts` y se inicializan desde `Server.ts` a través de `loadCrons()`.  
-La librería utilizada es `node-cron` v3, que soporta IANA timezones de forma nativa.
+Todos los jobs se registran en:
 
----
+- `src/crons/index.ts` (notificaciones)
+- `Server.ts` (sync diario de nómina)
 
-## Estructura
-
-```
-src/crons/
-├── index.ts            — Registro de todos los crons de notificaciones
-├── helpers.ts          — Utilidades de fecha/hora en timezone Argentina
-├── cumpleaños.ts       — Cron de cumpleaños (scouts y familiares)
-├── eventosReminder.ts  — Cron de recordatorios de eventos
-└── cuotaMensual.ts     — Cron de cuota mensual impaga
-```
-
-El cron de sincronización de nómina vive directamente en `Server.ts` ya que utiliza `timezone: "UTC"` y pertenece a otro dominio.
+Timezone principal del negocio: `America/Argentina/Buenos_Aires`.
 
 ---
 
-## Cron 1 — Cumpleaños
+## Resumen de jobs activos
 
-**Archivo:** `src/crons/cumpleaños.ts`  
-**Schedule:** `0 9 * * *` — todos los días a las 9:00 AM Argentina  
-**Timezone:** `America/Argentina/Buenos_Aires`  
-**Tipo de aviso:** `CUMPLEAÑOS`
-
-### Comportamiento
-
-1. Obtiene el día/mes actual en horario Argentina (UTC-3).
-2. Consulta todos los **Scouts** activos y todos los **Familiares** cuya `fechaNacimiento` coincida con hoy (mes y día) usando `strftime('%m-%d', fechaNacimiento)` en SQLite.
-3. Obtiene todos los usuarios activos del sistema.
-4. Por cada persona con cumpleaños, crea un `Aviso` dirigido a **todos** los usuarios con:
-   - `tipo: "CUMPLEAÑOS"`
-   - `referenciaId`: UUID del Scout o Familiar
-   - `referenciaTipo`: `"scout"` o `"familiar"`
-
-### Nota para el frontend
-
-El frontend puede usar `referenciaTipo` + `referenciaId` para comparar con el scout/familiar del usuario en sesión y cambiar el mensaje a "¡Feliz cumpleaños!" cuando corresponda.
+| Job | Schedule | Timezone | Archivo | Dominio |
+|---|---|---|---|---|
+| Cumpleaños | `0 9 * * *` | `America/Argentina/Buenos_Aires` | `src/crons/cumpleaños.ts` | Notificaciones |
+| Recordatorio de eventos | `0 9 * * *` | `America/Argentina/Buenos_Aires` | `src/crons/eventosReminder.ts` | Notificaciones |
+| Pagos pendientes | `0 10 * * 6` | `America/Argentina/Buenos_Aires` | `src/crons/cuotaMensual.ts` | Motor de pagos |
+| Documentos pendientes | `0 10 * * 6` | `America/Argentina/Buenos_Aires` | `src/crons/documentosPendientes.ts` | Documentación |
+| Sync de nómina (pull diario) | `0 10 * * *` | `UTC` (equivale 7:00 ART) | `Server.ts` | Integración cruz-del-sur |
 
 ---
 
-## Cron 2 — Recordatorio de Eventos
+## 1) Cumpleaños (`src/crons/cumpleaños.ts`)
 
-**Archivo:** `src/crons/eventosReminder.ts`  
-**Schedule:** `0 9 * * *` — todos los días a las 9:00 AM Argentina  
-**Timezone:** `America/Argentina/Buenos_Aires`  
-**Tipo de aviso:** `EVENTO`
+- Busca scouts activos y familiares cuyo `fechaNacimiento` coincide con día/mes actual.
+- Crea avisos tipo `CUMPLEAÑOS` para usuarios activos del sistema.
+- `referenciaTipo`: `scout` o `familiar`.
 
-### Comportamiento
+## 2) Recordatorio de eventos (`src/crons/eventosReminder.ts`)
 
-El cron ejecuta dos lógicas en cada corrida:
+Ejecuta dos estrategias:
 
-#### 2a. Recordatorio día siguiente a la creación
+1. **Día siguiente a creación** de evento activo.
+2. **Anticipación del evento** para días `[1, 3, 5, 7, 14]` antes de `fechaHoraInicio`.
 
-- Busca eventos `activo = true` cuya `fechaCreacion` cayó **ayer** (en timezone Argentina).
-- Resuelve los usuarios destinatarios de los participantes actuales del evento:
-  - `JOVEN_PROTAGONISTA` → usuarios de sus **familiares** vinculados.
-  - `EDUCADOR` → el **usuario** con ese `scoutId`.
-- Envía un aviso: *"Recordatorio: estás anotado en el evento X"*.
+Destinatarios por participante:
 
-#### 2b. Recordatorios N días antes del evento
+- `JOVEN_PROTAGONISTA` → usuarios de familiares vinculados.
+- `EDUCADOR` → usuario con `scoutId` del educador.
 
-Los intervalos fijos son: **1, 3, 5, 7 y 14 días antes** de `fechaHoraInicio`.
+Tipo de aviso: `EVENTO`.
 
-- Por cada intervalo, busca eventos cuyo `fechaHoraInicio` cae en ese día target (en timezone Argentina).
-- Resuelve destinatarios con la misma lógica que 2a.
-- Envía un aviso con el texto correspondiente: *"El evento X es mañana / en N días. ¡No te olvides!"*
+## 3) Pagos pendientes (`src/crons/cuotaMensual.ts`)
 
-### Nota
+Cron refactorizado al motor 2026+:
 
-Los participantes se resuelven en el momento de ejecución del cron, no al momento de creación del evento. La notificación inmediata al agregar un participante la maneja `EventoService.addParticipantes()` por separado.
+- Fuente: `ServicioPagosPendientes` (`ObligacionPago` con estado pendiente/incompleto).
+- Destinatarios:
+  1. usuarios de familiares vinculados al scout,
+  2. usuario directo del scout (`User.scoutId`).
+- Agrupa por usuario y envía resumen con cantidad/monto pendiente.
+- Deduplicación diaria por usuario + tipo `PAGO_PENDIENTE`.
 
----
+## 4) Documentos pendientes (`src/crons/documentosPendientes.ts`)
 
-## Cron 3 — Cuota Mensual
+- Fuente: `DocumentoService.getDocumentosPendientes({ scope: "ALL" })`.
+- Considera pendientes faltantes y vencidos anuales.
+- Destinatarios: usuarios activos asociados a familiares de scouts con pendientes.
+- Tipo de aviso: `DOCUMENTO_PENDIENTE`.
+- Deduplicación diaria por usuario + tipo de aviso.
 
-**Archivo:** `src/crons/cuotaMensual.ts`  
-**Schedule:** `0 10 * * 6` — todos los **sábados** a las 10:00 AM Argentina  
-**Timezone:** `America/Argentina/Buenos_Aires`  
-**Tipo de aviso:** `PAGO_PENDIENTE`
+## 5) Sync diario de nómina (`Server.ts`)
 
-### Comportamiento
-
-1. Determina el mes actual en Argentina. El concepto a buscar es: `"CUOTA DE GRUPO DE [MES]"` (en mayúsculas, ej: `CUOTA DE GRUPO DE ABRIL`).
-2. Obtiene todos los **familiares con usuario activo** y sus scouts vinculados.
-3. Para cada familiar, verifica si alguno de sus scouts tiene un `Pago` registrado en el mes actual con concepto que contenga la cadena del paso 1.
-4. Si **ninguno** pagó → envía un aviso `PAGO_PENDIENTE` al usuario del familiar.
-5. Incluye un chequeo anti-duplicado: si ya se envió un aviso `PAGO_PENDIENTE` al mismo usuario hoy, se omite (previene reenvíos por reinicios del proceso).
-
-### Cadencia mensual efectiva
-
-El cron corre todos los sábados. El primer sábado del mes será la primera corrida; los sábados siguientes reenvían si el pago sigue sin registrarse. Al comienzo del mes siguiente, el concepto cambia y el ciclo reinicia.
+- Ejecuta `NominaService.pullAndSync()`.
+- Schedule en UTC para sincronizar con export diario de cruz-del-sur.
+- Es independiente del módulo `src/crons/index.ts`.
 
 ---
 
-## Cron 4 — Sync de Nómina (existente)
+## Helpers de fecha
 
-**Archivo:** `Server.ts`  
-**Schedule:** `0 10 * * *` — todos los días a las 7:00 AM Argentina (10:00 UTC)  
-**Timezone:** `UTC`  
-**Descripción:** Sincronización diaria con cruz-del-sur, una hora después del export diario de esa plataforma (6:00 AM).
+Archivo: `src/crons/helpers.ts`
 
----
+- `nowArgentina()`
+- `startOfDayArg(date)`
+- `endOfDayArg(date)`
+- `addDaysArg(date, n)`
+- `MESES_ES`
 
-## Helpers de fecha (`src/crons/helpers.ts`)
-
-| Función | Descripción |
-|---------|-------------|
-| `nowArgentina()` | Devuelve un `Date` cuyas componentes UTC representan la hora actual en Argentina (UTC-3) |
-| `startOfDayArg(date)` | 00:00:00 Argentina del día `date`, expresado en UTC |
-| `endOfDayArg(date)` | 23:59:59.999 Argentina del día `date`, expresado en UTC |
-| `addDaysArg(date, n)` | Suma N días a `date` (en timezone Argentina) |
-| `MESES_ES` | Array de nombres de meses en español, en mayúsculas |
-
----
-
-## Tipos de aviso (`VALID_TIPOS_AVISO`)
-
-| Tipo | Usado en |
-|------|----------|
-| `CUMPLEAÑOS` | Cron de cumpleaños |
-| `EVENTO` | Cron de recordatorio de eventos |
-| `PAGO_PENDIENTE` | Cron de cuota mensual |
-| `CUSTOM` | Avisos manuales |
-
-## Tipos de referencia (`VALID_REFERENCIA_TIPOS`)
-
-| Tipo | Descripción |
-|------|-------------|
-| `scout` | Referencia a un Scout (ej: cumpleaños de scout) |
-| `familiar` | Referencia a un Familiar (ej: cumpleaños de familiar) |
-| `pago` | Referencia a un Pago |
-| `evento` | Referencia a un Evento |
+Se usan para evitar desfasajes de fecha al evaluar ventanas diarias en ART.

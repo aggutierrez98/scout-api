@@ -17,6 +17,7 @@
     "compression": "^1.7.4",
     "concurrently": "^9.1.2",
     "cors": "2.8.5",
+    "docxtemplater": "^3.68.5",
     "dotenv": "16.3.1",
     "dotenv-cli": "7.3.0",
     "expo-server-sdk": "^6.1.0",
@@ -38,6 +39,7 @@
     "node-cron": "^3.0.2",
     "node-fetch": "^3.3.2",
     "pdf-lib": "^1.17.1",
+    "pizzip": "^3.2.0",
     "progress": "^2.0.3",
     "prompt-sync": "^4.2.0",
     "puppeteer": "^24.2.0",
@@ -111,7 +113,8 @@
     "prisma:apply-migrations:prod": "dotenv -e .env.production -- ts-node src/bin/applyMigrations.ts",
     "prisma:generate-client:dev": "dotenv -e .env.development -- prisma generate",
     "fill-pdf:dev": "dotenv -e .env.development -- ts-node src/bin/completePdf.ts",
-    "test": "npm run test"
+    "test": "npm run test",
+    "pagos:migrar-reglas:dev": "dotenv -e .env.development -- ts-node src/bin/migrarPagosReglas.ts"
   },
   "version": "1.0.0"
 }

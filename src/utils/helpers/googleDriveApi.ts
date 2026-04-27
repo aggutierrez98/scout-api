@@ -1,8 +1,8 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { auth, JWT } from 'google-auth-library';
 import {
-    DocDataXLSX,
-    DocumentoXLSX,
+    DocumentoDefinitionSpreadsheetRow,
+    DocumentoPresentadoSpreadsheetRow,
     EntregaXLSX,
     FamiliarXLSX,
     PagoXLSX,
@@ -14,8 +14,14 @@ import {
 } from '../../types';
 import { google } from 'googleapis';
 import { createWriteStream } from 'fs';
-import { Stream } from 'stream';
+import { Readable, Stream } from 'stream';
 import { SecretsManager } from '../classes/SecretsManager';
+import logger from '../classes/Logger';
+import { AppError, HttpCode } from '../classes/AppError';
+
+const DOCX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+const GOOGLE_DOC_MIME_TYPE = "application/vnd.google-apps.document";
+const PDF_MIME_TYPE = "application/pdf";
 
 export const getSercviceAccountAuth = async () => {
     await SecretsManager.getInstance().initialize()
@@ -26,7 +32,8 @@ export const getSercviceAccountAuth = async () => {
         key: googleSecrets.PRIVATE_KEY,
         scopes: [
             'https://www.googleapis.com/auth/spreadsheets',
-            "https://www.googleapis.com/auth/drive.readonly"
+            "https://www.googleapis.com/auth/drive.readonly",
+            "https://www.googleapis.com/auth/drive.file",
         ],
     });
 };
@@ -36,8 +43,8 @@ export function getSpreadSheetData(sheetIndex: "scouts"): Promise<Partial<ScoutX
 export function getSpreadSheetData(sheetIndex: "entregas"): Promise<Partial<EntregaXLSX>[]>;
 export function getSpreadSheetData(sheetIndex: "usuarios"): Promise<Partial<UsuarioXLSX>[]>;
 export function getSpreadSheetData(sheetIndex: "pagos"): Promise<Partial<PagoXLSX>[]>;
-export function getSpreadSheetData(sheetIndex: "documentos"): Promise<Partial<DocumentoXLSX>[]>;
-export function getSpreadSheetData(sheetIndex: "docs-data"): Promise<Partial<DocDataXLSX>[]>;
+export function getSpreadSheetData(sheetIndex: "documentos"): Promise<Partial<DocumentoPresentadoSpreadsheetRow>[]>;
+export function getSpreadSheetData(sheetIndex: "docs-data"): Promise<Partial<DocumentoDefinitionSpreadsheetRow>[]>;
 export function getSpreadSheetData(sheetIndex: "equipos"): Promise<Partial<EquipoXLSX>[]>;
 export async function getSpreadSheetData(sheetIndex: SheetIndexType) {
     const serviceAccountAuth = await getSercviceAccountAuth();
@@ -74,7 +81,7 @@ const transformStreamToBuffer = async (stream: Stream): Promise<Buffer> => {
     })
 }
 
-export async function getPDFFile(fileId: string): Promise<Buffer | undefined> {
+export async function getFile(fileId: string): Promise<Buffer | undefined> {
 
     try {
         const serviceAccountAuth = await getSercviceAccountAuth();
@@ -92,5 +99,97 @@ export async function getPDFFile(fileId: string): Promise<Buffer | undefined> {
         return bufferData
     } catch (error) {
         console.error(error);
+    }
+}
+
+async function getOrCreateBackupSheet(doc: GoogleSpreadsheet, title: string) {
+    return doc.sheetsByTitle[title] ?? await doc.addSheet({ title });
+}
+
+export async function writeBackupSheet(sheetTitle: string, data: Record<string, string>[]) {
+    const secrets = SecretsManager.getInstance().getGoogleDriveSecrets();
+    if (!secrets.SPREADSHEET_BACKUP_KEY) {
+        throw new AppError({ name: 'BACKUP_CONFIG_ERROR', description: 'SPREADSHEET_BACKUP_KEY no configurado en Infisical', httpCode: HttpCode.INTERNAL_SERVER_ERROR });
+    }
+    const serviceAccountAuth = await getSercviceAccountAuth();
+    const doc = new GoogleSpreadsheet(secrets.SPREADSHEET_BACKUP_KEY, serviceAccountAuth);
+    await doc.loadInfo();
+    const sheet = await getOrCreateBackupSheet(doc, sheetTitle);
+    await sheet.clearRows();
+    if (data.length > 0) {
+        await sheet.setHeaderRow(Object.keys(data[0]));
+        await sheet.addRows(data);
+    }
+}
+
+export async function readBackupSheet(sheetTitle: string): Promise<Record<string, string>[]> {
+    const secrets = SecretsManager.getInstance().getGoogleDriveSecrets();
+    if (!secrets.SPREADSHEET_BACKUP_KEY) {
+        throw new AppError({ name: 'BACKUP_CONFIG_ERROR', description: 'SPREADSHEET_BACKUP_KEY no configurado en Infisical', httpCode: HttpCode.INTERNAL_SERVER_ERROR });
+    }
+    const serviceAccountAuth = await getSercviceAccountAuth();
+    const doc = new GoogleSpreadsheet(secrets.SPREADSHEET_BACKUP_KEY, serviceAccountAuth);
+    await doc.loadInfo();
+    const sheet = doc.sheetsByTitle[sheetTitle];
+    if (!sheet) return [];
+    const rows = await sheet.getRows();
+    return rows.map(r => r.toObject() as Record<string, string>);
+}
+
+export async function exportDocxBufferAsPdf(docxBuffer: Buffer, fileName: string): Promise<Buffer> {
+    const serviceAccountAuth = await getSercviceAccountAuth();
+    const drive = google.drive({ version: "v3", auth: serviceAccountAuth });
+    let tempGoogleDocId: string | undefined;
+
+    try {
+        const createResponse = await drive.files.create({
+            requestBody: {
+                name: fileName.replace(/\.docx$/i, ""),
+                mimeType: GOOGLE_DOC_MIME_TYPE,
+            },
+            media: {
+                mimeType: DOCX_MIME_TYPE,
+                body: Readable.from(docxBuffer),
+            },
+            fields: "id",
+        });
+
+        tempGoogleDocId = createResponse.data.id || undefined;
+
+        if (!tempGoogleDocId) {
+            throw new AppError({
+                name: "DOCX_TO_PDF_EXPORT_FAILED",
+                description: "No se pudo convertir la nómina a PDF",
+                httpCode: HttpCode.INTERNAL_SERVER_ERROR,
+            });
+        }
+
+        const exportResponse = await drive.files.export(
+            {
+                fileId: tempGoogleDocId,
+                mimeType: PDF_MIME_TYPE,
+            },
+            { responseType: "stream" },
+        );
+
+        return await transformStreamToBuffer(exportResponse.data);
+    } catch (error) {
+        logger.error(`[GoogleDriveApi] Error exportando DOCX a PDF: ${error instanceof Error ? error.message : String(error)}`);
+
+        if (error instanceof AppError) throw error;
+
+        throw new AppError({
+            name: "DOCX_TO_PDF_EXPORT_FAILED",
+            description: "No se pudo convertir la nómina a PDF",
+            httpCode: HttpCode.INTERNAL_SERVER_ERROR,
+        });
+    } finally {
+        if (tempGoogleDocId) {
+            try {
+                await drive.files.delete({ fileId: tempGoogleDocId });
+            } catch (cleanupError) {
+                logger.warn(`[GoogleDriveApi] No se pudo borrar el documento temporal ${tempGoogleDocId}: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`);
+            }
+        }
     }
 }

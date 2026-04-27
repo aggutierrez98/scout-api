@@ -1,0 +1,20 @@
+meta {
+  name: Get Tipos de Evento
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/tipo-evento
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:query {
+  ~offset: 0
+  ~limit: 20
+}

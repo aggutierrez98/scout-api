@@ -257,3 +257,68 @@ INFISICAL_SERVICE_TOKEN=<token-de-servicio>
 ```
 
 > El `SecretsManager` (en `src/utils/classes/`) se inicializa antes de que Express comience a escuchar, garantizando que todos los secretos estén disponibles antes del primer request.
+
+---
+
+## Módulo: motor de pagos por reglas (2026+)
+
+### Servicios agregados
+
+- `ServicioReglasPago`: alta/edición/activación de ciclos y reglas.
+- `ServicioObligacionesPago`: generación de `ObligacionPago`, scoping por rol y lectura de pendientes.
+- `ServicioImputacionPago`: aplica pagos reales sobre obligaciones y gestiona `SaldoAFavor`.
+- `ServicioCondonacionPago`: condona deuda incompleta con auditoría (`CondonacionPago`).
+- `ServicioPagosPendientes`: fachada para consumo desde cron.
+
+### Diseño de datos
+
+El motor separa claramente:
+
+1. **Reglas** (`CicloReglasPago` + tablas de reglas)
+2. **Deuda esperada** (`ObligacionPago`)
+3. **Pago real aplicado** (`ImputacionPago`)
+4. **Excepción auditada** (`CondonacionPago`)
+5. **Crédito remanente** (`SaldoAFavor`)
+
+Esto desacopla la lógica de cobro del campo textual `Pago.concepto`.
+
+### Integración con endpoint de pago existente
+
+`POST /api/pago` conserva su contrato, pero ahora:
+
+- crea el pago real,
+- intenta generar recibo,
+- dispara imputación automática sobre obligaciones,
+- guarda saldo a favor si sobra dinero.
+
+### Índices clave
+
+- `ObligacionPago(cicloId, periodo)`
+- `ObligacionPago(familiaClave, estado)`
+- `ObligacionPago(scoutId, periodo)`
+- `SaldoAFavor(familiaClave, cicloId)` (unique)
+
+---
+
+## Actualizaciones recientes (abril 2026)
+
+### API de pendientes con paginación para infinite scroll
+
+- `GET /api/pago/pendientes` acepta `offset` y `limit` (además de `rama`, `estado`, `familiaClave`, `scoutNombre`).
+- `GET /api/documento/pendientes` acepta `offset` y `limit` (además de `familiarId`, `soloCompletable`).
+
+Esto habilita listas más livianas en frontend (lotes de 20 items).
+
+### Contexto de grupo en autenticación
+
+- `GET /api/auth/me` y `GET /api/auth/renew` ahora exponen `datosGrupo` (`nombre`, `numero`, `distrito`, `zona`) tomados de `SecretsManager`.
+- Se usa para identidad dinámica del header en web.
+
+### Cobertura completa de eventos y tipo de evento
+
+Se consolidó documentación/colección de pruebas para:
+
+- CRUD completo de `/api/evento`,
+- `/api/evento/mis-eventos`,
+- administración de participantes de evento,
+- CRUD completo de `/api/tipo-evento`.

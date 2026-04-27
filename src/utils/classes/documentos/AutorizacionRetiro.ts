@@ -22,7 +22,7 @@ type Persona = {
 
 export interface RetiroData {
     solo: boolean,
-    personas?: Persona[] | string[]
+    personas?: Array<Persona | string>
 }
 interface Data {
     scoutId: string,
@@ -67,30 +67,44 @@ export class AutorizacionRetiro extends PdfDocument {
             },
         })
 
-        const retiroPersonas = await prismaClient.familiar.findMany({
-            where: {
-                uuid: {
-                    in: this.data.retiroData.personas as string[]
-                }
-            },
-            select: {
-                nombre: true,
-                apellido: true,
-                dni: true,
-                padreScout: {
-                    select: {
-                        relacion: true,
-                    },
-                    where: {
-                        scoutId: {
-                            equals: this.data.scoutId
-                        }
-                    }
-                }
-            },
-        })
+        const retiroPersonasRaw = this.data.retiroData.personas ?? [];
+        const retiroPersonasIds = retiroPersonasRaw.filter((persona): persona is string => typeof persona === "string");
+        const retiroPersonasManual = retiroPersonasRaw.filter((persona): persona is Persona => typeof persona !== "string");
 
-        this.data.retiroData.personas = retiroPersonas.map(persona => ({ ...persona, parentesco: persona.padreScout[0].relacion }))
+        let retiroPersonasFromFamiliares: Persona[] = [];
+        if (retiroPersonasIds.length > 0) {
+            const retiroPersonas = await prismaClient.familiar.findMany({
+                where: {
+                    uuid: {
+                        in: retiroPersonasIds,
+                    },
+                },
+                select: {
+                    nombre: true,
+                    apellido: true,
+                    dni: true,
+                    padreScout: {
+                        select: {
+                            relacion: true,
+                        },
+                        where: {
+                            scoutId: {
+                                equals: this.data.scoutId,
+                            },
+                        },
+                    },
+                },
+            });
+
+            retiroPersonasFromFamiliares = retiroPersonas.map((persona) => ({
+                nombre: persona.nombre,
+                apellido: persona.apellido,
+                dni: persona.dni,
+                parentesco: persona.padreScout[0]?.relacion || "",
+            }));
+        }
+
+        this.data.retiroData.personas = [...retiroPersonasFromFamiliares, ...retiroPersonasManual];
 
         if (!familiar || !familiar?.padreScout[0].scout) throw new AppError({
             name: "NOT_FOUND",
@@ -115,7 +129,8 @@ export class AutorizacionRetiro extends PdfDocument {
         const [diaNacimiento, mesNacimiento, anoNacimiento] = fechaNacimiento.toLocaleDateString().split("/")
         const { calle, numero } = separarCalleYNumero(direccion)
 
-        const personasData = (retiroData?.personas as Persona[]).reduce((acc, persona, index) => ({
+        const retiroPersonas = (retiroData?.personas as Persona[] | undefined) ?? [];
+        const personasData = retiroPersonas.reduce((acc, persona, index) => ({
             ...acc,
             [`Nombre_apellido_persona_${index + 1}`]: `${persona.apellido} ${persona.nombre}`,
             [`Parentesco_persona_${index + 1}`]: persona.parentesco,
