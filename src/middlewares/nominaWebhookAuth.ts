@@ -1,9 +1,31 @@
 import crypto from "crypto";
 import { NextFunction, Response, Request } from "express";
 import { AppError, HttpCode } from "../utils";
+import { SecretsManager } from "../utils/classes/SecretsManager";
+
+const timingSafeEqual = (expected: string, provided: string) => {
+	const expectedBuf = new Uint8Array(Buffer.from(expected));
+	const providedBuf = new Uint8Array(Buffer.from(provided));
+
+	if (expectedBuf.length !== providedBuf.length) {
+		return false;
+	}
+
+	return crypto.timingSafeEqual(expectedBuf, providedBuf);
+};
 
 export const nominaWebhookAuth = (req: Request, res: Response, next: NextFunction) => {
 	try {
+		const serviceApiKey = SecretsManager.getInstance().isReady()
+			? SecretsManager.getInstance().getServiceApiKey()
+			: undefined;
+		const headerApiKey = req.headers["x-api-key"];
+		const providedApiKey = Array.isArray(headerApiKey) ? headerApiKey[0] : headerApiKey;
+
+		if (serviceApiKey && providedApiKey && timingSafeEqual(serviceApiKey, providedApiKey)) {
+			return next();
+		}
+
 		const webhookSecret = process.env.NOMINA_WEBHOOK_SECRET;
 
 		if (!webhookSecret) {
