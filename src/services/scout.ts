@@ -322,38 +322,73 @@ export class ScoutService implements IScoutService {
 	importScouts = async (nomina: fileUpload.UploadedFile) => {
 		const scoutsData = readXlsxBuffer(nomina.data) as Partial<ScoutXLSX>[];
 
-		const scouts: Prisma.ScoutCreateManyInput[] = [];
-		for (const scoutData of scoutsData) {
-			const data = await mapXLSXScoutToScoutData(scoutData);
-			const foundExisting = await prismaClient.scout.findFirst({
-				where: { dni: data.dni },
-			});
+		const result: import("../types").ImportScoutsResult = {
+			total: scoutsData.length,
+			successful: 0,
+			creados: [],
+			conflictos: [],
+			errores: [],
+		};
 
-			if (!foundExisting) {
-				scouts.push({
-					...data,
-					uuid: nanoid(10),
+		for (let i = 0; i < scoutsData.length; i++) {
+			// La fila 1 del archivo es el encabezado, los datos empiezan en fila 2.
+			const fila = i + 2;
+			const scoutData = scoutsData[i];
+
+			try {
+				const data = await mapXLSXScoutToScoutData(scoutData);
+
+				const existing = await prismaClient.scout.findFirst({
+					where: { dni: data.dni },
+					select: { nombre: true, apellido: true, dni: true, rama: true, funcion: true },
+				});
+
+				if (existing) {
+					result.conflictos.push({
+						fila,
+						enArchivo: {
+							nombre: data.nombre,
+							apellido: data.apellido,
+							dni: data.dni,
+							rama: data.rama ?? undefined,
+							funcion: data.funcion ?? undefined,
+						},
+						enSistema: {
+							nombre: existing.nombre,
+							apellido: existing.apellido,
+							dni: existing.dni,
+							rama: existing.rama,
+							funcion: existing.funcion,
+						},
+					});
+					continue;
+				}
+
+				await prismaClient.scout.create({
+					data: { ...data, uuid: nanoid(10) },
+				});
+
+				result.creados.push({
+					fila,
+					nombre: data.nombre,
+					apellido: data.apellido,
+					dni: data.dni,
+					rama: data.rama ?? undefined,
+					funcion: data.funcion ?? undefined,
+				});
+				result.successful++;
+			} catch (err) {
+				logger.error(`[importScouts] Error en fila ${fila}: ${(err as Error).message}`);
+				result.errores.push({
+					fila,
+					nombreRaw: scoutData.Nombre,
+					dniRaw: scoutData.Documento ? String(scoutData.Documento) : undefined,
+					motivo: (err as Error).message,
 				});
 			}
 		}
 
-		logger.debug(`-> Cargando ${scouts.length} scouts a la bd...`);
-
-		try {
-			const scoutsResult = await prismaClient.scout.createMany({
-				data: scouts,
-			});
-			return {
-				total: scouts.length,
-				successful: scoutsResult.count,
-			};
-		} catch (error) {
-			logger.error(error as string);
-			throw new AppError({
-				name: "BAD_FILE",
-				httpCode: HttpCode.BAD_REQUEST,
-				description: "El archivo enviado contiene valores no validos",
-			});
-		}
+		logger.debug(`[importScouts] total=${result.total} creados=${result.successful} conflictos=${result.conflictos.length} errores=${result.errores.length}`);
+		return result;
 	};
 }

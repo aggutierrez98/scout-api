@@ -139,9 +139,9 @@ export class ScoutController {
 		next: NextFunction,
 	) => {
 		try {
-			const nomina = files?.nomina
-			const { successful, total } = await this.scoutService.importScouts(nomina as UploadedFile);
-			return res.json({ successful, total });
+			const nomina = files?.nomina;
+			const result = await this.scoutService.importScouts(nomina as UploadedFile);
+			return res.json(result);
 		} catch (e) {
 			next(e);
 		}

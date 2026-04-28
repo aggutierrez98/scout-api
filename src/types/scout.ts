@@ -55,6 +55,38 @@ export interface IScoutData extends IScout {
 	fechaCreacion: Date;
 }
 
+export interface ImportedScoutRow {
+	fila: number;
+	nombre: string;
+	apellido: string;
+	dni: string;
+	rama?: string;
+	funcion?: string;
+}
+
+export interface ConflictScoutRow {
+	fila: number;
+	/** Datos del archivo que se intentó importar */
+	enArchivo: { nombre: string; apellido: string; dni: string; rama?: string; funcion?: string };
+	/** Scout existente en el sistema con ese DNI */
+	enSistema: { nombre: string; apellido: string; dni: string; rama?: string | null; funcion?: string | null };
+}
+
+export interface ErrorScoutRow {
+	fila: number;
+	nombreRaw?: string;
+	dniRaw?: string;
+	motivo: string;
+}
+
+export interface ImportScoutsResult {
+	total: number;
+	successful: number;
+	creados: ImportedScoutRow[];
+	conflictos: ConflictScoutRow[];
+	errores: ErrorScoutRow[];
+}
+
 export type ScoutXLSX = {
 	Documento: string;
 	Nombre: string;
