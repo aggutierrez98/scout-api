@@ -2,6 +2,14 @@ node_modules
 npm-debug.log
 .wwebjs_auth
 .wwebjs_cache
-mysql-data
 dist
 **-ssh.pem
+.env*
+data/
+docs/
+bruno-collection/
+.claude/
+.agents/
+skills-lock.json
+docker-compose.yml
+**.md
