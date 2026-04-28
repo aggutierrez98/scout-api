@@ -1,4 +1,4 @@
-app = "scout-api"
+app = "scout-api-aggutierrez"
 primary_region = "gru"
 
 [build]
