@@ -253,4 +253,15 @@ export class PagoController {
 			next(e);
 		}
 	};
+
+	// Endpoint service-to-service: devuelve obligaciones pendientes de un scout
+	// sin RBAC de usuario. Sólo accesible con x-api-key.
+	getPendientesPorScout = async ({ params }: Request, res: Response, next: NextFunction) => {
+		try {
+			const pendientes = await this.servicioObligacionesPago.listarPendientesPorScout(params.scoutId);
+			res.send(pendientes);
+		} catch (e) {
+			next(e);
+		}
+	};
 }

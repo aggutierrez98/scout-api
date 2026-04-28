@@ -127,7 +127,8 @@ export default class Server {
 		router.use("/documento", checkSession, createDocumentoRouter(documentoService));
 
 		const pagoService = new PagoService();
-		router.use("/pago", checkSession, createPagoRouter(pagoService));
+		// La autenticación se aplica por-ruta dentro del router (JWT, service-key o dual).
+		router.use("/pago", createPagoRouter(pagoService));
 
 		const familiarService = new FamiliarService();
 		// La autenticación se aplica por-ruta dentro del router (JWT, service-key o dual).

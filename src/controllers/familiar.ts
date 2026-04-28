@@ -160,6 +160,50 @@ export class FamiliarController {
 		}
 	};
 
+	getByTelefono = async (
+		{ params }: Request,
+		res: Response,
+		next: NextFunction,
+	) => {
+		try {
+			const { telefono } = params;
+			const response = await this.familiarService.findByTelefono(telefono);
+
+			if (!response) {
+				throw new AppError({
+					name: "NOT_FOUND",
+					httpCode: HttpCode.NOT_FOUND,
+				});
+			}
+
+			res.send(response);
+		} catch (e) {
+			next(e);
+		}
+	};
+
+	getByNombre = async (
+		{ params }: Request,
+		res: Response,
+		next: NextFunction,
+	) => {
+		try {
+			const { nombre } = params;
+			const response = await this.familiarService.findByNombre(nombre);
+
+			if (!response) {
+				throw new AppError({
+					name: "NOT_FOUND",
+					httpCode: HttpCode.NOT_FOUND,
+				});
+			}
+
+			res.send(response);
+		} catch (e) {
+			next(e);
+		}
+	};
+
 	deleteItem = async (
 		{ params }: Request,
 		res: Response,

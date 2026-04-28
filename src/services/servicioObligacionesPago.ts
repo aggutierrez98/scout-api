@@ -73,28 +73,25 @@ export class ServicioObligacionesPago {
 		}
 
 		if (opts?.forzarRecrear) {
-			await (prismaClient as any).$transaction(async (tx: any) => {
-				await tx.condonacionPago.deleteMany({
-					where: { obligacion: { cicloId } },
-				});
-				await tx.imputacionPago.deleteMany({
-					where: { obligacion: { cicloId } },
-				});
-				await tx.obligacionPago.deleteMany({ where: { cicloId } });
-				await tx.saldoAFavor.deleteMany({ where: { cicloId } });
+			// Borrado en secuencia respetando FK: condonaciones → imputaciones → obligaciones → saldos
+			await (prismaClient as any).condonacionPago.deleteMany({
+				where: { obligacion: { cicloId } },
 			});
+			await (prismaClient as any).imputacionPago.deleteMany({
+				where: { obligacion: { cicloId } },
+			});
+			await (prismaClient as any).obligacionPago.deleteMany({ where: { cicloId } });
+			await (prismaClient as any).saldoAFavor.deleteMany({ where: { cicloId } });
 		}
 
-		const scouts = await (prismaClient as any).scout.findMany({
-			where: { estado: { not: "INACTIVO" } },
-			select: {
-				uuid: true,
-				funcion: true,
-				rama: true,
-			},
-		});
-
-		const { scoutToFamilia, familiaToScouts } = await construirMapaFamilias();
+		// Prefetch en paralelo
+		const [scouts, { scoutToFamilia, familiaToScouts }] = await Promise.all([
+			(prismaClient as any).scout.findMany({
+				where: { estado: { not: "INACTIVO" } },
+				select: { uuid: true, funcion: true, rama: true },
+			}),
+			construirMapaFamilias(),
+		]);
 
 		const reglasAfiliacion = ciclo.reglasAfiliacion ?? [];
 		const reglasCuota = (ciclo.reglasCuotaMensual ?? [])
@@ -106,6 +103,19 @@ export class ServicioObligacionesPago {
 
 		const mesInicioAfiliacion = new Date(ciclo.fechaInicio).getUTCMonth() + 1;
 		const periodoAfiliacion = `${ciclo.anio}-${String(mesInicioAfiliacion).padStart(2, "0")}`;
+
+		// ── Construir todas las obligaciones en memoria ────────────────────────
+		const todasLasObligaciones: Array<{
+			uuid: string;
+			cicloId: string;
+			tipo: string;
+			periodo: string;
+			scoutId: string;
+			familiaClave: string;
+			montoEsperado: number;
+			estado: string;
+			detalleCalculo: object;
+		}> = [];
 
 		for (const scout of scouts) {
 			const familiaClave = scoutToFamilia.get(scout.uuid) ?? `familia::${scout.uuid}`;
@@ -121,35 +131,18 @@ export class ServicioObligacionesPago {
 				(item: any) => item.funcionScout === scout.funcion && item.obligatoria,
 			);
 			if (reglaAfiliacion) {
-				await (prismaClient as any).obligacionPago.upsert({
-					where: {
-						cicloId_tipo_periodo_scoutId: {
-							cicloId,
-							tipo: "AFILIACION",
-							periodo: periodoAfiliacion,
-							scoutId: scout.uuid,
-						},
-					},
-					create: {
-						uuid: nanoid(10),
-						cicloId,
-						tipo: "AFILIACION",
-						periodo: periodoAfiliacion,
-						scoutId: scout.uuid,
-						familiaClave,
-						montoEsperado: reglaAfiliacion.monto,
-						detalleCalculo: {
-							reglaAfiliacionId: reglaAfiliacion.uuid,
-							funcionScout: scout.funcion,
-						},
-					},
-					update: {
-						familiaClave,
-						montoEsperado: reglaAfiliacion.monto,
-						detalleCalculo: {
-							reglaAfiliacionId: reglaAfiliacion.uuid,
-							funcionScout: scout.funcion,
-						},
+				todasLasObligaciones.push({
+					uuid: nanoid(10),
+					cicloId,
+					tipo: "AFILIACION",
+					periodo: periodoAfiliacion,
+					scoutId: scout.uuid,
+					familiaClave,
+					montoEsperado: reglaAfiliacion.monto,
+					estado: "PENDIENTE",
+					detalleCalculo: {
+						reglaAfiliacionId: reglaAfiliacion.uuid,
+						funcionScout: scout.funcion,
 					},
 				});
 			}
@@ -157,63 +150,71 @@ export class ServicioObligacionesPago {
 			for (const reglaCuota of reglasCuota) {
 				const periodo = `${ciclo.anio}-${String(reglaCuota.mes).padStart(2, "0")}`;
 				const montoAplicado = reglaFamiliarAplicada?.montoPorScout ?? reglaCuota.montoBase;
-
-				await (prismaClient as any).obligacionPago.upsert({
-					where: {
-						cicloId_tipo_periodo_scoutId: {
-							cicloId,
-							tipo: "CUOTA_MENSUAL",
-							periodo,
-							scoutId: scout.uuid,
-						},
-					},
-					create: {
-						uuid: nanoid(10),
-						cicloId,
-						tipo: "CUOTA_MENSUAL",
-						periodo,
-						scoutId: scout.uuid,
-						familiaClave,
-						montoEsperado: montoAplicado,
-						detalleCalculo: {
-							reglaCuotaMensualId: reglaCuota.uuid,
-							montoBase: reglaCuota.montoBase,
-							integrantesFamilia: integrantesFamilia.length,
-							ordenScout,
-							reglaDescuentoFamiliarId: reglaFamiliarAplicada?.uuid ?? null,
-							montoDescuentoFamiliar: reglaFamiliarAplicada?.montoPorScout ?? null,
-							descuentoAnualConfig: ciclo.reglaDescuentoPagoAnual
-								? {
-									habilitado: ciclo.reglaDescuentoPagoAnual.habilitado,
-									mesBonificado: ciclo.reglaDescuentoPagoAnual.mesBonificado,
-								}
-								: null,
-						},
-					},
-					update: {
-						familiaClave,
-						montoEsperado: montoAplicado,
-						detalleCalculo: {
-							reglaCuotaMensualId: reglaCuota.uuid,
-							montoBase: reglaCuota.montoBase,
-							integrantesFamilia: integrantesFamilia.length,
-							ordenScout,
-							reglaDescuentoFamiliarId: reglaFamiliarAplicada?.uuid ?? null,
-							montoDescuentoFamiliar: reglaFamiliarAplicada?.montoPorScout ?? null,
-						},
+				todasLasObligaciones.push({
+					uuid: nanoid(10),
+					cicloId,
+					tipo: "CUOTA_MENSUAL",
+					periodo,
+					scoutId: scout.uuid,
+					familiaClave,
+					montoEsperado: montoAplicado,
+					estado: "PENDIENTE",
+					detalleCalculo: {
+						reglaCuotaMensualId: reglaCuota.uuid,
+						montoBase: reglaCuota.montoBase,
+						integrantesFamilia: integrantesFamilia.length,
+						ordenScout,
+						reglaDescuentoFamiliarId: reglaFamiliarAplicada?.uuid ?? null,
+						montoDescuentoFamiliar: reglaFamiliarAplicada?.montoPorScout ?? null,
+						descuentoAnualConfig: ciclo.reglaDescuentoPagoAnual
+							? {
+								habilitado: ciclo.reglaDescuentoPagoAnual.habilitado,
+								mesBonificado: ciclo.reglaDescuentoPagoAnual.mesBonificado,
+							}
+							: null,
 					},
 				});
 			}
+		}
+
+		// ── 1 query: insertar todas las obligaciones nuevas (skipDuplicates) ────
+		// Las existentes se omiten sin error; no resetea su estado ni imputaciones.
+		await (prismaClient as any).obligacionPago.createMany({
+			data: todasLasObligaciones,
+			skipDuplicates: true,
+		});
+
+		// ── Actualizar montos de las existentes (si cambiaron las reglas) ───────
+		// Para cada obligacion existente, actualizar familiaClave y montoEsperado.
+		// Usamos updateMany agrupado por tipo+periodo+scout clave.
+		// Como no hay updateMany con valores distintos por fila en Prisma+SQLite,
+		// lo hacemos en paralelo (Promise.all) que es O(1) en latencia percibida.
+		const existentes = await (prismaClient as any).obligacionPago.findMany({
+			where: { cicloId, estado: { not: "AL_DIA" } },
+			select: { uuid: true, tipo: true, periodo: true, scoutId: true },
+		});
+
+		if (existentes.length > 0) {
+			const mapaObligacionNueva = new Map(
+				todasLasObligaciones.map(o => [`${o.tipo}|${o.periodo}|${o.scoutId}`, o]),
+			);
+			const updates = existentes
+				.map((ex: any) => {
+					const nueva = mapaObligacionNueva.get(`${ex.tipo}|${ex.periodo}|${ex.scoutId}`);
+					if (!nueva) return null;
+					return (prismaClient as any).obligacionPago.update({
+						where: { uuid: ex.uuid },
+						data: { familiaClave: nueva.familiaClave, montoEsperado: nueva.montoEsperado },
+					});
+				})
+				.filter(Boolean);
+			if (updates.length > 0) await Promise.all(updates);
 		}
 
 		const obligaciones = await (prismaClient as any).obligacionPago.findMany({
 			where: { cicloId },
 			select: { uuid: true },
 		});
-
-		for (const obligacion of obligaciones) {
-			await this.recalcularEstadoObligacion(obligacion.uuid);
-		}
 
 		if (opts?.forzarRecrear) {
 			const { ServicioImputacionPago } = await import("./servicioImputacionPago");
@@ -223,6 +224,7 @@ export class ServicioObligacionesPago {
 
 		return { cicloId, obligacionesGeneradas: obligaciones.length };
 	};
+
 
 	backfillDesdeCicloActivo = async () => {
 		const ciclo = await this.obtenerCicloActivo();
@@ -505,5 +507,50 @@ export class ServicioObligacionesPago {
 					: null,
 			})),
 		};
+	};
+
+	/**
+	 * Versión sin RBAC para uso service-to-service (x-api-key).
+	 * Devuelve las obligaciones PENDIENTE e INCOMPLETO de un scout específico.
+	 */
+	listarPendientesPorScout = async (scoutId: string) => {
+		const obligaciones = await (prismaClient as any).obligacionPago.findMany({
+			where: {
+				scoutId,
+				estado: { in: ["PENDIENTE", "INCOMPLETO"] },
+			},
+			include: {
+				scout: {
+					select: { uuid: true, nombre: true, apellido: true, rama: true },
+				},
+				imputaciones: {
+					select: { montoImputado: true },
+				},
+			},
+			orderBy: [{ periodo: "asc" }, { tipo: "asc" }],
+		});
+
+		return obligaciones.map((item: any) => {
+			const montoPagado = (item.imputaciones ?? []).reduce(
+				(acc: number, imp: any) => acc + imp.montoImputado,
+				0,
+			);
+			const montoPendiente = Number(
+				(item.montoEsperado - item.montoCondonado - montoPagado).toFixed(2),
+			);
+			return {
+				id: item.uuid,
+				tipo: item.tipo,
+				periodo: item.periodo,
+				estado: item.estado,
+				montoEsperado: item.montoEsperado,
+				montoPagado,
+				montoCondonado: item.montoCondonado,
+				montoPendiente,
+				scout: item.scout
+					? { id: item.scout.uuid, nombre: item.scout.nombre, apellido: item.scout.apellido, rama: item.scout.rama }
+					: null,
+			};
+		});
 	};
 }

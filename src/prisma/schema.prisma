@@ -134,20 +134,43 @@ model DocumentoPresentado {
 }
 
 model Pago {
-  id            Int         @id @default(autoincrement())
-  uuid          String      @unique
+  id            Int            @id @default(autoincrement())
+  uuid          String         @unique
   concepto      String
   monto         Float
-  rendido       Boolean     @default(false)
+  rendido       Boolean        @default(false)
   metodoPago    String
-  scout         Scout       @relation(fields: [scoutId], references: [uuid])
+  scout         Scout          @relation(fields: [scoutId], references: [uuid])
   scoutId       String
   fechaPago     DateTime
-  fechaCreacion DateTime    @default(now())
+  fechaCreacion DateTime       @default(now())
   reciboPago    ReciboPago?
   imputaciones  ImputacionPago[]
+  revision      PagoRevision?
 
   @@index([scoutId])
+}
+
+model PagoRevision {
+  id               Int       @id @default(autoincrement())
+  uuid             String    @unique
+  /// Pago creado (puede ser null si no se pudo identificar al scout)
+  pago             Pago?     @relation(fields: [pagoId], references: [uuid], onDelete: SetNull)
+  pagoId           String?   @unique
+  /// PENDIENTE | RESUELTO
+  estado           String    @default("PENDIENTE")
+  /// Tipo de conflicto: SIN_IDENTIFICACION | SIN_SCOUTS_VINCULADOS | SCOUT_AMBIGUO | OBLIGACION_NO_CLARA
+  tipoConflicto    String
+  /// Detalle estructurado del conflicto: familiarId?, scoutIds?, mensaje, metodoResolucion, confianza
+  conflicto        Json
+  /// Raw data del comprobante tal como llegó de whatsapp-comprobantes (para re-procesar manualmente)
+  datosComprobante Json
+  fechaCreacion    DateTime  @default(now())
+  fechaResolucion  DateTime?
+  resueltoPorId    String?
+
+  @@index([estado])
+  @@index([tipoConflicto])
 }
 
 model CicloReglasPago {
@@ -157,6 +180,8 @@ model CicloReglasPago {
   activo               Boolean                    @default(false)
   fechaInicio          DateTime
   fechaFin             DateTime
+  /// CBUs/aliases bancarios válidos para recibir transferencias en este ciclo
+  cbusAceptados        Json                       @default("[]")
   fechaCreacion        DateTime                   @default(now())
   fechaActualizacion   DateTime                   @updatedAt
   reglasAfiliacion     ReglaAfiliacion[]

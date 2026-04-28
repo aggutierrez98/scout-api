@@ -8,6 +8,7 @@ import type {
   GoogleAISecrets,
   GoogleDriveSecrets,
   TursoSecrets,
+  WebhookSecrets,
 } from '../../types/secrets';
 import { SECRET_KEYS } from '../../types/secrets';
 
@@ -140,6 +141,11 @@ export class SecretsManager {
           AUTH_TOKEN: getFolderSecret("TURSO", SECRET_KEYS.TURSO_AUTH_TOKEN),
           DATABASE_URL: getFolderSecret("TURSO", SECRET_KEYS.TURSO_DATABASE_URL),
         },
+
+        WEBHOOKS_AUTH: {
+          COMPROBANTES_SECRET: getSecret(SECRET_KEYS.WPP_COMPROBANTES_WEBHOOK_SECRET),
+          NOMINA_SECRET: getSecret(SECRET_KEYS.NOMINA_WEBHOOK_SECRET),
+        },
       };
 
       console.log('✅ Secrets Manager inicializado correctamente');
@@ -200,6 +206,27 @@ export class SecretsManager {
    */
   public getGoogleDriveSecrets(): GoogleDriveSecrets {
     return this.getSecrets().GOOGLE_DRIVE;
+  }
+
+  /**
+   * Obtiene los secretos de autenticación de webhooks
+   */
+  public getWebhookSecrets(): WebhookSecrets {
+    return this.getSecrets().WEBHOOKS_AUTH;
+  }
+
+  /**
+   * Obtiene el secret del webhook de comprobantes (whatsapp-comprobantes)
+   */
+  public getComprobantesWebhookSecret(): string {
+    return this.getSecrets().WEBHOOKS_AUTH.COMPROBANTES_SECRET;
+  }
+
+  /**
+   * Obtiene el secret del webhook de nómina (cruz-del-sur)
+   */
+  public getNominaWebhookSecret(): string {
+    return this.getSecrets().WEBHOOKS_AUTH.NOMINA_SECRET;
   }
 
   /**

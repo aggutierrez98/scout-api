@@ -33,6 +33,7 @@ export interface ICicloReglasPagoInput {
 	cuotasMensuales: IReglaCuotaMensualInput[];
 	descuentoPagoAnual: IReglaDescuentoPagoAnualInput;
 	descuentosFamiliares: IReglaDescuentoFamiliarInput[];
+	cbusAceptados?: string[];
 }
 
 export interface IPerdonarObligacionInput {

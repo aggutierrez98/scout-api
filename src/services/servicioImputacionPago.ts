@@ -11,30 +11,34 @@ const calcularPendienteObligacion = (obligacion: any) => {
 	return Number((obligacion.montoEsperado - obligacion.montoCondonado - montoImputado).toFixed(2));
 };
 
+const getEstadoObligacion = (montoEsperado: number, montoCondonado: number, montoImputado: number) => {
+	const pendiente = Number((montoEsperado - montoCondonado - montoImputado).toFixed(2));
+	if (pendiente <= 0) return "AL_DIA";
+	if (montoImputado > 0 || montoCondonado > 0) return "INCOMPLETO";
+	return "PENDIENTE";
+};
+
 export class ServicioImputacionPago {
 	private servicioObligaciones = new ServicioObligacionesPago();
 
 	private aplicarBonificacionAnual = async ({
 		tx,
-		cicloId,
+		ciclo,
 		scoutId,
 		disponible,
 	}: {
 		tx: any;
-		cicloId: string;
+		ciclo: any;
 		scoutId: string;
 		disponible: number;
 	}) => {
-		const ciclo = await tx.cicloReglasPago.findUnique({
-			where: { uuid: cicloId },
-			include: { reglaDescuentoPagoAnual: true },
-		});
+		// ciclo ya viene precargado — evitamos el findUnique dentro de la tx
 		const reglaAnual = ciclo?.reglaDescuentoPagoAnual;
 		if (!reglaAnual?.habilitado || !reglaAnual.mesBonificado) return disponible;
 
 		const obligacionesCuota = await tx.obligacionPago.findMany({
 			where: {
-				cicloId,
+				cicloId: ciclo.uuid,
 				scoutId,
 				tipo: "CUOTA_MENSUAL",
 			},
@@ -80,69 +84,84 @@ export class ServicioImputacionPago {
 			where: { uuid: obligacionBonificada.uuid },
 			data: {
 				montoCondonado: { increment: pendienteBonificada },
+				estado: "AL_DIA",
 			},
 		});
-		await this.servicioObligaciones.recalcularEstadoObligacion(obligacionBonificada.uuid, tx);
 		return disponible;
 	};
 
 	imputarPago = async (pagoId: string) => {
-		const pagoBase = await (prismaClient as any).pago.findUnique({
-			where: { uuid: pagoId },
-			select: {
-				uuid: true,
-				monto: true,
-				scoutId: true,
-				fechaPago: true,
-			},
-		});
+		// ── Prefetch: todas las queries FUERA de la transacción en paralelo ──────
+		const [pagoBase, ciclo] = await Promise.all([
+			(prismaClient as any).pago.findUnique({
+				where: { uuid: pagoId },
+				select: { uuid: true, monto: true, scoutId: true, fechaPago: true },
+			}),
+			this.servicioObligaciones.obtenerCicloActivo(),
+		]);
+
 		if (!pagoBase) return null;
 
-		const ciclo = await this.servicioObligaciones.obtenerCicloActivo();
-		const totalObligacionesScout = await (prismaClient as any).obligacionPago.count({
-			where: { cicloId: ciclo.uuid, scoutId: pagoBase.scoutId },
-		});
+		// familiaClave y count en paralelo
+		const [familiaClave, totalObligacionesScout] = await Promise.all([
+			obtenerFamiliaClavePorScout(pagoBase.scoutId),
+			(prismaClient as any).obligacionPago.count({
+				where: { cicloId: ciclo.uuid, scoutId: pagoBase.scoutId },
+			}),
+		]);
+
 		if (totalObligacionesScout === 0) {
 			await this.servicioObligaciones.generarObligacionesCiclo(ciclo.uuid);
 		}
 
+		// ── Transacción: solo escrituras + queries mínimas ────────────────────
 		return (prismaClient as any).$transaction(async (tx: any) => {
 			const pago = pagoBase;
-			const familiaClave = await obtenerFamiliaClavePorScout(pago.scoutId);
 
-			const saldo = await tx.saldoAFavor.findUnique({
-				where: {
-					familiaClave_cicloId: {
-						familiaClave,
-						cicloId: ciclo.uuid,
+			const [saldo, obligaciones] = await Promise.all([
+				tx.saldoAFavor.findUnique({
+					where: {
+						familiaClave_cicloId: { familiaClave, cicloId: ciclo.uuid },
 					},
-				},
-			});
+				}),
+				tx.obligacionPago.findMany({
+					where: {
+						cicloId: ciclo.uuid,
+						estado: { in: ["PENDIENTE", "INCOMPLETO"] },
+						OR: [{ scoutId: pago.scoutId }, { familiaClave }],
+					},
+					include: {
+						imputaciones: { select: { montoImputado: true } },
+					},
+					orderBy: [{ periodo: "asc" }, { tipo: "asc" }],
+				}),
+			]);
 
 			let disponible = Number((pago.monto + (saldo?.montoDisponible ?? 0)).toFixed(2));
 
 			disponible = await this.aplicarBonificacionAnual({
 				tx,
-				cicloId: ciclo.uuid,
+				ciclo,
 				scoutId: pago.scoutId,
 				disponible,
 			});
 
-			const obligaciones = await tx.obligacionPago.findMany({
-				where: {
-					cicloId: ciclo.uuid,
-					estado: { in: ["PENDIENTE", "INCOMPLETO"] },
-					OR: [{ scoutId: pago.scoutId }, { familiaClave }],
-				},
-				include: {
-					imputaciones: {
-						select: { montoImputado: true },
-					},
-				},
-				orderBy: [{ periodo: "asc" }, { tipo: "asc" }],
-			});
+			// ── Calcular todas las imputaciones en memoria ────────────────────
+			const imputacionesACrear: Array<{
+				uuid: string;
+				pagoId: string;
+				obligacionId: string;
+				montoImputado: number;
+			}> = [];
+			// Estado final de cada obligación imputada (calculado en memoria)
+			const estadosAActualizar: Array<{
+				uuid: string;
+				montoImputado: number;
+				montoCondonado: number;
+				montoEsperado: number;
+				montoImputadoAdicional: number;
+			}> = [];
 
-			const imputaciones: Array<{ obligacionId: string; montoImputado: number }> = [];
 			for (const obligacion of obligaciones) {
 				if (disponible <= 0) break;
 				const pendiente = calcularPendienteObligacion(obligacion);
@@ -151,48 +170,72 @@ export class ServicioImputacionPago {
 				const montoImputado = Number(Math.min(disponible, pendiente).toFixed(2));
 				if (montoImputado <= 0) continue;
 
-				await tx.imputacionPago.create({
-					data: {
-						uuid: nanoid(10),
-						pagoId: pago.uuid,
-						obligacionId: obligacion.uuid,
-						montoImputado,
-					},
+				imputacionesACrear.push({
+					uuid: nanoid(10),
+					pagoId: pago.uuid,
+					obligacionId: obligacion.uuid,
+					montoImputado,
 				});
-				await this.servicioObligaciones.recalcularEstadoObligacion(obligacion.uuid, tx);
-				imputaciones.push({ obligacionId: obligacion.uuid, montoImputado });
+				estadosAActualizar.push({
+					uuid: obligacion.uuid,
+					montoEsperado: obligacion.montoEsperado,
+					montoCondonado: obligacion.montoCondonado,
+					montoImputado: (obligacion.imputaciones ?? []).reduce(
+						(acc: number, i: any) => acc + i.montoImputado,
+						0,
+					),
+					montoImputadoAdicional: montoImputado,
+				});
 				disponible = Number((disponible - montoImputado).toFixed(2));
 			}
 
+			// ── Writes en batch paralelo ──────────────────────────────────────
 			const montoDisponible = Number(Math.max(disponible, 0).toFixed(2));
-			await tx.saldoAFavor.upsert({
-				where: {
-					familiaClave_cicloId: {
+
+			await Promise.all([
+				// createMany para imputaciones (1 query en vez de N)
+				imputacionesACrear.length > 0
+					? tx.imputacionPago.createMany({ data: imputacionesACrear })
+					: Promise.resolve(),
+				// upsert de saldo a favor
+				tx.saldoAFavor.upsert({
+					where: { familiaClave_cicloId: { familiaClave, cicloId: ciclo.uuid } },
+					create: {
+						uuid: nanoid(10),
 						familiaClave,
 						cicloId: ciclo.uuid,
+						montoDisponible,
+						origen: `Pago ${pago.uuid}`,
 					},
-				},
-				create: {
-					uuid: nanoid(10),
-					familiaClave,
-					cicloId: ciclo.uuid,
-					montoDisponible,
-					origen: `Pago ${pago.uuid}`,
-				},
-				update: {
-					montoDisponible,
-					origen: `Pago ${pago.uuid}`,
-				},
-			});
+					update: { montoDisponible, origen: `Pago ${pago.uuid}` },
+				}),
+			]);
+
+			// ── Actualizar estados de obligaciones en paralelo ────────────────
+			// El estado se calcula en memoria para evitar un findUnique por obligación
+			if (estadosAActualizar.length > 0) {
+				await Promise.all(
+					estadosAActualizar.map(({ uuid, montoEsperado, montoCondonado, montoImputado, montoImputadoAdicional }) => {
+						const totalImputado = montoImputado + montoImputadoAdicional;
+						const estado = getEstadoObligacion(montoEsperado, montoCondonado, totalImputado);
+						return tx.obligacionPago.update({ where: { uuid }, data: { estado } });
+					}),
+				);
+			}
+
+			console.log("Imputación completa para pago:", pago.uuid);
 
 			return {
 				pagoId: pago.uuid,
 				cicloId: ciclo.uuid,
 				familiaClave,
-				imputaciones,
+				imputaciones: imputacionesACrear.map(({ obligacionId, montoImputado }) => ({
+					obligacionId,
+					montoImputado,
+				})),
 				saldoAFavor: montoDisponible,
 			};
-		});
+		}, { timeout: 15_000 });
 	};
 
 	reimputarPagosCiclo = async (cicloId: string) => {
@@ -200,12 +243,11 @@ export class ServicioImputacionPago {
 			await tx.imputacionPago.deleteMany({
 				where: { obligacion: { cicloId } },
 			});
-			await tx.saldoAFavor.deleteMany({ where: { cicloId } });
 			await tx.obligacionPago.updateMany({
 				where: { cicloId },
 				data: { estado: "PENDIENTE" },
 			});
-		});
+		}, { timeout: 30_000 });
 
 		const ciclo = await (prismaClient as any).cicloReglasPago.findUnique({ where: { uuid: cicloId } });
 		if (!ciclo) return { procesados: 0 };

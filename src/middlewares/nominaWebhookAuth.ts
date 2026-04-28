@@ -26,7 +26,9 @@ export const nominaWebhookAuth = (req: Request, res: Response, next: NextFunctio
 			return next();
 		}
 
-		const webhookSecret = process.env.NOMINA_WEBHOOK_SECRET;
+		const webhookSecret = SecretsManager.getInstance().isReady()
+			? SecretsManager.getInstance().getNominaWebhookSecret()
+			: undefined;
 
 		if (!webhookSecret) {
 			throw new AppError({

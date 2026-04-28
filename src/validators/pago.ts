@@ -85,6 +85,7 @@ const ReglasPagoBodySchema = z.object({
 	cuotasMensuales: z.array(ReglaCuotaMensualSchema).min(1, "Debe configurar al menos una cuota mensual"),
 	descuentoPagoAnual: ReglaDescuentoPagoAnualSchema,
 	descuentosFamiliares: z.array(ReglaDescuentoFamiliarSchema).min(1, "Debe configurar al menos una regla familiar"),
+	cbusAceptados: z.array(z.string().min(1)).default([]),
 }).superRefine((value, ctx) => {
 	if (value.fechaInicio >= value.fechaFin) {
 		ctx.addIssue({

@@ -18,12 +18,22 @@ export default function createFamiliarRouter(familiarService: FamiliarService) {
 	const router = Router();
 	const familiarController = new FamiliarController({ familiarService });
 
-	// Endpoint service-to-service: autenticación por x-api-key únicamente.
-	// Se registra antes de "/:id" para evitar ser capturado por esa ruta.
+	// Endpoints service-to-service: autenticación por x-api-key únicamente.
+	// Se registran antes de "/:id" para evitar ser capturados por esa ruta.
 	router.get(
 		"/by-dni/:dni",
 		serviceAuth,
 		familiarController.getByDni,
+	);
+	router.get(
+		"/by-telefono/:telefono",
+		serviceAuth,
+		familiarController.getByTelefono,
+	);
+	router.get(
+		"/by-nombre/:nombre",
+		serviceAuth,
+		familiarController.getByNombre,
 	);
 	router.get(
 		"/",

@@ -1,10 +1,12 @@
 import crypto from "crypto";
 import { NextFunction, Response, Request } from "express";
 import { AppError, HttpCode } from "../utils";
+import { SecretsManager } from "../utils/classes/SecretsManager";
 
 export const webhookAuth = (req: Request, res: Response, next: NextFunction) => {
 	try {
-		const webhookSecret = process.env.WEBHOOK_SECRET;
+		const secrets = SecretsManager.getInstance();
+		const webhookSecret = secrets.isReady() ? secrets.getComprobantesWebhookSecret() : undefined;
 
 		if (!webhookSecret) {
 			throw new AppError({

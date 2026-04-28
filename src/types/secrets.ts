@@ -34,6 +34,11 @@ export interface TursoSecrets {
   DATABASE_URL: string;
 }
 
+export interface WebhookSecrets {
+  COMPROBANTES_SECRET: string;
+  NOMINA_SECRET: string;
+}
+
 export interface DatosGrupo {
   numero: string;
   nombre: string;
@@ -60,6 +65,7 @@ export interface AppSecrets {
   GOOGLE_AI: GoogleAISecrets;
   GOOGLE_DRIVE: GoogleDriveSecrets;
   TURSO: TursoSecrets;
+  WEBHOOKS_AUTH: WebhookSecrets;
 }
 
 /**
@@ -89,6 +95,10 @@ export const SECRET_KEYS = {
 
   // Google AI
   GOOGLE_AI_API_KEY: 'GOOGLE_AI_API_KEY',
+
+  // Webhooks
+  WPP_COMPROBANTES_WEBHOOK_SECRET: 'WPP_COMPROBANTES_WEBHOOK_SECRET',
+  NOMINA_WEBHOOK_SECRET: 'NOMINA_WEBHOOK_SECRET',
 
   // Google Drive
   GOOGLE_DRIVE_PRIVATE_KEY: 'PRIVATE_KEY',

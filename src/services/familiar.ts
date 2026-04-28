@@ -290,6 +290,68 @@ export class FamiliarService implements IFamiliarService {
 		return { ...mapFamiliar(data), scoutFamiliares };
 	};
 
+	/**
+	 * Busca familiar por número de teléfono.
+	 * La comparación es flexible: busca si el campo telefono del familiar
+	 * contiene el sufijo del número recibido (últimos 8 dígitos).
+	 */
+	findByTelefono = async (telefono: string) => {
+		const digits = telefono.replace(/\D/g, "");
+		// Usar los últimos 8 dígitos para tolerar prefijos variables (54, 0, 15, etc.)
+		const suffix = digits.slice(-8);
+
+		const familiares = await prismaClient.familiar.findMany({
+			where: { telefono: { not: null } },
+			include: {
+				padreScout: {
+					include: {
+						scout: {
+							select: { id: true, uuid: true, nombre: true, apellido: true, fechaNacimiento: true, sexo: true },
+						},
+					},
+				},
+			},
+		});
+
+		const encontrado = familiares.find((f) => {
+			if (!f.telefono) return false;
+			return f.telefono.replace(/\D/g, "").endsWith(suffix);
+		});
+
+		if (!encontrado) return null;
+		const { padreScout, ...data } = encontrado;
+		const scoutFamiliares = padreScout.map((ps: any) => mapPartialScout(ps.scout));
+		return { ...mapFamiliar(data), scoutFamiliares };
+	};
+
+	/**
+	 * Busca familiar por nombre o apellido (contains, case-insensitive via SQLite collation).
+	 * Devuelve el primer match con sus scouts vinculados.
+	 */
+	findByNombre = async (nombre: string) => {
+		const responseItem = await prismaClient.familiar.findFirst({
+			where: {
+				OR: [
+					{ nombre: { contains: nombre } },
+					{ apellido: { contains: nombre } },
+				],
+			},
+			include: {
+				padreScout: {
+					include: {
+						scout: {
+							select: { id: true, uuid: true, nombre: true, apellido: true, fechaNacimiento: true, sexo: true },
+						},
+					},
+				},
+			},
+		});
+		if (!responseItem) return null;
+		const { padreScout, ...data } = responseItem;
+		const scoutFamiliares = padreScout.map((ps: any) => mapPartialScout(ps.scout));
+		return { ...mapFamiliar(data), scoutFamiliares };
+	};
+
 	deleteFamiliar = async (id: string) => {
 		const responseItem = await prismaClient.familiar.delete({
 			where: { uuid: id },
@@ -304,3 +366,4 @@ export class FamiliarService implements IFamiliarService {
 		return mapFamiliar(responseItem);
 	};
 }
+

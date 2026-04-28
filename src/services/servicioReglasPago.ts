@@ -42,6 +42,7 @@ const mapReglas = (ciclo: any) => {
 				cantidadMaxima: item.cantidadMaxima,
 				montoPorScout: item.montoPorScout,
 			})),
+		cbusAceptados: Array.isArray(ciclo.cbusAceptados) ? ciclo.cbusAceptados : (JSON.parse(ciclo.cbusAceptados ?? "[]") as string[]),
 	};
 };
 
@@ -71,6 +72,7 @@ export class ServicioReglasPago {
 				activo: false,
 				fechaInicio: new Date(payload.fechaInicio),
 				fechaFin: new Date(payload.fechaFin),
+				cbusAceptados: JSON.stringify(payload.cbusAceptados ?? []),
 				reglasAfiliacion: {
 					create: payload.afiliacion.map((item) => ({
 						uuid: nanoid(10),
@@ -133,6 +135,7 @@ export class ServicioReglasPago {
 					anio: payload.anio,
 					fechaInicio: new Date(payload.fechaInicio),
 					fechaFin: new Date(payload.fechaFin),
+					cbusAceptados: JSON.stringify(payload.cbusAceptados ?? []),
 					reglasAfiliacion: {
 						create: payload.afiliacion.map((item) => ({
 							uuid: nanoid(10),
