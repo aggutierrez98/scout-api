@@ -52,6 +52,7 @@ Papeles administrativos requeridos por scout:
 - Ficha médica, autorizaciones, DNI, certificado médico, ficha de inscripción
 
 Propiedades relevantes:
+
 - `requiereRenovacionAnual`: si el documento debe volver a presentarse cada año
 - `completableDinamicamente`: si se puede generar automáticamente desde la API a partir de una plantilla
 - `requiereDatosFamiliar`: si necesita datos del familiar
@@ -75,23 +76,23 @@ Tutores, padres o madres de scouts. Relación `PADRE`, `MADRE`, `TUTOR`, `OTRO`.
 
 ## 🚀 Tecnologías Utilizadas
 
-| Capa | Tecnología |
-|------|-----------|
-| Lenguaje | TypeScript 5.9 |
-| Runtime | Node.js v22.13.1+ |
-| Framework HTTP | Express.js 4.21.2 |
-| ORM | Prisma 7 |
-| Base de datos | Turso (LibSQL / SQLite distribuida) |
-| Caché | Redis |
-| Autenticación | JWT + bcryptjs |
-| Validación | Zod |
-| Logging | Winston + Logtail + Morgan |
-| Almacenamiento archivos | AWS S3 |
-| Integraciones externas | Google Sheets / Drive API |
-| Gestión de secretos | Infisical |
-| Generación PDF | pdf-lib |
-| Protección HTTP | helmet, express-rate-limit, cors |
-| Tareas programadas | node-cron |
+| Capa                    | Tecnología                          |
+| ----------------------- | ----------------------------------- |
+| Lenguaje                | TypeScript 5.9                      |
+| Runtime                 | Node.js v22.13.1+                   |
+| Framework HTTP          | Express.js 4.21.2                   |
+| ORM                     | Prisma 7                            |
+| Base de datos           | Turso (LibSQL / SQLite distribuida) |
+| Caché                   | Redis                               |
+| Autenticación           | JWT + bcryptjs                      |
+| Validación              | Zod                                 |
+| Logging                 | Winston + Logtail + Morgan          |
+| Almacenamiento archivos | AWS S3                              |
+| Integraciones externas  | Google Sheets / Drive API           |
+| Gestión de secretos     | Infisical                           |
+| Generación PDF          | pdf-lib                             |
+| Protección HTTP         | helmet, express-rate-limit, cors    |
+| Tareas programadas      | node-cron                           |
 
 ---
 
@@ -172,48 +173,48 @@ router.use("/scout", checkSession, createScoutRouter(scoutService));
 
 ### Scout
 
-| Campo | Tipo | Descripción |
-|---|---|---|
-| `uuid` | String (PK) | Identificador interno (nunca expuesto) |
-| `nombre` | String | — |
-| `apellido` | String | — |
-| `dni` | String | Único |
-| `sexo` | Enum | — |
-| `fechaNacimiento` | DateTime | — |
-| `localidad` | String | — |
-| `direccion` | String | — |
-| `telefono` | String | Usado para matching de comprobantes webhook |
-| `mail` | String | — |
-| `rama` | Enum | Manada, Unidad, Caminantes, Pioneros |
-| `funcion` | Enum | Guía, Subguía, Tesorero, etc. |
-| `equipoId` | String (FK) | Patrulla a la que pertenece |
-| `estado` | Enum | `ACTIVO`, `INACTIVO`, `EGRESADO` |
-| `progresionActual` | String | Etapa de progresión vigente |
+| Campo              | Tipo        | Descripción                                 |
+| ------------------ | ----------- | ------------------------------------------- |
+| `uuid`             | String (PK) | Identificador interno (nunca expuesto)      |
+| `nombre`           | String      | —                                           |
+| `apellido`         | String      | —                                           |
+| `dni`              | String      | Único                                       |
+| `sexo`             | Enum        | —                                           |
+| `fechaNacimiento`  | DateTime    | —                                           |
+| `localidad`        | String      | —                                           |
+| `direccion`        | String      | —                                           |
+| `telefono`         | String      | Usado para matching de comprobantes webhook |
+| `mail`             | String      | —                                           |
+| `rama`             | Enum        | Manada, Unidad, Caminantes, Pioneros        |
+| `funcion`          | Enum        | Guía, Subguía, Tesorero, etc.               |
+| `equipoId`         | String (FK) | Patrulla a la que pertenece                 |
+| `estado`           | Enum        | `ACTIVO`, `INACTIVO`, `EGRESADO`            |
+| `progresionActual` | String      | Etapa de progresión vigente                 |
 
 ### User
 
-| Campo | Tipo | Descripción |
-|---|---|---|
-| `uuid` | String (PK) | Identificador externo (nunca exponer `id`) |
-| `username` | String | Único |
-| `password` | String? | Hash bcrypt — `null` hasta el primer login |
-| `invitationToken` | String? | Token de un solo uso generado al crear el usuario sin contraseña; se entrega al usuario para activar la cuenta vía `PUT /api/auth/firstLogin`; se limpia (→ `null`) tras la activación exitosa |
-| `role` | String | `EXTERNO` por defecto |
-| `active` | Boolean | — |
-| `scoutId` | String? (FK) | Scout vinculado (unique) |
-| `familiarId` | String? (FK) | Familiar vinculado (unique) |
+| Campo             | Tipo         | Descripción                                                                                                                                                                                    |
+| ----------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `uuid`            | String (PK)  | Identificador externo (nunca exponer `id`)                                                                                                                                                     |
+| `username`        | String       | Único                                                                                                                                                                                          |
+| `password`        | String?      | Hash bcrypt —`null` hasta el primer login                                                                                                                                                      |
+| `invitationToken` | String?      | Token de un solo uso generado al crear el usuario sin contraseña; se entrega al usuario para activar la cuenta vía `PUT /api/auth/firstLogin`; se limpia (→ `null`) tras la activación exitosa |
+| `role`            | String       | `EXTERNO` por defecto                                                                                                                                                                          |
+| `active`          | Boolean      | —                                                                                                                                                                                              |
+| `scoutId`         | String? (FK) | Scout vinculado (unique)                                                                                                                                                                       |
+| `familiarId`      | String? (FK) | Familiar vinculado (unique)                                                                                                                                                                    |
 
 ### Pago
 
-| Campo | Tipo | Descripción |
-|---|---|---|
-| `uuid` | String (PK) | — |
-| `concepto` | String | Descripción del pago |
-| `monto` | Float | Importe |
-| `rendido` | Boolean | Derivado automáticamente del método de pago al crearse: `TRANSFERENCIA` → `true`, cualquier otro → `false` |
-| `metodoPago` | Enum | `EFECTIVO`, `TRANSFERENCIA`, `OTRO` |
-| `scoutId` | String (FK) | — |
-| `fechaPago` | DateTime | Fecha del comprobante o ingreso |
+| Campo        | Tipo        | Descripción                                                                                               |
+| ------------ | ----------- | --------------------------------------------------------------------------------------------------------- |
+| `uuid`       | String (PK) | —                                                                                                         |
+| `concepto`   | String      | Descripción del pago                                                                                      |
+| `monto`      | Float       | Importe                                                                                                   |
+| `rendido`    | Boolean     | Derivado automáticamente del método de pago al crearse:`TRANSFERENCIA` → `true`, cualquier otro → `false` |
+| `metodoPago` | Enum        | `EFECTIVO`, `TRANSFERENCIA`, `OTRO`                                                                       |
+| `scoutId`    | String (FK) | —                                                                                                         |
+| `fechaPago`  | DateTime    | Fecha del comprobante o ingreso                                                                           |
 
 ### Familiar
 
@@ -221,11 +222,11 @@ Datos del familiar: `uuid`, `nombre`, `apellido`, `dni`, `sexo`, `telefono`, `ma
 
 ### FamiliarScout (N:M)
 
-| Campo | Tipo | Descripción |
-|---|---|---|
-| `familiarId` | String (FK) | — |
-| `scoutId` | String (FK) | — |
-| `relacion` | Enum | `PADRE`, `MADRE`, `TUTOR`, etc. |
+| Campo        | Tipo        | Descripción                     |
+| ------------ | ----------- | ------------------------------- |
+| `familiarId` | String (FK) | —                               |
+| `scoutId`    | String (FK) | —                               |
+| `relacion`   | Enum        | `PADRE`, `MADRE`, `TUTOR`, etc. |
 
 ### Equipo
 
@@ -241,20 +242,20 @@ Datos del familiar: `uuid`, `nombre`, `apellido`, `dni`, `sexo`, `telefono`, `ma
 
 ### Aviso / Notificacion
 
-| Modelo | Descripción |
-|---|---|
-| `Aviso` | Mensaje enviado por un administrador a uno o varios usuarios. Campos: `titulo`, `mensaje`, `tipo` (`CUMPLEAÑOS`, `PAGO_PENDIENTE`, `EVENTO`, `CUSTOM`), `referenciaId?`, `referenciaTipo?` |
-| `Notificacion` | Instancia de `Aviso` para un usuario específico. Campos: `leida`, `fechaLectura` |
+| Modelo         | Descripción                                                                                                                                                                               |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Aviso`        | Mensaje enviado por un administrador a uno o varios usuarios. Campos:`titulo`, `mensaje`, `tipo` (`CUMPLEAÑOS`, `PAGO_PENDIENTE`, `EVENTO`, `CUSTOM`), `referenciaId?`, `referenciaTipo?` |
+| `Notificacion` | Instancia de `Aviso` para un usuario específico. Campos: `leida`, `fechaLectura`                                                                                                          |
 
 ### PushToken
 
-| Campo | Tipo | Descripción |
-|---|---|---|
-| `uuid` | String (PK) | Identificador único |
-| `userId` | String (FK) | Usuario al que pertenece el token |
-| `platform` | String | `"EXPO"` (mobile) o `"WEB"` (FCM browser) |
-| `token` | String | Token de push (Expo o FCM) |
-| `active` | Boolean | Si el token está activo |
+| Campo      | Tipo        | Descripción                               |
+| ---------- | ----------- | ----------------------------------------- |
+| `uuid`     | String (PK) | Identificador único                       |
+| `userId`   | String (FK) | Usuario al que pertenece el token         |
+| `platform` | String      | `"EXPO"` (mobile) o `"WEB"` (FCM browser) |
+| `token`    | String      | Token de push (Expo o FCM)                |
+| `active`   | Boolean     | Si el token está activo                   |
 
 Unique constraint: `(userId, platform, token)` — el registro se reactiva (upsert) si el mismo token se registra de nuevo.
 
@@ -295,13 +296,13 @@ Ejemplos: `create_pago`, `read_scout`, `delete_documento`, `modify_entrega`.
 
 ### Permisos por Rol
 
-| Rol | Permisos clave |
-|---|---|
-| `EXTERNO` | `read_*` en todas las entidades + `create_documento` |
-| `COLABORADOR` | Todo EXTERNO + `create_pago`, `modify_pago`, `modify_documento` |
-| `EDUCADOR` | Todo COLABORADOR + `create_scout/equipo/familiar/entrega`, `modify_entrega/equipo/familiar`, `delete_equipo/documento/pago` |
-| `JEFE_RAMA` | Todo EDUCADOR + `modify_scout`, `delete_scout/familiar/entrega` |
-| `ADMINISTRADOR` | Todo JEFE_RAMA + `create_auth`, `modify_auth` |
+| Rol             | Permisos clave                                                                                                             |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `EXTERNO`       | `read_*` en todas las entidades + `create_documento`                                                                       |
+| `COLABORADOR`   | Todo EXTERNO +`create_pago`, `modify_pago`, `modify_documento`                                                             |
+| `EDUCADOR`      | Todo COLABORADOR +`create_scout/equipo/familiar/entrega`, `modify_entrega/equipo/familiar`, `delete_equipo/documento/pago` |
+| `JEFE_RAMA`     | Todo EDUCADOR +`modify_scout`, `delete_scout/familiar/entrega`                                                             |
+| `ADMINISTRADOR` | Todo JEFE_RAMA +`create_auth`, `modify_auth`                                                                               |
 
 ---
 
@@ -309,104 +310,104 @@ Ejemplos: `create_pago`, `read_scout`, `delete_documento`, `modify_entrega`.
 
 ### Auth — `/api/auth`
 
-| Método | Path | Auth | Descripción |
-|---|---|---|---|
-| `POST` | `/api/auth` | Sin auth | Login — devuelve JWT |
-| `GET` | `/api/auth/renew` | Bearer | Renovar JWT + `datosGrupo` |
-| `GET` | `/api/auth/me` | Bearer | Datos del usuario autenticado + `datosGrupo` (`nombre`, `numero`, `distrito`, `zona`) |
-| `GET` | `/api/auth/notifications` | Bearer | Notificaciones del usuario (legacy) |
-| `GET` | `/api/auth/users` | Bearer (ADMIN) | Listar usuarios (filtro `?nombre=`) |
-| `GET` | `/api/auth/users/:id` | Bearer (ADMIN) | Obtener usuario por UUID |
-| `POST` | `/api/auth/create` | Bearer (ADMIN) | Crear usuario — devuelve `invitationToken` si se crea sin contraseña |
-| `PUT` | `/api/auth/firstLogin` | Sin auth | Activar cuenta: requiere `username`, `invitationToken` y `password` |
-| `PUT` | `/api/auth/:id` | Bearer (ADMIN) | Modificar usuario |
+| Método | Path                      | Auth           | Descripción                                                                          |
+| ------ | ------------------------- | -------------- | ------------------------------------------------------------------------------------ |
+| `POST` | `/api/auth`               | Sin auth       | Login — devuelve JWT                                                                 |
+| `GET`  | `/api/auth/renew`         | Bearer         | Renovar JWT +`datosGrupo`                                                            |
+| `GET`  | `/api/auth/me`            | Bearer         | Datos del usuario autenticado +`datosGrupo` (`nombre`, `numero`, `distrito`, `zona`) |
+| `GET`  | `/api/auth/notifications` | Bearer         | Notificaciones del usuario (legacy)                                                  |
+| `GET`  | `/api/auth/users`         | Bearer (ADMIN) | Listar usuarios (filtro `?nombre=`)                                                  |
+| `GET`  | `/api/auth/users/:id`     | Bearer (ADMIN) | Obtener usuario por UUID                                                             |
+| `POST` | `/api/auth/create`        | Bearer (ADMIN) | Crear usuario — devuelve `invitationToken` si se crea sin contraseña                 |
+| `PUT`  | `/api/auth/firstLogin`    | Sin auth       | Activar cuenta: requiere `username`, `invitationToken` y `password`                  |
+| `PUT`  | `/api/auth/:id`           | Bearer (ADMIN) | Modificar usuario                                                                    |
 
 ### Scout — `/api/scout`
 
-| Método | Path | Descripción |
-|---|---|---|
-| `GET` | `/api/scout` | Listar scouts (filtros, paginación) |
-| `GET` | `/api/scout/:id` | Obtener scout |
-| `GET` | `/api/scout/by-dni/:dni` | Buscar por DNI (auth: x-api-key) |
-| `POST` | `/api/scout` | Crear scout |
-| `POST` | `/api/scout/import` | Importar scouts en masa (CSV/XLSX) |
-| `PUT` | `/api/scout/:id` | Actualizar scout |
-| `DELETE` | `/api/scout/:id` | Eliminar scout |
+| Método   | Path                     | Descripción                         |
+| -------- | ------------------------ | ----------------------------------- |
+| `GET`    | `/api/scout`             | Listar scouts (filtros, paginación) |
+| `GET`    | `/api/scout/:id`         | Obtener scout                       |
+| `GET`    | `/api/scout/by-dni/:dni` | Buscar por DNI (auth: x-api-key)    |
+| `POST`   | `/api/scout`             | Crear scout                         |
+| `POST`   | `/api/scout/import`      | Importar scouts en masa (CSV/XLSX)  |
+| `PUT`    | `/api/scout/:id`         | Actualizar scout                    |
+| `DELETE` | `/api/scout/:id`         | Eliminar scout                      |
 
 ### Familiar — `/api/familiar`
 
-| Método | Path | Descripción |
-|---|---|---|
-| `GET` | `/api/familiar` | Listar familiares |
-| `GET` | `/api/familiar/:id` | Obtener familiar |
-| `GET` | `/api/familiar/by-dni/:dni` | Buscar por DNI (auth: x-api-key) |
-| `POST` | `/api/familiar` | Crear familiar |
-| `PUT` | `/api/familiar/relate/:id` | Vincular familiar a scout |
-| `PUT` | `/api/familiar/unrelate/:id` | Desvincular familiar de scout |
-| `PUT` | `/api/familiar/:id` | Actualizar familiar |
-| `DELETE` | `/api/familiar/:id` | Eliminar familiar |
+| Método   | Path                         | Descripción                      |
+| -------- | ---------------------------- | -------------------------------- |
+| `GET`    | `/api/familiar`              | Listar familiares                |
+| `GET`    | `/api/familiar/:id`          | Obtener familiar                 |
+| `GET`    | `/api/familiar/by-dni/:dni`  | Buscar por DNI (auth: x-api-key) |
+| `POST`   | `/api/familiar`              | Crear familiar                   |
+| `PUT`    | `/api/familiar/relate/:id`   | Vincular familiar a scout        |
+| `PUT`    | `/api/familiar/unrelate/:id` | Desvincular familiar de scout    |
+| `PUT`    | `/api/familiar/:id`          | Actualizar familiar              |
+| `DELETE` | `/api/familiar/:id`          | Eliminar familiar                |
 
 ### Entrega — `/api/entrega`
 
-| Método | Path | Descripción |
-|---|---|---|
-| `GET` | `/api/entrega` | Listar entregas (filtros, paginación) |
-| `GET` | `/api/entrega/:id` | Obtener entrega |
-| `POST` | `/api/entrega` | Crear entrega |
-| `PUT` | `/api/entrega/:id` | Actualizar entrega |
-| `DELETE` | `/api/entrega/:id` | Eliminar entrega |
+| Método   | Path               | Descripción                           |
+| -------- | ------------------ | ------------------------------------- |
+| `GET`    | `/api/entrega`     | Listar entregas (filtros, paginación) |
+| `GET`    | `/api/entrega/:id` | Obtener entrega                       |
+| `POST`   | `/api/entrega`     | Crear entrega                         |
+| `PUT`    | `/api/entrega/:id` | Actualizar entrega                    |
+| `DELETE` | `/api/entrega/:id` | Eliminar entrega                      |
 
 **Tipos de entrega (`tipoEntrega`):**
 
-| Valor | Descripción visible |
-|---|---|
-| `PROGRESION` | Entrega de etapa de progresion personal |
-| `UNIFORME` | Entrega de uniforme scout |
-| `PROMESA` | Formulacion de promesa Scout |
-| `INSG_GUIA` | Entrega de insignia de Guia de patrulla |
+| Valor          | Descripción visible                        |
+| -------------- | ------------------------------------------ |
+| `PROGRESION`   | Entrega de etapa de progresion personal    |
+| `UNIFORME`     | Entrega de uniforme scout                  |
+| `PROMESA`      | Formulacion de promesa Scout               |
+| `INSG_GUIA`    | Entrega de insignia de Guia de patrulla    |
 | `INSG_SUBGUIA` | Entrega de insignia de Subguia de patrulla |
 
 ### Evento — `/api/evento`
 
-| Método | Path | Descripción |
-|---|---|---|
-| `GET` | `/api/evento` | Listar eventos |
-| `GET` | `/api/evento/mis-eventos` | Listar eventos del usuario autenticado (por participación) |
-| `GET` | `/api/evento/:id` | Obtener evento |
-| `GET` | `/api/evento/:id/nomina?pdf=true|false` | Exportar nómina del evento (`pdf=true` devuelve PDF, default DOCX). **Solo ADMINISTRADOR** |
-| `POST` | `/api/evento` | Crear evento |
-| `PUT` | `/api/evento/:id` | Actualizar evento |
-| `DELETE` | `/api/evento/:id` | Eliminar evento |
-| `POST` | `/api/evento/:id/participantes` | Agregar participantes |
-| `DELETE` | `/api/evento/:id/participantes` | Quitar todos los participantes |
-| `DELETE` | `/api/evento/:id/participantes/:participanteId` | Quitar participante |
+| Método   | Path                                            | Descripción                                                |
+| -------- | ----------------------------------------------- | ---------------------------------------------------------- |
+| `GET`    | `/api/evento`                                   | Listar eventos                                             |
+| `GET`    | `/api/evento/mis-eventos`                       | Listar eventos del usuario autenticado (por participación) |
+| `GET`    | `/api/evento/:id`                               | Obtener evento                                             |
+| `GET`    | `/api/evento/:id/nomina?pdf=true                | false`                                                     |
+| `POST`   | `/api/evento`                                   | Crear evento                                               |
+| `PUT`    | `/api/evento/:id`                               | Actualizar evento                                          |
+| `DELETE` | `/api/evento/:id`                               | Eliminar evento                                            |
+| `POST`   | `/api/evento/:id/participantes`                 | Agregar participantes                                      |
+| `DELETE` | `/api/evento/:id/participantes`                 | Quitar todos los participantes                             |
+| `DELETE` | `/api/evento/:id/participantes/:participanteId` | Quitar participante                                        |
 
 ### TipoEvento — `/api/tipo-evento`
 
-| Método | Path | Descripción |
-|---|---|---|
-| `GET` | `/api/tipo-evento` | Listar tipos de evento |
-| `GET` | `/api/tipo-evento/:id` | Obtener tipo de evento |
-| `POST` | `/api/tipo-evento` | Crear tipo de evento |
-| `PUT` | `/api/tipo-evento/:id` | Actualizar tipo de evento |
-| `DELETE` | `/api/tipo-evento/:id` | Eliminar tipo de evento |
+| Método   | Path                   | Descripción               |
+| -------- | ---------------------- | ------------------------- |
+| `GET`    | `/api/tipo-evento`     | Listar tipos de evento    |
+| `GET`    | `/api/tipo-evento/:id` | Obtener tipo de evento    |
+| `POST`   | `/api/tipo-evento`     | Crear tipo de evento      |
+| `PUT`    | `/api/tipo-evento/:id` | Actualizar tipo de evento |
+| `DELETE` | `/api/tipo-evento/:id` | Eliminar tipo de evento   |
 
 ### Documento — `/api/documento`
 
-| Método | Path | Descripción |
-|---|---|---|
-| `GET` | `/api/documento` | Listar documentos presentados |
-| `GET` | `/api/documento/data` | Catálogo de tipos de documentos |
-| `GET` | `/api/documento/pendientes` | Listar documentos pendientes/requeridos para ingreso (faltantes o vencidos anuales), aplicando alcance por rol (ALL/RAMA/FAMILIAR). Soporta `?familiarId=`, `?soloCompletable=true`, `?offset=` y `?limit=`. |
-| `GET` | `/api/documento/:id` | Obtener documento. `?download=true` devuelve URL firmada de S3 |
-| `POST` | `/api/documento` | Registrar documento presentado |
-| `POST` | `/api/documento/:id/archivo` | Subir archivo (PDF o JPEG) a documento existente — campo `archivo` (multipart) |
-| `POST` | `/api/documento/fill` | Generar PDF desde plantilla |
-| `POST` | `/api/documento/sign` | Firmar PDF existente |
-| `POST` | `/api/documento/upload` | Subir PDF ya completado |
-| `POST` | `/api/documento/scan` | Escanear PDF con Gemini OCR (sin persistir) |
-| `POST` | `/api/documento/scan/confirm` | Confirmar escaneo y persistir en BD + S3 |
-| `DELETE` | `/api/documento/:id` | Eliminar documento |
+| Método   | Path                          | Descripción                                                                                                                                                                                                  |
+| -------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET`    | `/api/documento`              | Listar documentos presentados                                                                                                                                                                                |
+| `GET`    | `/api/documento/data`         | Catálogo de tipos de documentos                                                                                                                                                                              |
+| `GET`    | `/api/documento/pendientes`   | Listar documentos pendientes/requeridos para ingreso (faltantes o vencidos anuales), aplicando alcance por rol (ALL/RAMA/FAMILIAR). Soporta `?familiarId=`, `?soloCompletable=true`, `?offset=` y `?limit=`. |
+| `GET`    | `/api/documento/:id`          | Obtener documento.`?download=true` devuelve URL firmada de S3                                                                                                                                                |
+| `POST`   | `/api/documento`              | Registrar documento presentado                                                                                                                                                                               |
+| `POST`   | `/api/documento/:id/archivo`  | Subir archivo (PDF o JPEG) a documento existente — campo `archivo` (multipart)                                                                                                                               |
+| `POST`   | `/api/documento/fill`         | Generar PDF desde plantilla                                                                                                                                                                                  |
+| `POST`   | `/api/documento/sign`         | Firmar PDF existente                                                                                                                                                                                         |
+| `POST`   | `/api/documento/upload`       | Subir PDF ya completado                                                                                                                                                                                      |
+| `POST`   | `/api/documento/scan`         | Escanear PDF con Gemini OCR (sin persistir)                                                                                                                                                                  |
+| `POST`   | `/api/documento/scan/confirm` | Confirmar escaneo y persistir en BD + S3                                                                                                                                                                     |
+| `DELETE` | `/api/documento/:id`          | Eliminar documento                                                                                                                                                                                           |
 
 #### Cambios recientes en `/api/documento/fill`
 
@@ -446,65 +447,65 @@ La carga de `DocumentoPresentado` se resuelve aparte desde la hoja `documentos`,
 
 ### Pago — `/api/pago`
 
-| Método | Path | Descripción |
-|---|---|---|
-| `GET` | `/api/pago` | Listar pagos |
-| `GET` | `/api/pago/:id` | Obtener pago |
-| `POST` | `/api/pago` | Registrar pago |
-| `POST` | `/api/pago/import` | Importar pagos desde CSV |
-| `PUT` | `/api/pago/:id` | Actualizar pago |
-| `DELETE` | `/api/pago/:id` | Eliminar pago |
+| Método   | Path               | Descripción              |
+| -------- | ------------------ | ------------------------ |
+| `GET`    | `/api/pago`        | Listar pagos             |
+| `GET`    | `/api/pago/:id`    | Obtener pago             |
+| `POST`   | `/api/pago`        | Registrar pago           |
+| `POST`   | `/api/pago/import` | Importar pagos desde CSV |
+| `PUT`    | `/api/pago/:id`    | Actualizar pago          |
+| `DELETE` | `/api/pago/:id`    | Eliminar pago            |
 
 #### Motor de reglas/pedientes (`/api/pago`)
 
-| Método | Path | Descripción |
-|---|---|---|
-| `GET` | `/api/pago/reglas/activa` | Obtener ciclo/reglas activas |
-| `POST` | `/api/pago/reglas` | Crear borrador de reglas |
-| `PUT` | `/api/pago/reglas/:id` | Actualizar reglas de un ciclo |
-| `POST` | `/api/pago/reglas/:id/activar` | Activar ciclo y recalcular obligaciones |
-| `GET` | `/api/pago/pendientes` | Listar obligaciones pendientes/incompletas (`rama`, `scoutNombre`, `familiaClave`, `estado`, `offset`, `limit`) |
-| `GET` | `/api/pago/pendientes/:id` | Obtener detalle de obligación |
-| `POST` | `/api/pago/pendientes/:id/perdonar` | Condonar deuda con auditoría |
+| Método | Path                                | Descripción                                                                                                     |
+| ------ | ----------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `GET`  | `/api/pago/reglas/activa`           | Obtener ciclo/reglas activas                                                                                    |
+| `POST` | `/api/pago/reglas`                  | Crear borrador de reglas                                                                                        |
+| `PUT`  | `/api/pago/reglas/:id`              | Actualizar reglas de un ciclo                                                                                   |
+| `POST` | `/api/pago/reglas/:id/activar`      | Activar ciclo y recalcular obligaciones                                                                         |
+| `GET`  | `/api/pago/pendientes`              | Listar obligaciones pendientes/incompletas (`rama`, `scoutNombre`, `familiaClave`, `estado`, `offset`, `limit`) |
+| `GET`  | `/api/pago/pendientes/:id`          | Obtener detalle de obligación                                                                                   |
+| `POST` | `/api/pago/pendientes/:id/perdonar` | Condonar deuda con auditoría                                                                                    |
 
 ### Equipo — `/api/equipo`
 
-| Método | Path | Descripción |
-|---|---|---|
-| `GET` | `/api/equipo` | Listar equipos |
-| `GET` | `/api/equipo/:id` | Obtener equipo |
-| `POST` | `/api/equipo` | Crear equipo |
-| `PUT` | `/api/equipo/:id` | Actualizar equipo |
-| `DELETE` | `/api/equipo/:id` | Eliminar equipo |
+| Método   | Path              | Descripción       |
+| -------- | ----------------- | ----------------- |
+| `GET`    | `/api/equipo`     | Listar equipos    |
+| `GET`    | `/api/equipo/:id` | Obtener equipo    |
+| `POST`   | `/api/equipo`     | Crear equipo      |
+| `PUT`    | `/api/equipo/:id` | Actualizar equipo |
+| `DELETE` | `/api/equipo/:id` | Eliminar equipo   |
 
 ### Notificacion — `/api/notificacion`
 
-| Método | Path | Auth | Descripción |
-|---|---|---|---|
-| `GET` | `/api/notificacion` | Bearer | Notificaciones del usuario autenticado (`?leida=`, `?limit=`, `?offset=`) |
-| `GET` | `/api/notificacion/:id` | Bearer | Obtener notificación puntual del usuario |
-| `POST` | `/api/notificacion` | Bearer | Crear aviso y enviarlo a usuarios (push + in-app) |
-| `PUT` | `/api/notificacion/:id` | Bearer | Marcar notificación como leída |
-| `PUT` | `/api/notificacion/read-all` | Bearer | Marcar todas como leídas |
-| `GET` | `/api/notificacion/avisos` | Bearer (ADMIN) | Listar avisos con filtros (`?tipo=`, `?fechaDesde=`, `?fechaHasta=`, `?userId=`) |
-| `GET` | `/api/notificacion/avisos/:id/destinatarios` | Bearer (ADMIN) | Listar destinatarios de un aviso con estado de lectura |
+| Método | Path                                         | Auth           | Descripción                                                                      |
+| ------ | -------------------------------------------- | -------------- | -------------------------------------------------------------------------------- |
+| `GET`  | `/api/notificacion`                          | Bearer         | Notificaciones del usuario autenticado (`?leida=`, `?limit=`, `?offset=`)        |
+| `GET`  | `/api/notificacion/:id`                      | Bearer         | Obtener notificación puntual del usuario                                         |
+| `POST` | `/api/notificacion`                          | Bearer         | Crear aviso y enviarlo a usuarios (push + in-app)                                |
+| `PUT`  | `/api/notificacion/:id`                      | Bearer         | Marcar notificación como leída                                                   |
+| `PUT`  | `/api/notificacion/read-all`                 | Bearer         | Marcar todas como leídas                                                         |
+| `GET`  | `/api/notificacion/avisos`                   | Bearer (ADMIN) | Listar avisos con filtros (`?tipo=`, `?fechaDesde=`, `?fechaHasta=`, `?userId=`) |
+| `GET`  | `/api/notificacion/avisos/:id/destinatarios` | Bearer (ADMIN) | Listar destinatarios de un aviso con estado de lectura                           |
 
 ### PushToken — `/api/notificacion/push-token`
 
-| Método | Path | Descripción |
-|---|---|---|
-| `POST` | `/api/notificacion/push-token` | Registrar token de push (`platform`: `"EXPO"` \| `"WEB"`, `token`: string) |
-| `DELETE` | `/api/notificacion/push-token` | Desregistrar token de push |
+| Método   | Path                           | Descripción                                                                |
+| -------- | ------------------------------ | -------------------------------------------------------------------------- |
+| `POST`   | `/api/notificacion/push-token` | Registrar token de push (`platform`: `"EXPO"` \| `"WEB"`, `token`: string) |
+| `DELETE` | `/api/notificacion/push-token` | Desregistrar token de push                                                 |
 
 ### Otros
 
-| Método | Path | Descripción |
-|---|---|---|
+| Método | Path                       | Descripción                                                   |
+| ------ | -------------------------- | ------------------------------------------------------------- |
 | `POST` | `/api/webhook/comprobante` | Recepción de comprobantes vía webhook (whatsapp-comprobantes) |
-| `POST` | `/api/webhook/nomina` | Recepción de nómina diaria vía webhook (cruz-del-sur) |
-| `POST` | `/api/nomina/sync` | Pull on-demand de nómina (requiere ADMINISTRADOR) |
-| `GET` | `/health` | Health check |
-| `GET` | `/docs` | Documentación Swagger |
+| `POST` | `/api/webhook/nomina`      | Recepción de nómina diaria vía webhook (cruz-del-sur)         |
+| `POST` | `/api/nomina/sync`         | Pull on-demand de nómina (requiere ADMINISTRADOR)             |
+| `GET`  | `/health`                  | Health check                                                  |
+| `GET`  | `/docs`                    | Documentación Swagger                                         |
 
 ---
 
@@ -557,17 +558,17 @@ pushNotificationService.sendPushToUsers() [fire-and-forget]
 
 ### Endpoints relevantes
 
-| Endpoint | Descripción |
-|---|---|
-| `POST /api/notificacion` | Crear aviso + trigger push |
-| `GET /api/notificacion` | Inbox del usuario (`?leida=`, paginado) |
-| `GET /api/notificacion/:id` | Obtener una notificación puntual |
-| `PUT /api/notificacion/:id` | Marcar como leída |
-| `PUT /api/notificacion/read-all` | Marcar todas como leídas |
-| `GET /api/notificacion/avisos` | Lista de avisos enviados (solo ADMIN) |
+| Endpoint                                         | Descripción                                      |
+| ------------------------------------------------ | ------------------------------------------------ |
+| `POST /api/notificacion`                         | Crear aviso + trigger push                       |
+| `GET /api/notificacion`                          | Inbox del usuario (`?leida=`, paginado)          |
+| `GET /api/notificacion/:id`                      | Obtener una notificación puntual                 |
+| `PUT /api/notificacion/:id`                      | Marcar como leída                                |
+| `PUT /api/notificacion/read-all`                 | Marcar todas como leídas                         |
+| `GET /api/notificacion/avisos`                   | Lista de avisos enviados (solo ADMIN)            |
 | `GET /api/notificacion/avisos/:id/destinatarios` | Destinatarios con estado de lectura (solo ADMIN) |
-| `POST /api/notificacion/push-token` | Registrar token (`platform`, `token`) |
-| `DELETE /api/notificacion/push-token` | Desregistrar token |
+| `POST /api/notificacion/push-token`              | Registrar token (`platform`, `token`)            |
+| `DELETE /api/notificacion/push-token`            | Desregistrar token                               |
 
 ### Variables de entorno (en Infisical)
 
@@ -611,7 +612,7 @@ Si la firma no coincide → `HTTP 401`.
   "timestamp": "2026-04-11T14:32:45.123Z",
   "datos": {
     "es_comprobante": true,
-    "monto": 15000.50,
+    "monto": 15000.5,
     "fecha": "2026-04-11",
     "hora": "14:32",
     "cbu_alias_destino": "juan.perez",
@@ -636,24 +637,24 @@ Si la firma no coincide → `HTTP 401`.
 
 ### Transformación a Pago
 
-| Campo webhook | Campo Pago | Notas |
-|---|---|---|
-| `datos.monto` | `monto` | — |
-| `datos.fecha` | `fechaPago` | Si es null, se usa la fecha actual |
-| `datos.concepto` | `concepto` | Fallback: `TRANSFERENCIA {banco_emisor}`. Máx 50 chars, MAYÚSCULAS |
-| _(fijo)_ `"TRANSFERENCIA"` | `metodoPago` | Siempre transferencia |
-| scout encontrado `.uuid` | `scoutId` | — |
-| _(fijo)_ `false` | `rendido` | Siempre queda pendiente de rendición |
+| Campo webhook              | Campo Pago   | Notas                                                             |
+| -------------------------- | ------------ | ----------------------------------------------------------------- |
+| `datos.monto`              | `monto`      | —                                                                 |
+| `datos.fecha`              | `fechaPago`  | Si es null, se usa la fecha actual                                |
+| `datos.concepto`           | `concepto`   | Fallback:`TRANSFERENCIA {banco_emisor}`. Máx 50 chars, MAYÚSCULAS |
+| _(fijo)_ `"TRANSFERENCIA"` | `metodoPago` | Siempre transferencia                                             |
+| scout encontrado `.uuid`   | `scoutId`    | —                                                                 |
+| _(fijo)_ `false`           | `rendido`    | Siempre queda pendiente de rendición                              |
 
 ### Respuestas HTTP
 
-| Código | Situación |
-|---|---|
-| `201 Created` | Pago registrado correctamente |
-| `400 Bad Request` | Payload inválido (Zod) |
-| `401 Unauthorized` | Firma HMAC incorrecta o ausente |
-| `422 Unprocessable Entity` | No se encontró scout coincidente |
-| `500 Internal Server Error` | Error inesperado |
+| Código                      | Situación                        |
+| --------------------------- | -------------------------------- |
+| `201 Created`               | Pago registrado correctamente    |
+| `400 Bad Request`           | Payload inválido (Zod)           |
+| `401 Unauthorized`          | Firma HMAC incorrecta o ausente  |
+| `422 Unprocessable Entity`  | No se encontró scout coincidente |
+| `500 Internal Server Error` | Error inesperado                 |
 
 ### Variable de entorno requerida
 
@@ -671,11 +672,11 @@ La integración con **cruz-del-sur** mantiene sincronizados los scouts del siste
 
 ### Las 3 formas de comunicación
 
-| Forma | Endpoint | Cuándo usarla |
-|---|---|---|
-| **1. On-demand pull** | `POST /api/nomina/sync` | Sincronización manual desde un cliente autenticado |
-| **2. Webhook push** | `POST /api/webhook/nomina` | Cruz-del-sur envía la nómina diaria automáticamente |
-| **3. Cron programado** | _(interno)_ | Sync automático diario a las 7:00 AM (Argentina) |
+| Forma                  | Endpoint                   | Cuándo usarla                                       |
+| ---------------------- | -------------------------- | --------------------------------------------------- |
+| **1. On-demand pull**  | `POST /api/nomina/sync`    | Sincronización manual desde un cliente autenticado  |
+| **2. Webhook push**    | `POST /api/webhook/nomina` | Cruz-del-sur envía la nómina diaria automáticamente |
+| **3. Cron programado** | _(interno)_                | Sync automático diario a las 7:00 AM (Argentina)    |
 
 ### Forma 1 — On-demand pull
 
@@ -749,22 +750,22 @@ Scout-api ejecuta automáticamente un pull de la nómina todos los días a las *
 
 ### Mapeo de campos
 
-| Campo cruz-del-sur | Campo Scout | Transformación |
-|---|---|---|
-| `documento` | `dni` | Clave de matching |
-| `nombre` | `nombre` | Directo |
-| `apellido` | `apellido` | Directo |
-| `sexo` | `sexo` | "Masculino"/"masculino"/"m" → "M"; "Femenino"/"femenino"/"f" → "F" |
-| `fechaNacimiento` | `fechaNacimiento` | "DD/MM/YYYY" o "YYYY-MM-DD" → `Date` |
-| `rama` | `rama` | "Scouts" → "SCOUTS", "Lobatos y Lobeznas" → "MANADA", etc. (`RAMAS_MAP`) |
-| `funcion` | `funcion` | "Jefe de Manada" → "JEFE_RAMA", "Scout" → "JOVEN", etc. (`FUNCIONES_MAP`) |
-| `telefono` | `telefono` | Directo |
-| `email` | `mail` | Directo |
-| `localidad` | `localidad` | Directo |
-| `calle` | `direccion` | Directo |
-| `provincia` | `provincia` | Directo |
-| `nacionalidad` | `nacionalidad` | Directo |
-| `religion` | `religion` | Directo |
+| Campo cruz-del-sur | Campo Scout       | Transformación                                                            |
+| ------------------ | ----------------- | ------------------------------------------------------------------------- |
+| `documento`        | `dni`             | Clave de matching                                                         |
+| `nombre`           | `nombre`          | Directo                                                                   |
+| `apellido`         | `apellido`        | Directo                                                                   |
+| `sexo`             | `sexo`            | "Masculino"/"masculino"/"m" → "M"; "Femenino"/"femenino"/"f" → "F"        |
+| `fechaNacimiento`  | `fechaNacimiento` | "DD/MM/YYYY" o "YYYY-MM-DD" →`Date`                                       |
+| `rama`             | `rama`            | "Scouts" → "SCOUTS", "Lobatos y Lobeznas" → "MANADA", etc. (`RAMAS_MAP`)  |
+| `funcion`          | `funcion`         | "Jefe de Manada" → "JEFE_RAMA", "Scout" → "JOVEN", etc. (`FUNCIONES_MAP`) |
+| `telefono`         | `telefono`        | Directo                                                                   |
+| `email`            | `mail`            | Directo                                                                   |
+| `localidad`        | `localidad`       | Directo                                                                   |
+| `calle`            | `direccion`       | Directo                                                                   |
+| `provincia`        | `provincia`       | Directo                                                                   |
+| `nacionalidad`     | `nacionalidad`    | Directo                                                                   |
+| `religion`         | `religion`        | Directo                                                                   |
 
 ### Variables de entorno
 
@@ -791,11 +792,9 @@ src/
 
 ---
 
-## 📁 Estructura de Carpetas
+## 📁 Estructura de Carpetasscout-api/├── src/
 
 ```
-scout-api/
-├── src/
 │   ├── bin/                          # Scripts CLI
 │   │   ├── createAdminUser.ts
 │   │   ├── seedDB.ts
@@ -896,13 +895,7 @@ scout-api/
 │   │   ├── notificacion.ts, pushToken.ts
 │   │   ├── webhook.ts
 │   │   └── generics.ts
-│   │
-│   ├── whatsapp/                     # Bot WhatsApp (actualmente desactivado)
-│   │   ├── WhatsappSession.ts        # Singleton (comentado en Server.ts)
-│   │   ├── useCases.ts
-│   │   ├── recordarCumpleaños.ts     # Cron (comentado en Server.ts)
-│   │   └── clientConfig.ts
-│   │
+
 │   ├── Server.ts                     # Express config + registro de rutas
 │   └── index.ts                      # Punto de entrada
 │
@@ -974,6 +967,7 @@ npm run docker:init-with-data
 ```
 
 Este comando:
+
 1. Levanta contenedores Docker (Turso + Redis)
 2. Copia `data/scout.db` al contenedor
 3. Genera el cliente Prisma
@@ -1097,6 +1091,7 @@ Logs centralizados en la nube (solo en producción).
 Push notifications hacia browsers web. La integración usa `firebase-admin` (Admin SDK) con una service account de Google Cloud.
 
 **Secreto requerido en Infisical** (`/scouts/backend`):
+
 ```
 FIREBASE_SERVICE_ACCOUNT_JSON   # JSON completo de la service account de GCP
 ```
@@ -1267,6 +1262,7 @@ npm run pagos:migrar-reglas:dev
 ```
 
 Acciones:
+
 1. Regenera obligaciones del ciclo activo
 2. Reimputa pagos existentes
 3. Reporta inconsistencias para revisión manual
