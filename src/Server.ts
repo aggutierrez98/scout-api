@@ -101,7 +101,7 @@ export default class Server {
 		}));
 		this.app.use(compression({ filter: shouldCompress }));
 		if (process.env.NODE_ENV === "production") {
-			// this.app.use(this.limiter);
+			this.app.use(this.limiter);
 			this.app.use(tooBusy);
 		}
 		this.app.use(morganMiddleware);

@@ -177,12 +177,16 @@ export class ServicioObligacionesPago {
 			}
 		}
 
-		// ── 1 query: insertar todas las obligaciones nuevas (skipDuplicates) ────
-		// Las existentes se omiten sin error; no resetea su estado ni imputaciones.
-		await (prismaClient as any).obligacionPago.createMany({
-			data: todasLasObligaciones,
-			skipDuplicates: true,
-		});
+		// ── Insertar en chunks para respetar el límite de statements de Turso/LibSQL ──
+		// Turso limita la cantidad de statements por request HTTP. Con cientos de scouts
+		// el batch puede exceder ese límite y lanzar PrismaClientValidationError.
+		const CHUNK_SIZE = 50;
+		for (let i = 0; i < todasLasObligaciones.length; i += CHUNK_SIZE) {
+			await (prismaClient as any).obligacionPago.createMany({
+				data: todasLasObligaciones.slice(i, i + CHUNK_SIZE),
+				skipDuplicates: true,
+			});
+		}
 
 		// ── Actualizar montos de las existentes (si cambiaron las reglas) ───────
 		// Para cada obligacion existente, actualizar familiaClave y montoEsperado.
