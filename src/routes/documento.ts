@@ -52,6 +52,15 @@ export default function createDocumentoRouter(documentoService: DocumentoService
 		documentoController.scanDocument,
 	);
 	router.post(
+		"/scan/bulk",
+		documentoController.scanDocumentBulk,
+	);
+	router.post(
+		"/scan/bulk/confirm",
+		cleanCacheMiddleware,
+		documentoController.confirmScanDocumentBulk,
+	);
+	router.post(
 		"/scan/confirm",
 		validate(ConfirmScanDocumentoSchema),
 		cleanCacheMiddleware,

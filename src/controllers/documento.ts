@@ -296,6 +296,99 @@ export class DocumentoController {
 		}
 	};
 
+	scanDocumentBulk = async (req: Request, res: Response, next: NextFunction) => {
+		try {
+			const rawFiles = req.files?.files;
+			if (!rawFiles) {
+				throw new AppError({
+					name: "BAD_REQUEST",
+					httpCode: HttpCode.BAD_REQUEST,
+					description: "Se requieren archivos en el campo 'files'",
+				});
+			}
+
+			const filesArray = Array.isArray(rawFiles) ? rawFiles : [rawFiles];
+			const validMimes = ["application/pdf", "image/jpeg"] as const;
+
+			const files = filesArray.map((f) => {
+				if (!validMimes.includes(f.mimetype as (typeof validMimes)[number])) {
+					throw new AppError({
+						name: "BAD_REQUEST",
+						httpCode: HttpCode.BAD_REQUEST,
+						description: `Formato no válido: ${f.mimetype}. Solo se aceptan PDF o JPEG`,
+					});
+				}
+				return {
+					buffer: f.data,
+					mimeType: f.mimetype as "application/pdf" | "image/jpeg",
+				};
+			});
+
+			const result = await this.documentoService.scanDocumentoBulk(files);
+			res.status(200).json(result);
+		} catch (e) {
+			next(e);
+		}
+	};
+
+	confirmScanDocumentBulk = async (req: Request, res: Response, next: NextFunction) => {
+		try {
+			const rawFiles = req.files?.files;
+			if (!rawFiles) {
+				throw new AppError({
+					name: "BAD_REQUEST",
+					httpCode: HttpCode.BAD_REQUEST,
+					description: "Se requieren archivos en el campo 'files'",
+				});
+			}
+
+			const filesArray = Array.isArray(rawFiles) ? rawFiles : [rawFiles];
+
+			let items: Array<{ index: number; scoutId: string; documentoId: string; fechaPresentacion?: Date }>;
+			try {
+				items = JSON.parse(req.body.items);
+			} catch {
+				throw new AppError({
+					name: "BAD_REQUEST",
+					httpCode: HttpCode.BAD_REQUEST,
+					description: "El campo 'items' debe ser un JSON válido",
+				});
+			}
+
+			if (!Array.isArray(items) || items.length !== filesArray.length) {
+				throw new AppError({
+					name: "BAD_REQUEST",
+					httpCode: HttpCode.BAD_REQUEST,
+					description: "La cantidad de archivos debe coincidir con la cantidad de items",
+				});
+			}
+
+			const validMimes = ["application/pdf", "image/jpeg"] as const;
+			const payload = items.map((item, i) => {
+				const file = filesArray[i];
+				if (!validMimes.includes(file.mimetype as (typeof validMimes)[number])) {
+					throw new AppError({
+						name: "BAD_REQUEST",
+						httpCode: HttpCode.BAD_REQUEST,
+						description: `Formato no válido: ${file.mimetype}`,
+					});
+				}
+				return {
+					buffer: file.data,
+					mimeType: file.mimetype as "application/pdf" | "image/jpeg",
+					scoutId: item.scoutId,
+					documentoId: item.documentoId,
+					fechaPresentacion: item.fechaPresentacion ? new Date(item.fechaPresentacion) : undefined,
+				};
+			});
+
+			const results = await this.documentoService.confirmScanDocumentoBulk(payload);
+			res.status(201).json(results);
+		} catch (e) {
+			next(e);
+		}
+	};
+
 	confirmScanDocument = async (req: Request, res: Response, next: NextFunction) => {
 		try {
 			const pdfFile = req.files?.pdf as UploadedFile | undefined;

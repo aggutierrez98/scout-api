@@ -19,6 +19,28 @@ import { scanAuthorizationDocument, AuthorizationDocumentScanResult } from "../u
 import type { ScopingContext } from "../utils/helpers/buildScopingContext";
 
 
+export type BulkScanConfidence = "high" | "none";
+
+export type BulkScanMatchedScout = {
+	id: string;
+	nombre: string;
+	apellido: string;
+};
+
+export type BulkScanMatchedDocumento = {
+	id: string;
+	nombre: string;
+};
+
+export type BulkScanItem = {
+	index: number;
+	extractedData: AuthorizationDocumentScanResult | null;
+	matchedScout: BulkScanMatchedScout | null;
+	matchedDocumento: BulkScanMatchedDocumento | null;
+	scoutConfidence: BulkScanConfidence;
+	documentoConfidence: BulkScanConfidence;
+};
+
 type getQueryParams = {
 	limit?: number;
 	offset?: number;
@@ -637,6 +659,209 @@ export class DocumentoService implements IDocumentoService {
 
 	scanDocumento = async (pdfBuffer: Buffer): Promise<AuthorizationDocumentScanResult> => {
 		return scanAuthorizationDocument(pdfBuffer);
+	};
+
+	private matchScoutByExtracted = async (
+		extracted: AuthorizationDocumentScanResult["scout"],
+	): Promise<{ scout: BulkScanMatchedScout | null; confidence: BulkScanConfidence }> => {
+		// 1. DNI exact match — más confiable
+		if (extracted.dni) {
+			const scout = await prismaClient.scout.findFirst({
+				where: { dni: extracted.dni },
+				select: { uuid: true, nombre: true, apellido: true },
+			});
+			if (scout)
+				return {
+					scout: { id: scout.uuid, nombre: scout.nombre, apellido: scout.apellido },
+					confidence: "high",
+				};
+		}
+
+		// 2. Nombre + apellido
+		if (extracted.nombre && extracted.apellido) {
+			const scout = await prismaClient.scout.findFirst({
+				where: {
+					nombre: { contains: extracted.nombre },
+					apellido: { contains: extracted.apellido },
+				},
+				select: { uuid: true, nombre: true, apellido: true },
+			});
+			if (scout)
+				return {
+					scout: { id: scout.uuid, nombre: scout.nombre, apellido: scout.apellido },
+					confidence: "high",
+				};
+		}
+
+		// 3. Fecha de nacimiento — puede haber múltiples coincidencias, se desempata con otros campos
+		if (extracted.fechaNacimiento) {
+			const parsed = new Date(extracted.fechaNacimiento);
+			if (!isNaN(parsed.getTime())) {
+				const startOfDay = new Date(`${extracted.fechaNacimiento}T00:00:00.000Z`);
+				const endOfDay = new Date(`${extracted.fechaNacimiento}T23:59:59.999Z`);
+
+				const candidates = await prismaClient.scout.findMany({
+					where: { fechaNacimiento: { gte: startOfDay, lte: endOfDay } },
+					select: { uuid: true, nombre: true, apellido: true, dni: true },
+				});
+
+				if (candidates.length === 1) {
+					const s = candidates[0];
+					return {
+						scout: { id: s.uuid, nombre: s.nombre, apellido: s.apellido },
+						confidence: "high",
+					};
+				}
+
+				if (candidates.length > 1) {
+					let narrowed = candidates;
+
+					if (extracted.dni) {
+						const byDni = narrowed.filter((s) => s.dni === extracted.dni);
+						if (byDni.length > 0) narrowed = byDni;
+					}
+
+					if (narrowed.length > 1 && extracted.apellido) {
+						const byApellido = narrowed.filter((s) =>
+							s.apellido.toLowerCase().includes(extracted.apellido!.toLowerCase()),
+						);
+						if (byApellido.length > 0) narrowed = byApellido;
+					}
+
+					if (narrowed.length > 1 && extracted.nombre) {
+						const byNombre = narrowed.filter((s) =>
+							s.nombre.toLowerCase().includes(extracted.nombre!.toLowerCase()),
+						);
+						if (byNombre.length > 0) narrowed = byNombre;
+					}
+
+					if (narrowed.length === 1) {
+						const s = narrowed[0];
+						return {
+							scout: { id: s.uuid, nombre: s.nombre, apellido: s.apellido },
+							confidence: "high",
+						};
+					}
+				}
+			}
+		}
+
+		return { scout: null, confidence: "none" };
+	};
+
+	private matchDocumentoByExtracted = async (
+		tipo: string | null,
+	): Promise<{ documento: BulkScanMatchedDocumento | null; confidence: BulkScanConfidence }> => {
+		if (!tipo) return { documento: null, confidence: "none" };
+
+		const documento = await prismaClient.documento.findFirst({
+			where: { nombre: { contains: tipo } },
+			select: { uuid: true, nombre: true },
+		});
+
+		if (documento)
+			return {
+				documento: { id: documento.uuid, nombre: documento.nombre },
+				confidence: "high",
+			};
+
+		return { documento: null, confidence: "none" };
+	};
+
+	scanDocumentoBulk = async (
+		files: Array<{ buffer: Buffer; mimeType: "application/pdf" | "image/jpeg" }>,
+	): Promise<BulkScanItem[]> => {
+		return Promise.all(
+			files.map(async (file, index) => {
+				try {
+					const extractedData = await scanAuthorizationDocument(file.buffer, file.mimeType);
+					const [scoutMatch, documentoMatch] = await Promise.all([
+						this.matchScoutByExtracted(extractedData.scout),
+						this.matchDocumentoByExtracted(extractedData.documento.tipo),
+					]);
+					return {
+						index,
+						extractedData,
+						matchedScout: scoutMatch.scout,
+						matchedDocumento: documentoMatch.documento,
+						scoutConfidence: scoutMatch.confidence,
+						documentoConfidence: documentoMatch.confidence,
+					};
+				} catch {
+					return {
+						index,
+						extractedData: null,
+						matchedScout: null,
+						matchedDocumento: null,
+						scoutConfidence: "none" as BulkScanConfidence,
+						documentoConfidence: "none" as BulkScanConfidence,
+					};
+				}
+			}),
+		);
+	};
+
+	confirmScanDocumentoBulk = async (
+		items: Array<{
+			buffer: Buffer;
+			mimeType: "application/pdf" | "image/jpeg";
+			scoutId: string;
+			documentoId: string;
+			fechaPresentacion?: Date;
+		}>,
+	): Promise<Array<{ success: true; data: ReturnType<typeof mapDocumentoPresentado> & { fileUrl: string | null } } | { success: false; index: number; error: string }>> => {
+		return Promise.all(
+			items.map(async (item, index) => {
+				try {
+					const documento = await prismaClient.documento.findUniqueOrThrow({
+						where: { uuid: item.documentoId },
+					});
+
+					const ext = item.mimeType === "image/jpeg" ? "jpg" : "pdf";
+					const contentType = item.mimeType === "image/jpeg" ? "image/jpeg" : "application/pdf";
+					const uploadId = nanoid(10);
+					const docName = documento.nombre.split(" ").join("_");
+					const fileName = `${item.scoutId}/${docName}_${uploadId}.${ext}`;
+
+					await uploadToS3(item.buffer, fileName, contentType);
+
+					const created = await prismaClient.documentoPresentado.create({
+						data: {
+							uuid: nanoid(10),
+							documentoId: item.documentoId,
+							scoutId: item.scoutId,
+							uploadId: fileName,
+							fechaPresentacion: item.fechaPresentacion ?? new Date(),
+						},
+						include: {
+							documento: {
+								select: {
+									nombre: true,
+									requiereRenovacionAnual: true,
+									requeridoParaIngreso: true,
+									completableDinamicamente: true,
+									googleDriveFileId: true,
+									requiereDatosFamiliar: true,
+									requiereFirmaFamiliar: true,
+								},
+							},
+							scout: {
+								select: {
+									nombre: true,
+									apellido: true,
+								},
+							},
+						},
+					});
+
+					const fileUrl = await getFileInS3(fileName);
+					return { success: true as const, data: { ...mapDocumentoPresentado(created), fileUrl } };
+				} catch (err) {
+					logger.error(err as string);
+					return { success: false as const, index, error: "Error al procesar documento" };
+				}
+			}),
+		);
 	};
 
 	confirmScanDocumento = async ({

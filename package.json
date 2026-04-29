@@ -111,6 +111,7 @@
     "prisma:migrate:dev": "dotenv -e .env.development -- prisma migrate dev --name auto-$(date +%s) --create-only",
     "prisma:apply-migrations:dev": "dotenv -e .env.development -- ts-node src/bin/applyMigrations.ts",
     "prisma:apply-migrations:prod": "dotenv -e .env.production -- ts-node src/bin/applyMigrations.ts",
+    "prisma:sync-schema:prod": "dotenv -e .env.production -- ts-node src/bin/syncSchema.ts",
     "prisma:generate-client:dev": "dotenv -e .env.development -- prisma generate",
     "fill-pdf:dev": "dotenv -e .env.development -- ts-node src/bin/completePdf.ts",
     "test": "npm run test",
