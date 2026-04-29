@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { cacheMiddleware, cleanCacheMiddleware } from "../middlewares";
 import { TipoEventoController } from "../controllers/tipoEvento";
 import { TipoEventoService } from "../services/tipoEvento";
 import { validate } from "../middlewares/validate";
@@ -16,10 +15,10 @@ export default function createTipoEventoRouter(tipoEventoService: TipoEventoServ
 	const tipoEventoController = new TipoEventoController({ tipoEventoService });
 
 	router.get("/", validate(GetTiposEventoSchema), tipoEventoController.getItems);
-	router.get("/:id", validate(GetTipoEventoSchema), cacheMiddleware, tipoEventoController.getItem);
-	router.post("/", validate(PostTipoEventoSchema), cleanCacheMiddleware, tipoEventoController.insertItem);
-	router.put("/:id", validate(PutTipoEventoSchema), cleanCacheMiddleware, tipoEventoController.updateItem);
-	router.delete("/:id", validate(DeleteTipoEventoSchema), cleanCacheMiddleware, tipoEventoController.deleteItem);
+	router.get("/:id", validate(GetTipoEventoSchema), tipoEventoController.getItem);
+	router.post("/", validate(PostTipoEventoSchema), tipoEventoController.insertItem);
+	router.put("/:id", validate(PutTipoEventoSchema), tipoEventoController.updateItem);
+	router.delete("/:id", validate(DeleteTipoEventoSchema), tipoEventoController.deleteItem);
 
 	return router;
 }
