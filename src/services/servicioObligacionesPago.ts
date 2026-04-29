@@ -177,16 +177,12 @@ export class ServicioObligacionesPago {
 			}
 		}
 
-		// ── Insertar en chunks para respetar el límite de statements de Turso/LibSQL ──
-		// Turso limita la cantidad de statements por request HTTP. Con cientos de scouts
-		// el batch puede exceder ese límite y lanzar PrismaClientValidationError.
-		const CHUNK_SIZE = 50;
-		for (let i = 0; i < todasLasObligaciones.length; i += CHUNK_SIZE) {
-			await (prismaClient as any).obligacionPago.createMany({
-				data: todasLasObligaciones.slice(i, i + CHUNK_SIZE),
-				skipDuplicates: true,
-			});
-		}
+		// Prisma 7 eliminó skipDuplicates de createMany. No es necesario porque
+		// todos los callers pasan forzarRecrear: true, que ya borra las obligaciones
+		// existentes antes de llegar acá.
+		await (prismaClient as any).obligacionPago.createMany({
+			data: todasLasObligaciones,
+		});
 
 		// ── Actualizar montos de las existentes (si cambiaron las reglas) ───────
 		// Para cada obligacion existente, actualizar familiaClave y montoEsperado.
