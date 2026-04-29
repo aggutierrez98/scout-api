@@ -1,6 +1,7 @@
 import { IncomingMessage, Server, ServerResponse } from "http";
 import { CacheManager, gracefulShutdownMainProcess } from "./utils";
 import { SecretsManager } from "./utils/classes/SecretsManager";
+import { setupProductionTransports } from "./utils/lib/winston.util";
 
 (async () => {
 	let server: Server<typeof IncomingMessage, typeof ServerResponse>;
@@ -9,6 +10,7 @@ import { SecretsManager } from "./utils/classes/SecretsManager";
 
 	// Inicializar SecretsManager y CacheManager antes de todo
 	await SecretsManager.getInstance().initialize();
+	setupProductionTransports();
 	await CacheManager.getInstance().initialize()
 
 	const { default: ServerModel } = await import("./Server");

@@ -33,31 +33,25 @@ const format = winston.format.combine(
 	winston.format.printf((info) => `${info.timestamp} ${info.level}: ${info.message}`),
 );
 
-const defineTransports = () => {
+const winstonLogger = winston.createLogger({
+	levels: LOG_LEVELS,
+	level: level(),
+	format,
+	transports: [new winston.transports.Console()],
+});
+
+export const setupProductionTransports = () => {
 	const env = process.env.NODE_ENV || "development";
-	const isDevelopment = env === "development";
-	
-	if (isDevelopment) {
-		return [new winston.transports.Console()];
-	}
-	
-	// Producción: usar BetterStack (antes Logtail)
+	if (env === "development") return;
+
 	const betterstack = SecretsManager.getInstance().getBetterStackSecrets();
-	return [
-		new winston.transports.Console(),
+	winstonLogger.add(
 		new LogtailTransport(
 			new Logtail(betterstack.AUTH_TOKEN, {
 				endpoint: `https://${betterstack.INGESTING_HOST}`,
 			})
 		)
-	];
+	);
 };
-
-const winstonLogger = winston.createLogger({
-	levels: LOG_LEVELS, // Define los niveles de log que utilizara la instancia de winston
-	level: level(), // Define el nivel mas bajo que se logea en la instancia de winston
-	format, // Define el formato del log
-	transports: defineTransports(),
-});
 
 export default winstonLogger;
