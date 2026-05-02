@@ -1,8 +1,11 @@
 import { nanoid } from "nanoid";
 import { AppError, HttpCode } from "../utils";
 import { prismaClient } from "../utils/lib/prisma-client";
+import { ServicioObligacionesPago } from "./servicioObligacionesPago";
 
 export class ServicioBecaSAAC {
+	private servicioObligaciones = new ServicioObligacionesPago();
+
 	listarPorCiclo = async (cicloId: string) => {
 		const becas = await (prismaClient as any).becaSAAC.findMany({
 			where: { cicloId },
@@ -51,7 +54,10 @@ export class ServicioBecaSAAC {
 		}
 
 		const [ciclo, scout, existing] = await Promise.all([
-			(prismaClient as any).cicloReglasPago.findUnique({ where: { uuid: cicloId }, select: { uuid: true } }),
+			(prismaClient as any).cicloReglasPago.findUnique({
+				where: { uuid: cicloId },
+				select: { uuid: true, activo: true },
+			}),
 			(prismaClient as any).scout.findUnique({ where: { uuid: scoutId }, select: { uuid: true } }),
 			(prismaClient as any).becaSAAC.findFirst({ where: { scoutId, cicloId }, select: { uuid: true } }),
 		]);
@@ -84,6 +90,10 @@ export class ServicioBecaSAAC {
 			},
 		});
 
+		if (ciclo.activo) {
+			await this.servicioObligaciones.generarObligacionesCiclo(cicloId, { forzarRecrear: true });
+		}
+
 		return {
 			id: beca.uuid,
 			porcentaje: beca.porcentaje,
@@ -110,7 +120,16 @@ export class ServicioBecaSAAC {
 			});
 		}
 
-		const beca = await (prismaClient as any).becaSAAC.findUnique({ where: { uuid: becaId }, select: { uuid: true } });
+		const beca = await (prismaClient as any).becaSAAC.findUnique({
+			where: { uuid: becaId },
+			select: {
+				uuid: true,
+				cicloId: true,
+				ciclo: {
+					select: { activo: true },
+				},
+			},
+		});
 		if (!beca) {
 			throw new AppError({ name: "BECA_NO_ENCONTRADA", httpCode: HttpCode.NOT_FOUND, description: "Beca SAAC no encontrada" });
 		}
@@ -123,16 +142,32 @@ export class ServicioBecaSAAC {
 			},
 		});
 
+		if (beca.ciclo?.activo) {
+			await this.servicioObligaciones.generarObligacionesCiclo(beca.cicloId, { forzarRecrear: true });
+		}
+
 		return { id: updated.uuid, porcentaje: updated.porcentaje, motivo: updated.motivo ?? null };
 	};
 
 	eliminar = async (becaId: string) => {
-		const beca = await (prismaClient as any).becaSAAC.findUnique({ where: { uuid: becaId }, select: { uuid: true } });
+		const beca = await (prismaClient as any).becaSAAC.findUnique({
+			where: { uuid: becaId },
+			select: {
+				uuid: true,
+				cicloId: true,
+				ciclo: {
+					select: { activo: true },
+				},
+			},
+		});
 		if (!beca) {
 			throw new AppError({ name: "BECA_NO_ENCONTRADA", httpCode: HttpCode.NOT_FOUND, description: "Beca SAAC no encontrada" });
 		}
 
 		await (prismaClient as any).becaSAAC.delete({ where: { uuid: becaId } });
+		if (beca.ciclo?.activo) {
+			await this.servicioObligaciones.generarObligacionesCiclo(beca.cicloId, { forzarRecrear: true });
+		}
 		return { id: becaId };
 	};
 }

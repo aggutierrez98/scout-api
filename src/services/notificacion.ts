@@ -26,7 +26,7 @@ type avisoQueryParams = {
 
 interface INotificacionService {
 	crearAviso: (data: IAviso) => Promise<ReturnType<typeof mapAviso>>;
-	getNotificaciones: (userId: string, params: queryParams) => Promise<{ notificaciones: ReturnType<typeof mapNotificacion>[]; totalNoLeidas: number }>;
+	getNotificaciones: (userId: string, params: queryParams) => Promise<{ notificaciones: ReturnType<typeof mapNotificacion>[]; totalNoLeidas: number; total: number }>;
 	findNotificacion: (uuid: string, userId: string) => Promise<ReturnType<typeof mapNotificacion> | null>;
 	marcarLeida: (notificacionUuid: string, userId: string) => Promise<ReturnType<typeof mapNotificacion>>;
 	marcarTodasLeidas: (userId: string) => Promise<{ actualizadas: number }>;
@@ -80,13 +80,14 @@ export class NotificacionService implements INotificacionService {
 
 	getNotificaciones = async (userId: string, { limit = 20, offset = 0, filters = {} }: queryParams) => {
 		const { leida } = filters;
+		const where = {
+			userId,
+			leida: leida !== undefined ? leida === "true" : undefined,
+		};
 
-		const [notificaciones, totalNoLeidas] = await Promise.all([
+		const [notificaciones, totalNoLeidas, total] = await Promise.all([
 			prismaClient.notificacion.findMany({
-				where: {
-					userId,
-					leida: leida !== undefined ? leida === "true" : undefined,
-				},
+				where,
 				include: {
 					aviso: true,
 				},
@@ -100,11 +101,13 @@ export class NotificacionService implements INotificacionService {
 					leida: false,
 				},
 			}),
+			prismaClient.notificacion.count({ where }),
 		]);
 
 		return {
 			notificaciones: notificaciones.map((n) => mapNotificacion(n)),
 			totalNoLeidas,
+			total,
 		};
 	};
 

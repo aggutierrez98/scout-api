@@ -30,4 +30,5 @@ export interface INotificacionData {
 export interface INotificacionesResponse {
 	notificaciones: INotificacionData[];
 	totalNoLeidas: number;
+	total: number;
 }
