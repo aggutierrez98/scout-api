@@ -36,6 +36,11 @@ export default function createFamiliarRouter(familiarService: FamiliarService) {
 		familiarController.getByNombre,
 	);
 	router.get(
+		"/telefonos",
+		serviceAuth,
+		familiarController.getTelefonos,
+	);
+	router.get(
 		"/",
 		checkSession,
 		validate(GetFamiliaresSchema),

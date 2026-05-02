@@ -204,6 +204,15 @@ export class FamiliarController {
 		}
 	};
 
+	getTelefonos = async (_req: Request, res: Response, next: NextFunction) => {
+		try {
+			const telefonos = await this.familiarService.getTelefonos();
+			res.send({ telefonos });
+		} catch (e) {
+			next(e);
+		}
+	};
+
 	deleteItem = async (
 		{ params }: Request,
 		res: Response,

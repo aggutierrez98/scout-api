@@ -4,6 +4,7 @@ import { DocumentoController } from "../controllers/documento";
 import { validate } from "../middlewares/validate";
 import {
 	DeleteDocumentoSchema,
+	DeleteManyDocumentosSchema,
 	GetDocumentoSchema,
 	GetDocumentosSchema,
 	GetDocumentosPendientesSchema,
@@ -80,6 +81,12 @@ export default function createDocumentoRouter(documentoService: DocumentoService
 		"/upload",
 		validate(UploadDocumentSchema),
 		documentoController.uploadDocument,
+	);
+	router.delete(
+		"/bulk",
+		validate(DeleteManyDocumentosSchema),
+		cleanCacheMiddleware,
+		documentoController.deleteManyItems,
 	);
 	router.delete(
 		"/:id",

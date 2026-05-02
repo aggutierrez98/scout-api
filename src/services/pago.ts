@@ -8,6 +8,8 @@ import { ReciboPago } from "../utils/classes/documentos/ReciboPago";
 import { getFileInS3 } from "../utils/lib/s3.util";
 import logger from "../utils/classes/Logger";
 import { ServicioImputacionPago } from "./servicioImputacionPago";
+import { AppError, HttpCode } from "../utils/classes/AppError";
+import { normalizeText } from "../utils/helpers/text";
 
 type queryParams = {
 	limit?: number;
@@ -35,6 +37,7 @@ interface IPagoService {
 	getPago: (id: string) => Promise<IPagoData | null>;
 	updatePago: (id: string, dataUpdated: IPago) => Promise<IPagoData | null>;
 	deletePago: (id: string) => Promise<IPagoData | null>;
+	deletePagos: (ids: string[]) => Promise<{ deletedCount: number }>;
 }
 
 export class PagoService implements IPagoService {
@@ -152,6 +155,9 @@ export class PagoService implements IPagoService {
 			familiarId,
 		} = filters;
 
+		const nombreNorm = normalizeText(nombre);
+		const conceptoNorm = normalizeText(concepto);
+
 		const responseItem = await prismaClient.pago.findMany({
 			skip: offset,
 			take: limit,
@@ -200,22 +206,14 @@ export class PagoService implements IPagoService {
 					{
 						scout: {
 							OR: [
-								{
-									nombre: {
-										contains: nombre,
-									},
-								},
-								{
-									apellido: {
-										contains: nombre,
-									},
-								},
+								{ nombreNormalizado: { contains: nombreNorm } },
+								{ apellidoNormalizado: { contains: nombreNorm } },
 							],
 						}
 					},
 					{
 						concepto: {
-							contains: concepto,
+							contains: conceptoNorm,
 						},
 					}
 				],
@@ -298,6 +296,29 @@ export class PagoService implements IPagoService {
 	deletePago = async (id: string) => {
 		const responseItem = await prismaClient.pago.delete({ where: { uuid: id } });
 		return mapPago(responseItem) as any;
+	};
+
+	deletePagos = async (ids: string[]) => {
+		const uniqueIds = [...new Set(ids)];
+		return prismaClient.$transaction(async (tx) => {
+			const existingCount = await tx.pago.count({
+				where: { uuid: { in: uniqueIds } },
+			});
+
+			if (existingCount !== uniqueIds.length) {
+				throw new AppError({
+					name: "NOT_FOUND",
+					httpCode: HttpCode.NOT_FOUND,
+					description: "Uno o más pagos no existen",
+				});
+			}
+
+			const { count } = await tx.pago.deleteMany({
+				where: { uuid: { in: uniqueIds } },
+			});
+
+			return { deletedCount: count };
+		});
 	};
 
 	importPagos = async (csvBuffer: Buffer): Promise<{ created: number; errors: Array<{ fila: number; nombre: string; razon: string }> }> => {

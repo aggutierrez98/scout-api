@@ -11,6 +11,7 @@ import { prismaClient } from "../utils/lib/prisma-client";
 import { mapEntregaRealizada } from "../mappers/entrega";
 import { mapPartialScout } from "../mappers/scout";
 import { AppError, HttpCode } from "../utils/classes/AppError";
+import { normalizeText } from "../utils/helpers/text";
 
 type queryParams = {
 	limit?: number;
@@ -43,6 +44,7 @@ interface IEntregaService {
 		dataUpdated: IEntrega,
 	) => Promise<IEntregaData | null>;
 	deleteEntrega: (id: string) => Promise<IEntregaData | null>;
+	deleteEntregas: (ids: string[]) => Promise<{ deletedCount: number }>;
 }
 
 const getProgresionDataFromEntregaType = (
@@ -213,6 +215,8 @@ export class EntregaService implements IEntregaService {
 			familiarId,
 		} = filters;
 
+		const nombreNorm = normalizeText(nombre);
+
 		const responseItem = await prismaClient.entregaRealizada.findMany({
 			skip: offset,
 			take: limit,
@@ -227,16 +231,8 @@ export class EntregaService implements IEntregaService {
 				},
 				scout: {
 					OR: [
-						{
-							nombre: {
-								contains: nombre,
-							},
-						},
-						{
-							apellido: {
-								contains: nombre,
-							},
-						},
+						{ nombreNormalizado: { contains: nombreNorm } },
+						{ apellidoNormalizado: { contains: nombreNorm } },
 					],
 					equipo: {
 						uuid: equipos ? { in: equipos } : undefined,
@@ -377,5 +373,28 @@ export class EntregaService implements IEntregaService {
 		} catch (error) {
 			return null;
 		}
+	};
+
+	deleteEntregas = async (ids: string[]) => {
+		const uniqueIds = [...new Set(ids)];
+		return prismaClient.$transaction(async (tx) => {
+			const existingCount = await tx.entregaRealizada.count({
+				where: { uuid: { in: uniqueIds } },
+			});
+
+			if (existingCount !== uniqueIds.length) {
+				throw new AppError({
+					name: "NOT_FOUND",
+					httpCode: HttpCode.NOT_FOUND,
+					description: "Una o más entregas no existen",
+				});
+			}
+
+			const { count } = await tx.entregaRealizada.deleteMany({
+				where: { uuid: { in: uniqueIds } },
+			});
+
+			return { deletedCount: count };
+		});
 	};
 }

@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import type { IEvento, IAddParticipantes, NominaDocumentFormat } from "../types";
 import { prismaClient } from "../utils/lib/prisma-client";
 import { mapEvento, mapEventoParticipante } from "../mappers/evento";
+import { normalizeText } from "../utils/helpers/text";
 import { NotificacionService } from "./notificacion";
 import { AppError, HttpCode } from "../utils";
 import type { ScopingContext } from "../utils/helpers/buildScopingContext";
@@ -42,10 +43,11 @@ export class EventoService {
 
 	getEventos = async ({ limit = 5, offset = 0, filters = {} }: queryParams) => {
 		const { nombre, fechaDesde, fechaHasta } = filters;
+		const nombreNorm = nombre ? normalizeText(nombre) : undefined;
 		const items = await prismaClient.evento.findMany({
 			where: {
 				activo: true,
-				nombre: nombre ? { contains: nombre } : undefined,
+				nombreNormalizado: nombreNorm ? { contains: nombreNorm } : undefined,
 				fechaHoraInicio: { gte: fechaDesde, lte: fechaHasta },
 			},
 			skip: offset,
@@ -139,7 +141,11 @@ export class EventoService {
 
 	insertEvento = async (data: IEvento) => {
 		const item = await prismaClient.evento.create({
-			data: { ...data, uuid: nanoid(10) },
+			data: {
+				...data,
+				uuid: nanoid(10),
+				nombreNormalizado: normalizeText(data.nombre),
+			},
 			include: this.eventoInclude,
 		});
 		return mapEvento(item);
@@ -148,7 +154,10 @@ export class EventoService {
 	updateEvento = async (id: string, data: Partial<IEvento>) => {
 		const item = await prismaClient.evento.update({
 			where: { uuid: id },
-			data,
+			data: {
+				...data,
+				...(data.nombre ? { nombreNormalizado: normalizeText(data.nombre) } : {}),
+			},
 			include: this.eventoInclude,
 		});
 		return mapEvento(item);

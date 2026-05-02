@@ -109,3 +109,9 @@ export const DeleteEntregaSchema = z.object({
 		id: IdSchema.refine(validEntregaId),
 	}),
 });
+
+export const DeleteManyEntregasSchema = z.object({
+	body: z.object({
+		ids: z.array(IdSchema).min(1),
+	}),
+});

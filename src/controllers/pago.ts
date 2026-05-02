@@ -143,6 +143,19 @@ export class PagoController {
 		}
 	};
 
+	deleteManyItems = async (
+		{ body }: Request,
+		res: Response,
+		next: NextFunction,
+	) => {
+		try {
+			const response = await this.pagoService.deletePagos(body.ids);
+			res.send(response);
+		} catch (e) {
+			next(e);
+		}
+	};
+
 	importItems = async (req: Request, res: Response, next: NextFunction) => {
 		try {
 			if (!req.files?.csv) {

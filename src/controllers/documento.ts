@@ -242,6 +242,19 @@ export class DocumentoController {
 		}
 	};
 
+	deleteManyItems = async (
+		{ body }: Request,
+		res: Response,
+		next: NextFunction,
+	) => {
+		try {
+			const response = await this.documentoService.deleteDocumentos(body.ids);
+			res.send(response);
+		} catch (e) {
+			next(e);
+		}
+	};
+
 	getDocumentosPendientes = async (req: Request, res: Response, next: NextFunction) => {
 		try {
 			const { familiarId, soloCompletable, offset, limit } = req.query as {

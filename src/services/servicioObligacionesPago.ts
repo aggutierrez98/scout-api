@@ -3,6 +3,7 @@ import { ROLES, RamasType, RolesType } from "../types";
 import { AppError, HttpCode } from "../utils";
 import { prismaClient } from "../utils/lib/prisma-client";
 import { construirMapaFamilias, obtenerScoutIdsPorFamiliar } from "./pagoFamilia";
+import { normalizeText } from "../utils/helpers/text";
 
 const ROLES_GLOBALES_PENDIENTES: RolesType[] = [
 	ROLES.JEFE_GRUPO,
@@ -85,13 +86,19 @@ export class ServicioObligacionesPago {
 		}
 
 		// Prefetch en paralelo
-		const [scouts, { scoutToFamilia, familiaToScouts }] = await Promise.all([
+		const [scouts, { scoutToFamilia, familiaToScouts }, becasRaw] = await Promise.all([
 			(prismaClient as any).scout.findMany({
 				where: { estado: { not: "INACTIVO" } },
 				select: { uuid: true, funcion: true, rama: true },
 			}),
 			construirMapaFamilias(),
+			(prismaClient as any).becaSAAC.findMany({
+				where: { cicloId },
+				select: { scoutId: true, porcentaje: true },
+			}),
 		]);
+
+		const becaMap = new Map<string, number>(becasRaw.map((b: any) => [b.scoutId, b.porcentaje]));
 
 		const reglasAfiliacion = ciclo.reglasAfiliacion ?? [];
 		const reglasCuota = (ciclo.reglasCuotaMensual ?? [])
@@ -131,6 +138,10 @@ export class ServicioObligacionesPago {
 				(item: any) => item.funcionScout === scout.funcion && item.obligatoria,
 			);
 			if (reglaAfiliacion) {
+				const porcentajeBeca = becaMap.get(scout.uuid);
+				const montoEsperado = porcentajeBeca !== undefined
+					? Number((reglaAfiliacion.monto * (1 - porcentajeBeca / 100)).toFixed(2))
+					: reglaAfiliacion.monto;
 				todasLasObligaciones.push({
 					uuid: nanoid(10),
 					cicloId,
@@ -138,42 +149,45 @@ export class ServicioObligacionesPago {
 					periodo: periodoAfiliacion,
 					scoutId: scout.uuid,
 					familiaClave,
-					montoEsperado: reglaAfiliacion.monto,
+					montoEsperado,
 					estado: "PENDIENTE",
 					detalleCalculo: {
 						reglaAfiliacionId: reglaAfiliacion.uuid,
 						funcionScout: scout.funcion,
+						...(porcentajeBeca !== undefined ? { becaSAAC: { porcentaje: porcentajeBeca } } : {}),
 					},
 				});
 			}
 
-			for (const reglaCuota of reglasCuota) {
-				const periodo = `${ciclo.anio}-${String(reglaCuota.mes).padStart(2, "0")}`;
-				const montoAplicado = reglaFamiliarAplicada?.montoPorScout ?? reglaCuota.montoBase;
-				todasLasObligaciones.push({
-					uuid: nanoid(10),
-					cicloId,
-					tipo: "CUOTA_MENSUAL",
-					periodo,
-					scoutId: scout.uuid,
-					familiaClave,
-					montoEsperado: montoAplicado,
-					estado: "PENDIENTE",
-					detalleCalculo: {
-						reglaCuotaMensualId: reglaCuota.uuid,
-						montoBase: reglaCuota.montoBase,
-						integrantesFamilia: integrantesFamilia.length,
-						ordenScout,
-						reglaDescuentoFamiliarId: reglaFamiliarAplicada?.uuid ?? null,
-						montoDescuentoFamiliar: reglaFamiliarAplicada?.montoPorScout ?? null,
-						descuentoAnualConfig: ciclo.reglaDescuentoPagoAnual
-							? {
-								habilitado: ciclo.reglaDescuentoPagoAnual.habilitado,
-								mesBonificado: ciclo.reglaDescuentoPagoAnual.mesBonificado,
-							}
-							: null,
-					},
-				});
+			if (scout.funcion === "JOVEN") {
+				for (const reglaCuota of reglasCuota) {
+					const periodo = `${ciclo.anio}-${String(reglaCuota.mes).padStart(2, "0")}`;
+					const montoAplicado = reglaFamiliarAplicada?.montoPorScout ?? reglaCuota.montoBase;
+					todasLasObligaciones.push({
+						uuid: nanoid(10),
+						cicloId,
+						tipo: "CUOTA_MENSUAL",
+						periodo,
+						scoutId: scout.uuid,
+						familiaClave,
+						montoEsperado: montoAplicado,
+						estado: "PENDIENTE",
+						detalleCalculo: {
+							reglaCuotaMensualId: reglaCuota.uuid,
+							montoBase: reglaCuota.montoBase,
+							integrantesFamilia: integrantesFamilia.length,
+							ordenScout,
+							reglaDescuentoFamiliarId: reglaFamiliarAplicada?.uuid ?? null,
+							montoDescuentoFamiliar: reglaFamiliarAplicada?.montoPorScout ?? null,
+							descuentoAnualConfig: ciclo.reglaDescuentoPagoAnual
+								? {
+									habilitado: ciclo.reglaDescuentoPagoAnual.habilitado,
+									mesBonificado: ciclo.reglaDescuentoPagoAnual.mesBonificado,
+								}
+								: null,
+						},
+					});
+				}
 			}
 		}
 
@@ -231,6 +245,99 @@ export class ServicioObligacionesPago {
 		return this.generarObligacionesCiclo(ciclo.uuid, { forzarRecrear: true });
 	};
 
+	generarObligacionesParaScout = async (scoutId: string) => {
+		let ciclo: any;
+		try {
+			ciclo = await this.obtenerCicloActivo();
+		} catch {
+			return;
+		}
+
+		const scout = await (prismaClient as any).scout.findUnique({
+			where: { uuid: scoutId },
+			select: { uuid: true, funcion: true, estado: true },
+		});
+		if (!scout || scout.estado === "INACTIVO") return;
+
+		const { scoutToFamilia } = await construirMapaFamilias();
+		const familiaClave = scoutToFamilia.get(scoutId) ?? `familia::${scoutId}`;
+
+		const reglasAfiliacion = ciclo.reglasAfiliacion ?? [];
+		const reglasCuota = (ciclo.reglasCuotaMensual ?? [])
+			.filter((r: any) => r.cobrable)
+			.sort((a: any, b: any) => a.mes - b.mes);
+
+		const mesInicioAfiliacion = new Date(ciclo.fechaInicio).getUTCMonth() + 1;
+		const periodoAfiliacion = `${ciclo.anio}-${String(mesInicioAfiliacion).padStart(2, "0")}`;
+
+		const obligacionesACrear: Array<any> = [];
+
+		const reglaAfiliacion = reglasAfiliacion.find(
+			(r: any) => r.funcionScout === scout.funcion && r.obligatoria,
+		);
+		if (reglaAfiliacion) {
+			const becaScout = await (prismaClient as any).becaSAAC.findFirst({
+				where: { scoutId, cicloId: ciclo.uuid },
+				select: { porcentaje: true },
+			});
+			const montoEsperado = becaScout
+				? Number((reglaAfiliacion.monto * (1 - becaScout.porcentaje / 100)).toFixed(2))
+				: reglaAfiliacion.monto;
+			obligacionesACrear.push({
+				uuid: nanoid(10),
+				cicloId: ciclo.uuid,
+				tipo: "AFILIACION",
+				periodo: periodoAfiliacion,
+				scoutId,
+				familiaClave,
+				montoEsperado,
+				estado: "PENDIENTE",
+				detalleCalculo: {
+					reglaAfiliacionId: reglaAfiliacion.uuid,
+					funcionScout: scout.funcion,
+					generadoPostCiclo: true,
+					...(becaScout ? { becaSAAC: { porcentaje: becaScout.porcentaje } } : {}),
+				},
+			});
+		}
+
+		if (scout.funcion === "JOVEN") {
+			const mesActual = new Date().getMonth() + 1;
+			for (const reglaCuota of reglasCuota.filter((r: any) => r.mes >= mesActual)) {
+				obligacionesACrear.push({
+					uuid: nanoid(10),
+					cicloId: ciclo.uuid,
+					tipo: "CUOTA_MENSUAL",
+					periodo: `${ciclo.anio}-${String(reglaCuota.mes).padStart(2, "0")}`,
+					scoutId,
+					familiaClave,
+					montoEsperado: reglaCuota.montoBase,
+					estado: "PENDIENTE",
+					detalleCalculo: {
+						reglaCuotaMensualId: reglaCuota.uuid,
+						montoBase: reglaCuota.montoBase,
+						generadoPostCiclo: true,
+					},
+				});
+			}
+		}
+
+		for (const obligacion of obligacionesACrear) {
+			const existing = await (prismaClient as any).obligacionPago.findFirst({
+				where: {
+					cicloId: obligacion.cicloId,
+					tipo: obligacion.tipo,
+					periodo: obligacion.periodo,
+					scoutId: obligacion.scoutId,
+				},
+				select: { uuid: true },
+			});
+			if (!existing) {
+				await (prismaClient as any).obligacionPago.create({ data: obligacion });
+			}
+		}
+	};
+
 	recalcularEstadoObligacion = async (obligacionId: string, tx?: any) => {
 		const client = tx ?? (prismaClient as any);
 		const obligacion = await client.obligacionPago.findUnique({
@@ -267,11 +374,12 @@ export class ServicioObligacionesPago {
 		const scoutNombre = typeof filters.scoutNombre === "string"
 			? filters.scoutNombre.trim()
 			: "";
+		const scoutNombreNorm = normalizeText(scoutNombre);
 		const scoutNombreFiltro = scoutNombre
 			? {
 				OR: [
-					{ nombre: { contains: scoutNombre } },
-					{ apellido: { contains: scoutNombre } },
+					{ nombreNormalizado: { contains: scoutNombreNorm } },
+					{ apellidoNormalizado: { contains: scoutNombreNorm } },
 				],
 			}
 			: null;
@@ -347,8 +455,11 @@ export class ServicioObligacionesPago {
 		const skip = Number.isFinite(offsetRaw) && offsetRaw > 0 ? Math.floor(offsetRaw) : 0;
 		const take = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.floor(limitRaw) : undefined;
 
+		const now = new Date();
+		const periodoActual = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
 		const obligaciones = await (prismaClient as any).obligacionPago.findMany({
-			where,
+			where: { ...where, periodo: { lte: periodoActual } },
 			skip,
 			take,
 			include: {
@@ -514,10 +625,14 @@ export class ServicioObligacionesPago {
 	 * Devuelve las obligaciones PENDIENTE e INCOMPLETO de un scout específico.
 	 */
 	listarPendientesPorScout = async (scoutId: string) => {
+		const now = new Date();
+		const periodoActual = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
 		const obligaciones = await (prismaClient as any).obligacionPago.findMany({
 			where: {
 				scoutId,
 				estado: { in: ["PENDIENTE", "INCOMPLETO"] },
+				periodo: { lte: periodoActual },
 			},
 			include: {
 				scout: {

@@ -158,6 +158,12 @@ export const DeletePagoSchema = z.object({
 	}),
 });
 
+export const DeleteManyPagosSchema = z.object({
+	body: z.object({
+		ids: z.array(IdSchema).min(1),
+	}),
+});
+
 export const GetReglasPagoActivaSchema = z.object({});
 
 export const PostReglasPagoSchema = z.object({

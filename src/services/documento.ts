@@ -17,6 +17,7 @@ import { prismaClient } from "../utils/lib/prisma-client";
 import { mapDocumentoPresentado, mapDocumentoDefinicion } from "../mappers/documentoPresentado";
 import { scanAuthorizationDocument, AuthorizationDocumentScanResult } from "../utils/lib/gemini";
 import type { ScopingContext } from "../utils/helpers/buildScopingContext";
+import { normalizeText } from "../utils/helpers/text";
 
 
 export type BulkScanConfidence = "high" | "none";
@@ -88,6 +89,7 @@ interface IDocumentoService {
 	getDocumentos: (params: getQueryParams) => Promise<IDocumentoEntregado[]>;
 	getDocumento: (id: string) => Promise<IDocumentoEntregado | null>;
 	deleteDocumento: (id: string) => Promise<IDocumentoEntregado | null>;
+	deleteDocumentos: (ids: string[]) => Promise<{ deletedCount: number }>;
 }
 
 export class DocumentoService implements IDocumentoService {
@@ -305,6 +307,8 @@ export class DocumentoService implements IDocumentoService {
 			familiarId,
 		} = filters;
 
+		const nombreNorm = normalizeText(nombre);
+
 		const responseItem = await prismaClient.documentoPresentado.findMany({
 			skip: offset,
 			take: limit,
@@ -358,24 +362,14 @@ export class DocumentoService implements IDocumentoService {
 					{
 						scout: {
 							OR: [
-								{
-									nombre: {
-										contains: nombre,
-									},
-								},
-								{
-									apellido: {
-										contains: nombre,
-									},
-								},
+								{ nombreNormalizado: { contains: nombreNorm } },
+								{ apellidoNormalizado: { contains: nombreNorm } },
 							],
 						}
 					},
 					{
 						documento: {
-							nombre: {
-								contains: nombre,
-							},
+							nombreNormalizado: { contains: nombreNorm },
 						},
 					}
 				],
@@ -443,6 +437,29 @@ export class DocumentoService implements IDocumentoService {
 		});
 
 		return mapDocumentoPresentado(responseItem) as any;
+	};
+
+	deleteDocumentos = async (ids: string[]) => {
+		const uniqueIds = [...new Set(ids)];
+		return prismaClient.$transaction(async (tx) => {
+			const existingCount = await tx.documentoPresentado.count({
+				where: { uuid: { in: uniqueIds } },
+			});
+
+			if (existingCount !== uniqueIds.length) {
+				throw new AppError({
+					name: "NOT_FOUND",
+					httpCode: HttpCode.NOT_FOUND,
+					description: "Uno o más documentos no existen",
+				});
+			}
+
+			const { count } = await tx.documentoPresentado.deleteMany({
+				where: { uuid: { in: uniqueIds } },
+			});
+
+			return { deletedCount: count };
+		});
 	};
 
 	fillDocumento = async (data: FillDocumentoData) => {

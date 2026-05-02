@@ -9,6 +9,7 @@ import { EntregaService } from "../services/entrega";
 import { validate } from "../middlewares/validate";
 import {
 	DeleteEntregaSchema,
+	DeleteManyEntregasSchema,
 	GetEntregaSchema,
 	GetEntregasSchema,
 	PostManyEntregasSchema,
@@ -38,6 +39,12 @@ export default function createEntregaRouter(entregaService: EntregaService) {
 		validate(PutEntregaSchema),
 		cleanCacheMiddleware,
 		entregaController.updateItem,
+	);
+	router.delete(
+		"/bulk",
+		validate(DeleteManyEntregasSchema),
+		cleanCacheMiddleware,
+		entregaController.deleteManyItems,
 	);
 	router.delete(
 		"/:id",

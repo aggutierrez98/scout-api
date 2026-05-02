@@ -17,6 +17,8 @@ import type { Prisma } from "@prisma/client";
 import logger from "../utils/classes/Logger";
 import { mapXLSXScoutToScoutData } from "../utils/helpers/mapXLSXScoutToScoutData";
 import { mapScout } from "../mappers/scout";
+import { normalizeText } from "../utils/helpers/text";
+import { ServicioObligacionesPago } from "./servicioObligacionesPago";
 
 type queryParams = {
 	limit?: number;
@@ -78,18 +80,26 @@ export class ScoutService implements IScoutService {
 
 		const uuid = nanoid(10);
 
+		const nombre = scout.nombre.toLocaleUpperCase();
+		const apellido = scout.apellido.toLocaleUpperCase();
 		const responseInsert = await prismaClient.scout.create({
 			data: {
 				...scout,
 				uuid,
-				nombre: scout.nombre.toLocaleUpperCase(),
-				apellido: scout.apellido.toLocaleUpperCase(),
+				nombre,
+				apellido,
+				nombreNormalizado: normalizeText(nombre),
+				apellidoNormalizado: normalizeText(apellido),
 				direccion: scout.direccion.toLocaleUpperCase(),
 				localidad: scout.localidad.toLocaleUpperCase(),
 				telefono: scout.telefono?.toLocaleUpperCase(),
 				mail: scout.mail?.toLocaleUpperCase(),
 				rama: scout.rama,
 			},
+		});
+
+		new ServicioObligacionesPago().generarObligacionesParaScout(responseInsert.uuid).catch((err: Error) => {
+			logger.warn(`[insertScout] No se pudieron generar obligaciones para ${responseInsert.uuid}: ${err.message}`);
 		});
 
 		return mapScout(responseInsert);
@@ -112,6 +122,7 @@ export class ScoutService implements IScoutService {
 			familiarId,
 		} = filters;
 
+		const nombreNorm = normalizeText(nombre);
 		const responseItem = await prismaClient.scout.findMany({
 			skip: offset,
 			take: limit || undefined, // Si el limite === 0  →  no hay limite y se buscan todos
@@ -132,13 +143,13 @@ export class ScoutService implements IScoutService {
 				},
 				OR: [
 					{
-						nombre: {
-							contains: nombre,
+						nombreNormalizado: {
+							contains: nombreNorm,
 						},
 					},
 					{
-						apellido: {
-							contains: nombre,
+						apellidoNormalizado: {
+							contains: nombreNorm,
 						},
 					},
 				],
@@ -364,8 +375,17 @@ export class ScoutService implements IScoutService {
 					continue;
 				}
 
-				await prismaClient.scout.create({
-					data: { ...data, uuid: nanoid(10) },
+				const scoutCreado = await prismaClient.scout.create({
+					data: {
+						...data,
+						uuid: nanoid(10),
+						nombreNormalizado: normalizeText(data.nombre),
+						apellidoNormalizado: normalizeText(data.apellido),
+					},
+				});
+
+				new ServicioObligacionesPago().generarObligacionesParaScout(scoutCreado.uuid).catch((err: Error) => {
+					logger.warn(`[importScouts] No se pudieron generar obligaciones para ${scoutCreado.uuid}: ${err.message}`);
 				});
 
 				result.creados.push({

@@ -10,10 +10,14 @@ post {
   auth: bearer
 }
 
+headers {
+  ~Authorization: Bearer {{token}}
+}
+
 auth:bearer {
   token: {{token}}
 }
 
 body:multipart-form {
-  csv: @file(/Users/aggutierrez/Downloads/Hoja de cálculo sin título - Hoja 2.csv)
+  csv: @file(/Users/aggutierrez/Downloads/Pagos de todo el grupo 2026 - Hoja 8.csv)
 }

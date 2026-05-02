@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { prismaClient } from "../utils/lib/prisma-client";
 import { mapFamiliar } from "../mappers/familiar";
 import { mapPartialScout } from "../mappers/scout";
+import { normalizeText } from "../utils/helpers/text";
 
 interface queryParams {
 	limit?: number;
@@ -41,12 +42,16 @@ export class FamiliarService implements IFamiliarService {
 	insertFamiliar = async (familiar: Omit<IFamiliar, "id">) => {
 		const uuid = nanoid(10);
 
+		const nombre = familiar.nombre.toLocaleUpperCase();
+		const apellido = familiar.apellido.toLocaleUpperCase();
 		const familiarRespInsert = await prismaClient.familiar.create({
 			data: {
 				...familiar,
 				uuid,
-				nombre: familiar.nombre.toLocaleUpperCase(),
-				apellido: familiar.apellido.toLocaleUpperCase(),
+				nombre,
+				apellido,
+				nombreNormalizado: normalizeText(nombre),
+				apellidoNormalizado: normalizeText(apellido),
 				telefono: familiar.telefono?.toLocaleUpperCase(),
 			},
 		});
@@ -179,6 +184,8 @@ export class FamiliarService implements IFamiliarService {
 			familiarUuid,
 		} = filters;
 
+		const nombreNorm = normalizeText(nombre);
+
 		const scopingConditions: Prisma.FamiliarWhereInput[] = []
 		if (familiarUuid) {
 			scopingConditions.push({ uuid: familiarUuid })
@@ -201,8 +208,8 @@ export class FamiliarService implements IFamiliarService {
 									some: {
 										scout: {
 											OR: [
-												{ nombre: { contains: nombre } },
-												{ apellido: { contains: nombre } },
+												{ nombreNormalizado: { contains: nombreNorm } },
+												{ apellidoNormalizado: { contains: nombreNorm } },
 												{ uuid: { equals: scoutId } },
 											]
 										}
@@ -211,8 +218,8 @@ export class FamiliarService implements IFamiliarService {
 							},
 							{
 								OR: [
-									{ nombre: { contains: nombre } },
-									{ apellido: { contains: nombre } },
+									{ nombreNormalizado: { contains: nombreNorm } },
+									{ apellidoNormalizado: { contains: nombreNorm } },
 								]
 							},
 						],
@@ -329,11 +336,12 @@ export class FamiliarService implements IFamiliarService {
 	 * Devuelve el primer match con sus scouts vinculados.
 	 */
 	findByNombre = async (nombre: string) => {
+		const nombreNorm = normalizeText(nombre);
 		const responseItem = await prismaClient.familiar.findFirst({
 			where: {
 				OR: [
-					{ nombre: { contains: nombre } },
-					{ apellido: { contains: nombre } },
+					{ nombreNormalizado: { contains: nombreNorm } },
+					{ apellidoNormalizado: { contains: nombreNorm } },
 				],
 			},
 			include: {
@@ -350,6 +358,14 @@ export class FamiliarService implements IFamiliarService {
 		const { padreScout, ...data } = responseItem;
 		const scoutFamiliares = padreScout.map((ps: any) => mapPartialScout(ps.scout));
 		return { ...mapFamiliar(data), scoutFamiliares };
+	};
+
+	getTelefonos = async (): Promise<string[]> => {
+		const results = await prismaClient.familiar.findMany({
+			where: { telefono: { not: null } },
+			select: { telefono: true },
+		});
+		return results.map(f => f.telefono!);
 	};
 
 	deleteFamiliar = async (id: string) => {

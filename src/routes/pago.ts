@@ -7,6 +7,7 @@ import { validate } from "../middlewares/validate";
 import {
 	ActivarReglasPagoSchema,
 	DeletePagoSchema,
+	DeleteManyPagosSchema,
 	GetPagoSchema,
 	GetPagosSchema,
 	GetPendientePagoDetalleSchema,
@@ -52,8 +53,8 @@ export default function createPagoRouter(pagoService: PagoService) {
 	router.post("/import", checkSession, cleanCacheMiddleware, pagoController.importItems);
 	router.get("/:id", checkSession, validate(GetPagoSchema), cacheMiddleware, pagoController.getItem);
 	router.put("/:id", checkSession, validate(PutPagoSchema), cleanCacheMiddleware, pagoController.updateItem);
+	router.delete("/bulk", checkSession, validate(DeleteManyPagosSchema), cleanCacheMiddleware, pagoController.deleteManyItems);
 	router.delete("/:id", checkSession, validate(DeletePagoSchema), cleanCacheMiddleware, pagoController.deleteItem);
 
 	return router;
 }
-

@@ -179,6 +179,12 @@ export const DeleteDocumentoSchema = z.object({
 	}),
 });
 
+export const DeleteManyDocumentosSchema = z.object({
+	body: z.object({
+		ids: z.array(IdSchema).min(1),
+	}),
+});
+
 export const ScanDocumentoSchema = z.object({});
 
 export const ConfirmScanDocumentoSchema = z.object({

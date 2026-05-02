@@ -118,4 +118,17 @@ export class EntregaController {
 			next(e);
 		}
 	};
+
+	deleteManyItems = async (
+		{ body }: Request,
+		res: Response,
+		next: NextFunction,
+	) => {
+		try {
+			const response = await this.entregaService.deleteEntregas(body.ids);
+			res.send(response);
+		} catch (e) {
+			next(e);
+		}
+	};
 }
