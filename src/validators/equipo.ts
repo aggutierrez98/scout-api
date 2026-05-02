@@ -30,7 +30,7 @@ export const GetEquipoSchema = z.object({
 });
 
 export const PostEquipoSchema = z.object({
-	body: EquipoSchema,
+	body: EquipoSchema.omit({ fechaCreacion: true, Scouts: true }),
 });
 
 export const PutEquipoSchema = z.object({
