@@ -176,7 +176,7 @@ export const FUNCIONES_MAP = {
 	"Asist. Zonal Comunicaciones Institucionales": "ACOMPAÑANTE",
 	Acompañante: "ACOMPAÑANTE",
 	"Sub-Jefe de Grupo": "SUBJEFE_GRUPO",
-	"Jefe de Grupo": "JEFE_GRUPO",
+	"Jefe/a de Grupo": "JEFE_GRUPO",
 	"Ayudante de Castores": "AYUDANTE_RAMA",
 	"Ayudante de Manada": "AYUDANTE_RAMA",
 	"Ayudante de Unidad Scout": "AYUDANTE_RAMA",
@@ -203,6 +203,7 @@ export const FUNCIONES_MAP = {
 	Caminante: "JOVEN",
 	Rover: "JOVEN",
 	"Representante Juvenil al Consejo de Grupo": "JOVEN",
+	"Equipo de Apoyo": "COLABORADOR",
 };
 
 export const RAMAS_MAP = {

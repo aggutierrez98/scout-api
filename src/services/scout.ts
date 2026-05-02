@@ -274,6 +274,7 @@ export class ScoutService implements IScoutService {
 			religion,
 			progresionActual,
 			rama,
+			funcion,
 		} = dataUpdated;
 
 		const currentScout = await prismaClient.scout.findUnique({
@@ -311,6 +312,7 @@ export class ScoutService implements IScoutService {
 				religion,
 				progresionActual,
 				rama,
+				funcion,
 			},
 		});
 		return mapScout(responseItem);

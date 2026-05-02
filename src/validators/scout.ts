@@ -93,7 +93,7 @@ export const PutScoutSchema = z.object({
 	params: z.object({
 		id: IdSchema.refine(validScoutID),
 	}),
-	body: ScoutBaseSchema.omit({ funcion: true }).deepPartial(),
+	body: ScoutBaseSchema.deepPartial(),
 });
 
 export const DeleteScoutSchema = z.object({

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { AppError, HttpCode } from "../utils/classes/AppError";
-import { IUserData, OrderToGetScouts } from "../types";
+import { IUserData, OrderToGetScouts, ROLES } from "../types";
 import { ScoutService } from "../services/scout";
 import { UploadedFile } from "express-fileupload";
 import type { ScopingContext } from "../utils/helpers/buildScopingContext";
@@ -65,6 +65,14 @@ export class ScoutController {
 	) => {
 		try {
 			const { id } = params;
+			const currentUser = res.locals.currentUser as IUserData | undefined;
+			if (body.funcion !== undefined && currentUser?.role !== ROLES.ADMINISTRADOR) {
+				throw new AppError({
+					name: "FORBIDDEN",
+					httpCode: HttpCode.FORBIDDEN,
+					description: "Solo ADMIN puede editar la función del scout",
+				});
+			}
 			const response = await this.scoutService.updateScout(id, body);
 
 			if (!response) {
