@@ -194,52 +194,86 @@ export class FamiliarService implements IFamiliarService {
 			scopingConditions.push({ padreScout: { some: { scout: { rama: ramaFilter } } } })
 		}
 
+		const whereClause: Prisma.FamiliarWhereInput = {
+			AND: [
+				...scopingConditions,
+				{
+					OR: [
+						{
+							padreScout: {
+								some: {
+									scout: {
+										OR: [
+											{ nombreNormalizado: { contains: nombreNorm } },
+											{ apellidoNormalizado: { contains: nombreNorm } },
+											{ uuid: { equals: scoutId } },
+										]
+									}
+								}
+							}
+						},
+						{
+							OR: [
+								{ nombreNormalizado: { contains: nombreNorm } },
+								{ apellidoNormalizado: { contains: nombreNorm } },
+							]
+						},
+					],
+					...(scoutId ? {
+						padreScout: {
+							some: {
+								scout: { uuid: scoutId },
+							}
+						}
+					} : {}),
+					user: existingUser
+						? (existingUser === "true"
+							? { isNot: null }
+							: { is: null }
+						) : undefined
+				}
+			]
+		};
+
+		if (select) {
+			const responses = await prismaClient.familiar.findMany({
+				skip: offset,
+				take: limit,
+				orderBy: { nombre: "asc" },
+				where: whereClause,
+				select,
+			});
+			return responses.map(familiar => mapFamiliar(familiar as any));
+		}
+
 		const responses = await prismaClient.familiar.findMany({
 			skip: offset,
 			take: limit,
 			orderBy: { nombre: "asc" },
-			where: {
-				AND: [
-					...scopingConditions,
-					{
-						OR: [
-							{
-								padreScout: {
-									some: {
-										scout: {
-											OR: [
-												{ nombreNormalizado: { contains: nombreNorm } },
-												{ apellidoNormalizado: { contains: nombreNorm } },
-												{ uuid: { equals: scoutId } },
-											]
-										}
-									}
-								}
-							},
-							{
-								OR: [
-									{ nombreNormalizado: { contains: nombreNorm } },
-									{ apellidoNormalizado: { contains: nombreNorm } },
-								]
-							},
-						],
-						padreScout: {
-							some: {
-								scout: { uuid: { equals: scoutId } },
+			where: whereClause,
+			include: {
+				padreScout: {
+					include: {
+						scout: {
+							select: {
+								uuid: true,
+								nombre: true,
+								apellido: true,
 							}
-						},
-						user: existingUser
-							? (existingUser === "true"
-								? { isNot: null }
-								: { is: null }
-							) : undefined
+						}
 					}
-				]
+				}
 			},
-			select
 		});
 
-		return responses.map(familiar => mapFamiliar(familiar));
+		return responses.map(({ padreScout, ...familiar }) => ({
+			...mapFamiliar(familiar),
+			scouts: padreScout.map(ps => ({
+				id: ps.scout.uuid,
+				nombre: ps.scout.nombre,
+				apellido: ps.scout.apellido,
+			}))
+		}));
 
 	};
 

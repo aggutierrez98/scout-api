@@ -45,14 +45,23 @@ export default class Server {
 	public app;
 	public port;
 	public limiter;
+	public apiLimiter;
 
 	constructor() {
 		this.app = express();
 
-		// Limit each IP requests to "max" per "windowMs" time
+		// Strict limit for auth routes (brute-force protection)
 		this.limiter = rateLimit({
-			windowMs: (15) * 60 * 1000, // 15 minutes
+			windowMs: 1 * 60 * 1000,
 			max: 100,
+			standardHeaders: "draft-7",
+			legacyHeaders: false,
+		});
+
+		// Generous limit for authenticated API routes
+		this.apiLimiter = rateLimit({
+			windowMs: 1 * 60 * 1000,
+			max: 500,
 			standardHeaders: "draft-7",
 			legacyHeaders: false,
 		});
@@ -101,7 +110,8 @@ export default class Server {
 		}));
 		this.app.use(compression({ filter: shouldCompress }));
 		if (process.env.NODE_ENV === "production") {
-			this.app.use(this.limiter);
+			this.app.use("/api/auth", this.limiter);
+			this.app.use("/api", this.apiLimiter);
 			this.app.use(tooBusy);
 		}
 		this.app.use(morganMiddleware);
