@@ -72,24 +72,28 @@ async function main() {
 				path.join(migrationsDir, dir, "migration.sql"),
 				"utf8",
 			);
-			// dividir por ';' y ejecutar cada sentencia;
+			// dividir por ';' y ejecutar todas las sentencias en un solo batch.
+			// Usar batch() es crítico para migraciones que usan PRAGMA foreign_keys=OFF /
+			// PRAGMA defer_foreign_keys=ON (patrón RedefineTables de Prisma): con execute()
+			// individual cada llamada HTTP es una sesión nueva y el PRAGMA no persiste;
+			// con batch("write") todas las sentencias comparten la misma transacción y
+			// defer_foreign_keys=ON difiere los FK checks hasta el commit.
 			const statements = file
 				.split(/;\s*\n/)
-				.filter(
-					(s) => s.trim().replace(/--[^\n]*/g, "").trim().length > 0,
+				.map((s) => s.trim())
+				.filter((s) => s.replace(/--[^\n]*/g, "").trim().length > 0);
+
+			try {
+				await client.batch(
+					statements.map((sql) => ({ sql, args: [] })),
+					"write",
 				);
-			for (const sql of statements) {
-				try {
-					await client.execute(sql);
-				} catch (e: any) {
-					const msg: string = e?.message ?? "";
-					if (msg.includes("already exists") || msg.includes("duplicate")) {
-						console.warn(
-							`⚠️  Skipped (already exists): ${sql.trim().slice(0, 60)}...`,
-						);
-					} else {
-						throw e;
-					}
+			} catch (e: any) {
+				const msg: string = e?.message ?? "";
+				if (msg.includes("already exists") || msg.includes("duplicate")) {
+					console.warn(`⚠️  Skipped (already exists): primera sentencia de ${dir}`);
+				} else {
+					throw e;
 				}
 			}
 
