@@ -34,6 +34,7 @@ export interface ICicloReglasPagoInput {
 	descuentoPagoAnual: IReglaDescuentoPagoAnualInput;
 	descuentosFamiliares: IReglaDescuentoFamiliarInput[];
 	cbusAceptados?: string[];
+	exencionPrimerCiclo?: { habilitado: boolean };
 }
 
 export interface IPerdonarObligacionInput {

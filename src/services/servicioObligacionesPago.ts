@@ -89,7 +89,7 @@ export class ServicioObligacionesPago {
 		const [scouts, { scoutToFamilia, familiaToScouts }, becasRaw] = await Promise.all([
 			(prismaClient as any).scout.findMany({
 				where: { estado: { not: "INACTIVO" } },
-				select: { uuid: true, funcion: true, rama: true },
+				select: { uuid: true, funcion: true, rama: true, primerCicloAfiliado: true },
 			}),
 			construirMapaFamilias(),
 			(prismaClient as any).becaSAAC.findMany({
@@ -99,6 +99,7 @@ export class ServicioObligacionesPago {
 		]);
 
 		const becaMap = new Map<string, number>(becasRaw.map((b: any) => [b.scoutId, b.porcentaje]));
+		const exencionHabilitada = ciclo.exencionPrimerCicloHabilitada ?? false;
 
 		const reglasAfiliacion = ciclo.reglasAfiliacion ?? [];
 		const reglasCuota = (ciclo.reglasCuotaMensual ?? [])
@@ -137,7 +138,8 @@ export class ServicioObligacionesPago {
 			const reglaAfiliacion = reglasAfiliacion.find(
 				(item: any) => item.funcionScout === scout.funcion && item.obligatoria,
 			);
-			if (reglaAfiliacion) {
+			const esPrimerCicloExento = exencionHabilitada && scout.funcion === "JOVEN" && scout.primerCicloAfiliado;
+			if (reglaAfiliacion && !esPrimerCicloExento) {
 				const porcentajeBeca = becaMap.get(scout.uuid);
 				const montoEsperado = porcentajeBeca !== undefined
 					? Number((reglaAfiliacion.monto * (1 - porcentajeBeca / 100)).toFixed(2))
@@ -255,7 +257,7 @@ export class ServicioObligacionesPago {
 
 		const scout = await (prismaClient as any).scout.findUnique({
 			where: { uuid: scoutId },
-			select: { uuid: true, funcion: true, estado: true },
+			select: { uuid: true, funcion: true, estado: true, primerCicloAfiliado: true },
 		});
 		if (!scout || scout.estado === "INACTIVO") return;
 
@@ -270,12 +272,14 @@ export class ServicioObligacionesPago {
 		const mesInicioAfiliacion = new Date(ciclo.fechaInicio).getUTCMonth() + 1;
 		const periodoAfiliacion = `${ciclo.anio}-${String(mesInicioAfiliacion).padStart(2, "0")}`;
 
+		const exencionHabilitada = ciclo.exencionPrimerCicloHabilitada ?? false;
 		const obligacionesACrear: Array<any> = [];
 
 		const reglaAfiliacion = reglasAfiliacion.find(
 			(r: any) => r.funcionScout === scout.funcion && r.obligatoria,
 		);
-		if (reglaAfiliacion) {
+		const esPrimerCicloExento = exencionHabilitada && scout.funcion === "JOVEN" && scout.primerCicloAfiliado;
+		if (reglaAfiliacion && !esPrimerCicloExento) {
 			const becaScout = await (prismaClient as any).becaSAAC.findFirst({
 				where: { scoutId, cicloId: ciclo.uuid },
 				select: { porcentaje: true },

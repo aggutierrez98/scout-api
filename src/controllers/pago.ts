@@ -7,6 +7,7 @@ import { ROLES, RolesType } from "../types";
 import { ServicioReglasPago } from "../services/servicioReglasPago";
 import { ServicioObligacionesPago } from "../services/servicioObligacionesPago";
 import { ServicioCondonacionPago } from "../services/servicioCondonacionPago";
+import { prismaClient } from "../utils/lib/prisma-client";
 
 const ROLES_ALTOS: RolesType[] = [
 	ROLES.JEFE_GRUPO,
@@ -273,6 +274,79 @@ export class PagoController {
 		try {
 			const pendientes = await this.servicioObligacionesPago.listarPendientesPorScout(params.scoutId);
 			res.send(pendientes);
+		} catch (e) {
+			next(e);
+		}
+	};
+
+	getPrimerCicloScouts = async (_req: Request, res: Response, next: NextFunction) => {
+		try {
+			const user = this.getCurrentUser(res);
+			this.requireRoles(user.role, ROLES_ALTOS);
+
+			const scouts = await (prismaClient as any).scout.findMany({
+				where: { primerCicloAfiliado: true, estado: { not: "INACTIVO" } },
+				select: { uuid: true, nombre: true, apellido: true, rama: true, funcion: true },
+				orderBy: [{ apellido: "asc" }, { nombre: "asc" }],
+			});
+
+			res.json(scouts.map((s: any) => ({
+				id: s.uuid,
+				nombre: s.nombre,
+				apellido: s.apellido,
+				rama: s.rama ?? null,
+				funcion: s.funcion ?? null,
+			})));
+		} catch (e) {
+			next(e);
+		}
+	};
+
+	addScoutPrimerCiclo = async ({ params }: Request, res: Response, next: NextFunction) => {
+		try {
+			const user = this.getCurrentUser(res);
+			this.requireRoles(user.role, ROLES_ALTOS);
+			const { scoutId } = params;
+
+			await (prismaClient as any).scout.update({
+				where: { uuid: scoutId },
+				data: { primerCicloAfiliado: true },
+			});
+
+			const cicloActivo = await (prismaClient as any).cicloReglasPago.findFirst({
+				where: { activo: true, exencionPrimerCicloHabilitada: true },
+				select: { uuid: true },
+			});
+			if (cicloActivo) {
+				await this.servicioObligacionesPago.generarObligacionesCiclo(cicloActivo.uuid, { forzarRecrear: true });
+			}
+
+			res.json({ scoutId, primerCicloAfiliado: true });
+		} catch (e) {
+			next(e);
+		}
+	};
+
+	removeScoutPrimerCiclo = async ({ params }: Request, res: Response, next: NextFunction) => {
+		try {
+			const user = this.getCurrentUser(res);
+			this.requireRoles(user.role, ROLES_ALTOS);
+			const { scoutId } = params;
+
+			await (prismaClient as any).scout.update({
+				where: { uuid: scoutId },
+				data: { primerCicloAfiliado: false },
+			});
+
+			const cicloActivo = await (prismaClient as any).cicloReglasPago.findFirst({
+				where: { activo: true, exencionPrimerCicloHabilitada: true },
+				select: { uuid: true },
+			});
+			if (cicloActivo) {
+				await this.servicioObligacionesPago.generarObligacionesCiclo(cicloActivo.uuid, { forzarRecrear: true });
+			}
+
+			res.json({ scoutId, primerCicloAfiliado: false });
 		} catch (e) {
 			next(e);
 		}

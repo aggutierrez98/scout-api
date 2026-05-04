@@ -90,6 +90,7 @@ model Scout {
   equipoId              String?
   funcion               String?
   estado                String?               @default("ACTIVO")
+  primerCicloAfiliado   Boolean               @default(false)
   documentosPresentados DocumentoPresentado[]
   entregasObtenidas     EntregaRealizada[]
   familiarScout         FamiliarScout[]
@@ -187,6 +188,7 @@ model CicloReglasPago {
   fechaFin             DateTime
   /// CBUs/aliases bancarios válidos para recibir transferencias en este ciclo
   cbusAceptados        Json                       @default("[]")
+  exencionPrimerCicloHabilitada Boolean @default(false)
   fechaCreacion        DateTime                   @default(now())
   fechaActualizacion   DateTime                   @updatedAt
   reglasAfiliacion     ReglaAfiliacion[]

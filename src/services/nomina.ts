@@ -103,6 +103,13 @@ export class NominaService {
 			return result;
 		}
 
+		// Obtener el año del ciclo activo para calcular primerCicloAfiliado
+		const cicloActivo = await (prismaClient as any).cicloReglasPago.findFirst({
+			where: { activo: true },
+			select: { anio: true },
+		});
+		const cicloAnio = cicloActivo?.anio ?? null;
+
 		// DNIs presentes en la nómina (normalizados a string)
 		const nominaDnis = new Set(members.map((m) => m.documento.trim()));
 
@@ -148,6 +155,10 @@ export class NominaService {
 
 				const fechaNac = parseDate(member.fechaNacimiento);
 				if (fechaNac) updateData.fechaNacimiento = fechaNac;
+
+				const fechaPrimerAfiliacion = parseDate(member.fechaPrimerAfiliacion);
+				const anioAfiliacion = fechaPrimerAfiliacion ? fechaPrimerAfiliacion.getUTCFullYear() : null;
+				updateData.primerCicloAfiliado = cicloAnio !== null && anioAfiliacion === cicloAnio;
 
 				await prismaClient.scout.update({
 					where: { uuid: scout.uuid },

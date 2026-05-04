@@ -43,6 +43,9 @@ const mapReglas = (ciclo: any) => {
 				montoPorScout: item.montoPorScout,
 			})),
 		cbusAceptados: Array.isArray(ciclo.cbusAceptados) ? ciclo.cbusAceptados : (JSON.parse(ciclo.cbusAceptados ?? "[]") as string[]),
+		exencionPrimerCiclo: {
+			habilitado: ciclo.exencionPrimerCicloHabilitada ?? false,
+		},
 	};
 };
 
@@ -73,6 +76,7 @@ export class ServicioReglasPago {
 				fechaInicio: new Date(payload.fechaInicio),
 				fechaFin: new Date(payload.fechaFin),
 				cbusAceptados: JSON.stringify(payload.cbusAceptados ?? []),
+				exencionPrimerCicloHabilitada: payload.exencionPrimerCiclo?.habilitado ?? false,
 				reglasAfiliacion: {
 					create: payload.afiliacion.map((item) => ({
 						uuid: nanoid(10),
@@ -136,6 +140,7 @@ export class ServicioReglasPago {
 					fechaInicio: new Date(payload.fechaInicio),
 					fechaFin: new Date(payload.fechaFin),
 					cbusAceptados: JSON.stringify(payload.cbusAceptados ?? []),
+					exencionPrimerCicloHabilitada: payload.exencionPrimerCiclo?.habilitado ?? false,
 					reglasAfiliacion: {
 						create: payload.afiliacion.map((item) => ({
 							uuid: nanoid(10),

@@ -18,6 +18,8 @@ import {
 	PostReglasPagoSchema,
 	PutPagoSchema,
 	PutReglasPagoSchema,
+	GetPrimerCicloScoutsSchema,
+	PrimerCicloScoutParamSchema,
 } from "../validators/pago";
 
 export default function createPagoRouter(pagoService: PagoService) {
@@ -28,6 +30,9 @@ export default function createPagoRouter(pagoService: PagoService) {
 	router.get("/", checkSession, validate(GetPagosSchema), pagoController.getItems);
 
 	// ─── Reglas de pago ──────────────────────────────────────────────────────
+	router.get("/reglas/primer-ciclo-scouts", checkSession, validate(GetPrimerCicloScoutsSchema), pagoController.getPrimerCicloScouts);
+	router.put("/reglas/primer-ciclo-scouts/:scoutId", checkSession, validate(PrimerCicloScoutParamSchema), cleanCacheMiddleware, pagoController.addScoutPrimerCiclo);
+	router.delete("/reglas/primer-ciclo-scouts/:scoutId", checkSession, validate(PrimerCicloScoutParamSchema), cleanCacheMiddleware, pagoController.removeScoutPrimerCiclo);
 	router.get("/reglas/activa", checkSession, validate(GetReglasPagoActivaSchema), pagoController.getReglasActiva);
 	router.post("/reglas", checkSession, validate(PostReglasPagoSchema), cleanCacheMiddleware, pagoController.crearReglas);
 	router.put("/reglas/:id", checkSession, validate(PutReglasPagoSchema), cleanCacheMiddleware, pagoController.actualizarReglas);

@@ -86,6 +86,7 @@ const ReglasPagoBodySchema = z.object({
 	descuentoPagoAnual: ReglaDescuentoPagoAnualSchema,
 	descuentosFamiliares: z.array(ReglaDescuentoFamiliarSchema).min(1, "Debe configurar al menos una regla familiar"),
 	cbusAceptados: z.array(z.string().min(1)).default([]),
+	exencionPrimerCiclo: z.object({ habilitado: z.boolean() }).optional(),
 }).superRefine((value, ctx) => {
 	if (value.fechaInicio >= value.fechaFin) {
 		ctx.addIssue({
@@ -206,5 +207,13 @@ export const PerdonarPendientePagoSchema = z.object({
 	body: z.object({
 		motivo: z.string().min(10, "Debe ingresar un motivo de al menos 10 caracteres"),
 		montoCondonado: z.number().positive("El monto condonado debe ser mayor a 0").optional(),
+	}),
+});
+
+export const GetPrimerCicloScoutsSchema = z.object({});
+
+export const PrimerCicloScoutParamSchema = z.object({
+	params: z.object({
+		scoutId: IdSchema.refine(validScoutID, "Scout no encontrado"),
 	}),
 });
