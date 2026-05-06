@@ -8,6 +8,7 @@ import {
 	ActivarReglasPagoSchema,
 	DeletePagoSchema,
 	DeleteManyPagosSchema,
+	GetExportarPendientesPagoSchema,
 	GetPagoSchema,
 	GetPagosSchema,
 	GetPendientePagoDetalleSchema,
@@ -41,6 +42,7 @@ export default function createPagoRouter(pagoService: PagoService) {
 	// ─── Obligaciones pendientes ──────────────────────────────────────────────
 	// Service-to-service: sin RBAC, solo x-api-key. DEBE ir antes de /:id.
 	router.get("/pendientes/por-scout/:scoutId", serviceAuth, pagoController.getPendientesPorScout);
+	router.get("/pendientes/exportar", checkSession, validate(GetExportarPendientesPagoSchema), pagoController.exportarPendientes);
 	router.get("/pendientes", checkSession, validate(GetPendientesPagoSchema), pagoController.getPendientes);
 	router.get("/pendientes/:id", checkSession, validate(GetPendientePagoDetalleSchema), pagoController.getPendiente);
 	router.post("/pendientes/:id/perdonar", checkSession, validate(PerdonarPendientePagoSchema), cleanCacheMiddleware, pagoController.perdonarPendiente);

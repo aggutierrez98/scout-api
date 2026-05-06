@@ -194,6 +194,16 @@ export const GetPendientesPagoSchema = z.object({
 	}),
 });
 
+export const GetExportarPendientesPagoSchema = z.object({
+	query: z.object({
+		rama: z.enum(VALID_RAMAS).optional(),
+		scoutId: IdSchema.optional(),
+		scoutNombre: z.string().min(1).max(120).optional(),
+		familiaClave: z.string().min(1).optional(),
+		estado: EstadoObligacionSchema.optional(),
+	}),
+});
+
 export const GetPendientePagoDetalleSchema = z.object({
 	params: z.object({
 		id: IdSchema.refine(validObligacionId),

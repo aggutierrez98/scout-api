@@ -1,0 +1,22 @@
+meta {
+  name: Exportar Pagos Pendientes
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{base_url}}/api/pago/pendientes/exportar
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:query {
+  ~rama: SCOUTS
+  ~scoutNombre: juan perez
+  ~familiaClave: familia::abc|def
+  ~estado: PENDIENTE
+}

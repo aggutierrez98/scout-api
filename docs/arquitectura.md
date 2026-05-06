@@ -314,6 +314,15 @@ Esto habilita listas más livianas en frontend (lotes de 20 items).
 - `GET /api/auth/me` y `GET /api/auth/renew` ahora exponen `datosGrupo` (`nombre`, `numero`, `distrito`, `zona`) tomados de `SecretsManager`.
 - Se usa para identidad dinámica del header en web.
 
+### Exportación de pagos pendientes a Excel (mayo 2026)
+
+- `GET /api/pago/pendientes/exportar` devuelve un archivo `.xlsx` con los pagos pendientes aplicando los mismos filtros que el listado (`rama`, `estado`, `familiaClave`, `scoutNombre`).
+- Sin paginación: exporta todos los resultados que coincidan con el filtro.
+- **Una fila por scout**: agrupa todas sus obligaciones pendientes en una sola fila.
+- Columnas: Apellido y Nombre, DNI, Rama, Edad, Familiares (nombres), Teléfonos familiares, Teléfono scout, Conceptos pendientes, Monto total pendiente.
+- RBAC: aplica el mismo scoping por rol que el listado (`ServicioObligacionesPago.validarAccesoPendientes`).
+- El botón "Exportar .xlsx" en la UI web es visible para roles `JEFE_GRUPO`, `SUBJEFE_GRUPO` y `ADMINISTRADOR`.
+
 ### Cobertura completa de eventos y tipo de evento
 
 Se consolidó documentación/colección de pruebas para:

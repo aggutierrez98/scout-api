@@ -233,6 +233,22 @@ export class PagoController {
 		}
 	};
 
+	exportarPendientes = async ({ query }: Request, res: Response, next: NextFunction) => {
+		try {
+			const currentUser = this.getCurrentUser(res);
+			const buffer = await this.servicioObligacionesPago.exportarPendientesXLSX({
+				user: currentUser,
+				filters: query,
+			});
+			const fecha = new Date().toISOString().slice(0, 10);
+			res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+			res.setHeader("Content-Disposition", `attachment; filename="pagos-pendientes-${fecha}.xlsx"`);
+			res.send(buffer);
+		} catch (e) {
+			next(e);
+		}
+	};
+
 	getPendiente = async ({ params }: Request, res: Response, next: NextFunction) => {
 		try {
 			const currentUser = this.getCurrentUser(res);

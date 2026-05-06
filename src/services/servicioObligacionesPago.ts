@@ -624,6 +624,112 @@ export class ServicioObligacionesPago {
 		};
 	};
 
+	exportarPendientesXLSX = async ({ user, filters }: { user: any; filters: any }) => {
+		const where = await this.validarAccesoPendientes({ user, filters });
+
+		const now = new Date();
+		const periodoActual = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+		const obligaciones = await (prismaClient as any).obligacionPago.findMany({
+			where: { ...where, periodo: { lte: periodoActual } },
+			include: {
+				scout: {
+					select: {
+						uuid: true,
+						nombre: true,
+						apellido: true,
+						rama: true,
+						dni: true,
+						fechaNacimiento: true,
+						telefono: true,
+						familiarScout: {
+							include: {
+								familiar: {
+									select: { nombre: true, apellido: true, telefono: true },
+								},
+							},
+						},
+					},
+				},
+				imputaciones: { select: { montoImputado: true } },
+			},
+			orderBy: [{ scoutId: "asc" }, { periodo: "asc" }, { tipo: "asc" }],
+		});
+
+		const scoutMap = new Map<string, { scout: any; conceptos: string[]; montoTotal: number }>();
+
+		for (const item of obligaciones) {
+			const montoPagado = (item.imputaciones ?? []).reduce(
+				(acc: number, imp: any) => acc + imp.montoImputado,
+				0,
+			);
+			const montoPendiente = Number(
+				(item.montoEsperado - item.montoCondonado - montoPagado).toFixed(2),
+			);
+
+			if (!scoutMap.has(item.scoutId)) {
+				scoutMap.set(item.scoutId, { scout: item.scout, conceptos: [], montoTotal: 0 });
+			}
+
+			const entry = scoutMap.get(item.scoutId)!;
+			const tipoLabel = item.tipo === "AFILIACION" ? "Afiliación" : "Cuota mensual";
+			entry.conceptos.push(`${tipoLabel} ${item.periodo} ($${montoPendiente.toLocaleString("es-AR")})`);
+			entry.montoTotal = Number((entry.montoTotal + montoPendiente).toFixed(2));
+		}
+
+		const calcularEdad = (fechaNacimiento: Date) => {
+			const hoy = new Date();
+			let edad = hoy.getFullYear() - fechaNacimiento.getFullYear();
+			const m = hoy.getMonth() - fechaNacimiento.getMonth();
+			if (m < 0 || (m === 0 && hoy.getDate() < fechaNacimiento.getDate())) edad--;
+			return edad;
+		};
+
+		const header = [
+			"Apellido y Nombre",
+			"DNI",
+			"Rama",
+			"Edad",
+			"Familiares",
+			"Teléfonos familiares",
+			"Teléfono scout",
+			"Conceptos pendientes",
+			"Monto total pendiente ($)",
+		];
+
+		const rows = Array.from(scoutMap.values()).map(({ scout, conceptos, montoTotal }) => {
+			const familiares = (scout.familiarScout ?? []).map(
+				(fs: any) => `${fs.familiar.nombre} ${fs.familiar.apellido}`,
+			);
+			const telefonosFamiliares = (scout.familiarScout ?? [])
+				.filter((fs: any) => fs.familiar.telefono)
+				.map((fs: any) => fs.familiar.telefono);
+
+			return [
+				`${scout.apellido}, ${scout.nombre}`,
+				scout.dni ?? "-",
+				scout.rama ?? "-",
+				scout.fechaNacimiento ? calcularEdad(new Date(scout.fechaNacimiento)) : "-",
+				familiares.join(" / ") || "-",
+				telefonosFamiliares.join(" / ") || "-",
+				scout.telefono || "-",
+				conceptos.join(" / "),
+				montoTotal,
+			];
+		});
+
+		const xlsx = await import("xlsx");
+		const ws = xlsx.utils.aoa_to_sheet([header, ...rows]);
+		ws["!cols"] = [
+			{ wch: 28 }, { wch: 12 }, { wch: 12 }, { wch: 6 },
+			{ wch: 35 }, { wch: 25 }, { wch: 15 },
+			{ wch: 55 }, { wch: 22 },
+		];
+		const wb = xlsx.utils.book_new();
+		xlsx.utils.book_append_sheet(wb, ws, "Pagos pendientes");
+		return xlsx.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+	};
+
 	/**
 	 * Versión sin RBAC para uso service-to-service (x-api-key).
 	 * Devuelve las obligaciones PENDIENTE e INCOMPLETO de un scout específico.
