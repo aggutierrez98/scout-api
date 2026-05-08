@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+const ObligacionSugeridaSchema = z.object({
+  id: z.string(),
+  scoutId: z.string(),
+  tipo: z.enum(['CUOTA_MENSUAL', 'AFILIACION']),
+  periodo: z.string(),
+  montoPendiente: z.number(),
+  scoreMatch: z.number(),
+});
+
 const WebhookComprobanteDatosSchema = z.object({
   es_comprobante: z.boolean(),
   monto: z.number().nullable(),
@@ -16,6 +25,12 @@ const WebhookComprobanteDatosSchema = z.object({
   whatsapp_mensaje_texto: z.string().nullable(),
   whatsapp_timestamp: z.string(),
   scoutId: z.string().nullable().optional(),
+  familiarId: z.string().nullable().optional(),
+  scoutIds: z.array(z.string()).optional(),
+  obligacionId: z.string().nullable().optional(),
+  obligacionesSugeridas: z.array(ObligacionSugeridaSchema).optional(),
+  confianza: z.enum(['ALTA', 'MEDIA', 'BAJA']).optional(),
+  metodoResolucion: z.string().optional(),
 });
 
 export const PostWebhookComprobanteSchema = z.object({
