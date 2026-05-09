@@ -249,16 +249,17 @@ export class ServicioImputacionPago {
 			});
 		}, { timeout: 30_000 });
 
-		const ciclo = await (prismaClient as any).cicloReglasPago.findUnique({ where: { uuid: cicloId } });
-		if (!ciclo) return { procesados: 0 };
+		const scoutsConObligaciones = await (prismaClient as any).obligacionPago.findMany({
+			where: { cicloId },
+			select: { scoutId: true },
+			distinct: ["scoutId"],
+		});
+		if (scoutsConObligaciones.length === 0) return { procesados: 0 };
+
+		const scoutIds = scoutsConObligaciones.map((o: any) => o.scoutId);
 
 		const pagos = await (prismaClient as any).pago.findMany({
-			where: {
-				fechaPago: {
-					gte: ciclo.fechaInicio,
-					lte: ciclo.fechaFin,
-				},
-			},
+			where: { scoutId: { in: scoutIds } },
 			orderBy: [{ fechaPago: "asc" }, { fechaCreacion: "asc" }],
 			select: { uuid: true },
 		});

@@ -111,10 +111,8 @@ async function crearRevision(
 export class WebhookService {
   procesarComprobante = async (datos: IWebhookComprobanteDatos): Promise<IWebhookResult> => {
     if (datos.monto === null) {
-      throw new AppError({
-        name: "MONTO_REQUERIDO",
-        description: "El monto del comprobante no puede ser nulo",
-        httpCode: HttpCode.UNPROCESSABLE_ENTITY,
+      return crearRevision('DATOS_INCOMPLETOS', datos, {
+        mensaje: 'El monto no pudo ser extraído del comprobante — requiere revisión manual',
       });
     }
 

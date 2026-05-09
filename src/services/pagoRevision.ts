@@ -114,6 +114,14 @@ export class ServicioPagoRevision {
     const datos = revision.datosComprobante as IWebhookComprobanteDatos;
     let pagoId: string | null = revision.pagoId;
 
+    if (datos.monto === null) {
+      throw new AppError({
+        name: 'MONTO_NO_DISPONIBLE',
+        httpCode: HttpCode.UNPROCESSABLE_ENTITY,
+        description: 'El monto del comprobante no fue extraído automáticamente. Registrá el pago manualmente.',
+      });
+    }
+
     // Si el pago existe pero sin scout (huérfano), asignarlo
     if (revision.pago) {
       await prismaClient.pago.update({

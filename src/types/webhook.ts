@@ -12,7 +12,8 @@ export type TipoConflicto =
   | 'SIN_SCOUTS_VINCULADOS'
   | 'SCOUT_AMBIGUO'
   | 'OBLIGACION_NO_CLARA'
-  | 'CUENTA_INVALIDA';
+  | 'CUENTA_INVALIDA'
+  | 'DATOS_INCOMPLETOS';
 
 
 export interface ObligacionSugerida {

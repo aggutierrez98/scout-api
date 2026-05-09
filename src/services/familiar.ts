@@ -253,6 +253,7 @@ export class FamiliarService implements IFamiliarService {
 			where: whereClause,
 			include: {
 				padreScout: {
+					...(scoutId ? { where: { scout: { uuid: scoutId } } } : {}),
 					include: {
 						scout: {
 							select: {
@@ -272,6 +273,7 @@ export class FamiliarService implements IFamiliarService {
 				id: ps.scout.uuid,
 				nombre: ps.scout.nombre,
 				apellido: ps.scout.apellido,
+				...(scoutId ? { relacion: ps.relacion } : {}),
 			}))
 		}));
 

@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import { ICicloReglasPagoInput } from "../types";
 import { prismaClient } from "../utils/lib/prisma-client";
 import { ServicioObligacionesPago } from "./servicioObligacionesPago";
+import logger from "../utils/classes/Logger";
 
 const mapReglas = (ciclo: any) => {
 	if (!ciclo) return null;
@@ -183,9 +184,14 @@ export class ServicioReglasPago {
 		});
 
 		if (ciclo.activo) {
-			await this.servicioObligaciones.generarObligacionesCiclo(ciclo.uuid, {
-				forzarRecrear: true,
-			});
+			try {
+				await this.servicioObligaciones.generarObligacionesCiclo(ciclo.uuid, {
+					forzarRecrear: true,
+				});
+			} catch (err: any) {
+				logger.error(`[ReglasPago] Fallo en regeneración de obligaciones para ciclo ${ciclo.uuid}: ${err?.message ?? err}`);
+				throw err;
+			}
 		}
 
 		return mapReglas(ciclo);
@@ -200,9 +206,14 @@ export class ServicioReglasPago {
 			});
 		});
 
-		await this.servicioObligaciones.generarObligacionesCiclo(cicloId, {
-			forzarRecrear: true,
-		});
+		try {
+			await this.servicioObligaciones.generarObligacionesCiclo(cicloId, {
+				forzarRecrear: true,
+			});
+		} catch (err: any) {
+			logger.error(`[ReglasPago] Fallo en regeneración de obligaciones al activar ciclo ${cicloId}: ${err?.message ?? err}`);
+			throw err;
+		}
 
 		return this.obtenerReglaActiva();
 	};

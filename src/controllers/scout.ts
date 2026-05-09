@@ -104,6 +104,14 @@ export class ScoutController {
 	) => {
 		try {
 			const { id } = params;
+			const currentUser = res.locals.currentUser as IUserData | undefined;
+			if (currentUser?.role !== ROLES.ADMINISTRADOR) {
+				throw new AppError({
+					name: "FORBIDDEN",
+					httpCode: HttpCode.FORBIDDEN,
+					description: "Solo ADMIN puede eliminar scouts",
+				});
+			}
 			const response = await this.scoutService.deleteScout(id);
 
 			if (!response) {
