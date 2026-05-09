@@ -364,7 +364,8 @@ export class PagoService implements IPagoService {
 				errors.push({ fila, nombre: nombreStr, razon: `Fecha inválida: ${fechaStr}` });
 				continue;
 			}
-			const [day, month, year] = dateParts.map(Number);
+			const [day, month, rawYear] = dateParts.map(Number);
+			const year = rawYear < 100 ? 2000 + rawYear : rawYear;
 			const fechaPago = new Date(year, month - 1, day);
 			if (isNaN(fechaPago.getTime())) {
 				errors.push({ fila, nombre: nombreStr, razon: `Fecha inválida: ${fechaStr}` });
