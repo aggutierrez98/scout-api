@@ -33,6 +33,7 @@ type queryParams = {
 		ramas?: RamasType[];
 		existingUser?: string;
 		familiarId?: string;
+		estado?: string;
 	};
 	select?: Prisma.ScoutSelect;
 };
@@ -120,6 +121,7 @@ export class ScoutService implements IScoutService {
 			ramas,
 			existingUser,
 			familiarId,
+			estado,
 		} = filters;
 
 		const nombreNorm = normalizeText(nombre);
@@ -128,6 +130,7 @@ export class ScoutService implements IScoutService {
 			take: limit || undefined, // Si el limite === 0  →  no hay limite y se buscan todos
 			orderBy: { [orderBy]: "asc" },
 			where: {
+				estado: estado || undefined,
 				sexo: sexo || undefined,
 				equipo: {
 					uuid: equipos ? { in: equipos } : undefined,
@@ -275,6 +278,7 @@ export class ScoutService implements IScoutService {
 			progresionActual,
 			rama,
 			funcion,
+			estado,
 		} = dataUpdated;
 
 		const currentScout = await prismaClient.scout.findUnique({
@@ -313,6 +317,7 @@ export class ScoutService implements IScoutService {
 				progresionActual,
 				rama,
 				funcion,
+				estado,
 			},
 		});
 		return mapScout(responseItem);
@@ -335,12 +340,20 @@ export class ScoutService implements IScoutService {
 	importScouts = async (nomina: fileUpload.UploadedFile) => {
 		const scoutsData = readXlsxBuffer(nomina.data) as Partial<ScoutXLSX>[];
 
+		// DNIs presentes en el archivo (raw), para determinar quién NO está en la nómina
+		const nominaDnis = new Set(
+			scoutsData
+				.map((row) => (row.Documento ? String(row.Documento).trim() : null))
+				.filter(Boolean) as string[],
+		);
+
 		const result: import("../types").ImportScoutsResult = {
 			total: scoutsData.length,
 			successful: 0,
 			creados: [],
 			conflictos: [],
 			errores: [],
+			desafiliados: [],
 		};
 
 		for (let i = 0; i < scoutsData.length; i++) {
@@ -410,7 +423,33 @@ export class ScoutService implements IScoutService {
 			}
 		}
 
-		logger.debug(`[importScouts] total=${result.total} creados=${result.successful} conflictos=${result.conflictos.length} errores=${result.errores.length}`);
+		// Scouts activos que NO están en la nómina → marcar como no afiliados
+		if (nominaDnis.size > 0) {
+			const aDesafiliar = await prismaClient.scout.findMany({
+				where: {
+					estado: "ACTIVO",
+					afiliado: { not: false },
+					dni: { notIn: Array.from(nominaDnis) },
+				},
+				select: { nombre: true, apellido: true, dni: true, rama: true, funcion: true },
+			});
+
+			if (aDesafiliar.length > 0) {
+				await prismaClient.scout.updateMany({
+					where: {
+						estado: "ACTIVO",
+						afiliado: { not: false },
+						dni: { notIn: Array.from(nominaDnis) },
+					},
+					data: { afiliado: false },
+				});
+				result.desafiliados = aDesafiliar;
+			}
+		}
+
+		logger.debug(
+			`[importScouts] total=${result.total} creados=${result.successful} conflictos=${result.conflictos.length} errores=${result.errores.length} desafiliados=${result.desafiliados.length}`,
+		);
 		return result;
 	};
 }

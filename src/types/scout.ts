@@ -19,6 +19,7 @@ export interface IScout {
 	religion: string | null;
 	progresionActual: ProgresionType | null;
 	funcion: string | null;
+	estado?: string | null;
 }
 
 export interface IScoutData extends IScout {
@@ -79,12 +80,21 @@ export interface ErrorScoutRow {
 	motivo: string;
 }
 
+export interface DesafiliadoScoutRow {
+	nombre: string;
+	apellido: string;
+	dni: string;
+	rama?: string | null;
+	funcion?: string | null;
+}
+
 export interface ImportScoutsResult {
 	total: number;
 	successful: number;
 	creados: ImportedScoutRow[];
 	conflictos: ConflictScoutRow[];
 	errores: ErrorScoutRow[];
+	desafiliados: DesafiliadoScoutRow[];
 }
 
 export type ScoutXLSX = {

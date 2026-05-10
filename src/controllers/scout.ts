@@ -73,6 +73,13 @@ export class ScoutController {
 					description: "Solo ADMIN puede editar la función del scout",
 				});
 			}
+			if (body.estado !== undefined && currentUser?.role !== ROLES.ADMINISTRADOR) {
+				throw new AppError({
+					name: "FORBIDDEN",
+					httpCode: HttpCode.FORBIDDEN,
+					description: "Solo ADMIN puede cambiar el estado del scout",
+				});
+			}
 			const response = await this.scoutService.updateScout(id, body);
 
 			if (!response) {
