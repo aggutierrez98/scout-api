@@ -249,6 +249,9 @@ export class ServicioImputacionPago {
 			});
 		}, { timeout: 30_000 });
 
+		// Un pago pertenece al ciclo por el scout que lo hizo, no por su fecha.
+		// Filtrar por fechaInicio/fechaFin del ciclo excluye pagos válidos realizados
+		// antes de la fecha de inicio (ej: pagos de marzo cuando el ciclo empieza en abril).
 		const scoutsConObligaciones = await (prismaClient as any).obligacionPago.findMany({
 			where: { cicloId },
 			select: { scoutId: true },

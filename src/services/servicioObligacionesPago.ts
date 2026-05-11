@@ -164,7 +164,13 @@ export class ServicioObligacionesPago {
 			if (scout.funcion === "JOVEN") {
 				for (const reglaCuota of reglasCuota) {
 					const periodo = `${ciclo.anio}-${String(reglaCuota.mes).padStart(2, "0")}`;
-					const montoAplicado = reglaFamiliarAplicada?.montoPorScout ?? reglaCuota.montoBase;
+					// El descuento familiar solo puede reducir el precio, nunca superarlo.
+					// Sin Math.min, un montoPorScout=$15000 sobreescribiría meses con
+					// precio especial más bajo (ej: abril=$3000).
+					const montoFamilia = reglaFamiliarAplicada?.montoPorScout;
+					const montoAplicado = montoFamilia !== undefined
+						? Math.min(montoFamilia, reglaCuota.montoBase)
+						: reglaCuota.montoBase;
 					todasLasObligaciones.push({
 						uuid: nanoid(10),
 						cicloId,
