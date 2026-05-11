@@ -233,6 +233,18 @@ export class PagoController {
 		}
 	};
 
+	exportarPagos = async (req: Request, res: Response, next: NextFunction) => {
+		try {
+			const buffer = await this.pagoService.exportarPagosXLSX({ filters: req.query as any });
+			const fecha = new Date().toISOString().slice(0, 10);
+			res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+			res.setHeader("Content-Disposition", `attachment; filename="pagos-${fecha}.xlsx"`);
+			res.send(buffer);
+		} catch (e) {
+			next(e);
+		}
+	};
+
 	exportarPendientes = async ({ query }: Request, res: Response, next: NextFunction) => {
 		try {
 			const currentUser = this.getCurrentUser(res);

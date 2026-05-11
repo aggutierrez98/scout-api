@@ -39,6 +39,11 @@ export interface WebhookSecrets {
   NOMINA_SECRET: string;
 }
 
+export interface GmailSecrets {
+  USER: string;
+  APP_PASSWORD: string;
+}
+
 export interface DatosGrupo {
   numero: string;
   nombre: string;
@@ -62,6 +67,7 @@ export interface AppSecrets {
   AWS: AWSSecrets;
   BETTERSTACK: BetterStackSecrets;
   FIREBASE: FirebaseSecrets;
+  GMAIL: GmailSecrets;
   GOOGLE_AI: GoogleAISecrets;
   GOOGLE_DRIVE: GoogleDriveSecrets;
   TURSO: TursoSecrets;
@@ -109,4 +115,8 @@ export const SECRET_KEYS = {
   // Turso
   TURSO_AUTH_TOKEN: 'AUTH_TOKEN',
   TURSO_DATABASE_URL: 'DATABASE_URL',
+
+  // Gmail SMTP
+  GMAIL_USER: 'SMTP_USER',
+  GMAIL_APP_PASSWORD: 'SMTP_APP_PASSWORD',
 } as const;

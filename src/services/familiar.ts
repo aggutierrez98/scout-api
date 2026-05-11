@@ -280,9 +280,20 @@ export class FamiliarService implements IFamiliarService {
 	};
 
 	updateFamiliar = async (id: string, dataUpdated: Omit<IFamiliar, "id">) => {
+		const { nombre, apellido, ...rest } = dataUpdated as Partial<IFamiliar>;
 		const { padreScout, ...data } = await prismaClient.familiar.update({
 			where: { uuid: id },
-			data: dataUpdated,
+			data: {
+				...rest,
+				...(nombre ? {
+					nombre: nombre.toLocaleUpperCase(),
+					nombreNormalizado: normalizeText(nombre.toLocaleUpperCase()),
+				} : {}),
+				...(apellido ? {
+					apellido: apellido.toLocaleUpperCase(),
+					apellidoNormalizado: normalizeText(apellido.toLocaleUpperCase()),
+				} : {}),
+			} as any,
 			include: {
 				padreScout: {
 					where: {

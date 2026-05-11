@@ -5,6 +5,7 @@ import type {
   BetterStackSecrets,
   DatosGrupo,
   FirebaseSecrets,
+  GmailSecrets,
   GoogleAISecrets,
   GoogleDriveSecrets,
   TursoSecrets,
@@ -126,6 +127,11 @@ export class SecretsManager {
           SERVICE_ACCOUNT_JSON: getFolderSecret("FIREBASE", SECRET_KEYS.FIREBASE_SERVICE_ACCOUNT_JSON),
         },
 
+        GMAIL: {
+          USER: getSecret(SECRET_KEYS.GMAIL_USER),
+          APP_PASSWORD: getSecret(SECRET_KEYS.GMAIL_APP_PASSWORD),
+        },
+
         GOOGLE_AI: {
           API_KEY: getSecret(SECRET_KEYS.GOOGLE_AI_API_KEY),
         },
@@ -211,6 +217,10 @@ export class SecretsManager {
   /**
    * Obtiene los secretos de autenticación de webhooks
    */
+  public getGmailSecrets(): GmailSecrets {
+    return this.getSecrets().GMAIL;
+  }
+
   public getWebhookSecrets(): WebhookSecrets {
     return this.getSecrets().WEBHOOKS_AUTH;
   }

@@ -269,6 +269,8 @@ export class ScoutService implements IScoutService {
 	};
 	updateScout = async (id: string, dataUpdated: Partial<IScout>) => {
 		const {
+			nombre,
+			apellido,
 			direccion,
 			localidad,
 			mail,
@@ -308,6 +310,14 @@ export class ScoutService implements IScoutService {
 		const responseItem = await prismaClient.scout.update({
 			where: { uuid: id },
 			data: {
+				...(nombre ? {
+					nombre: nombre.toLocaleUpperCase(),
+					nombreNormalizado: normalizeText(nombre.toLocaleUpperCase()),
+				} : {}),
+				...(apellido ? {
+					apellido: apellido.toLocaleUpperCase(),
+					apellidoNormalizado: normalizeText(apellido.toLocaleUpperCase()),
+				} : {}),
 				direccion,
 				localidad,
 				mail,

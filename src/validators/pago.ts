@@ -194,6 +194,13 @@ export const GetPendientesPagoSchema = z.object({
 	}),
 });
 
+export const GetExportarPagosSchema = z.object({
+	query: z.object({
+		tiempoDesde: z.string().regex(ISODateStringReg).optional(),
+		tiempoHasta: z.string().regex(ISODateStringReg).optional(),
+	}),
+});
+
 export const GetExportarPendientesPagoSchema = z.object({
 	query: z.object({
 		rama: z.enum(VALID_RAMAS).optional(),

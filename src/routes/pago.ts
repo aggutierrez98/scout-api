@@ -8,6 +8,7 @@ import {
 	ActivarReglasPagoSchema,
 	DeletePagoSchema,
 	DeleteManyPagosSchema,
+	GetExportarPagosSchema,
 	GetExportarPendientesPagoSchema,
 	GetPagoSchema,
 	GetPagosSchema,
@@ -56,6 +57,7 @@ export default function createPagoRouter(pagoService: PagoService) {
 
 
 	// ─── CRUD pagos ───────────────────────────────────────────────────────────
+	router.get("/exportar", checkSession, validate(GetExportarPagosSchema), pagoController.exportarPagos);
 	router.post("/", checkSession, validate(PostPagoSchema), pagoController.insertItem);
 	router.post("/import", checkSession, cleanCacheMiddleware, pagoController.importItems);
 	router.get("/:id", checkSession, validate(GetPagoSchema), cacheMiddleware, pagoController.getItem);

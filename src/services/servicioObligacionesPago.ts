@@ -4,6 +4,7 @@ import { AppError, HttpCode } from "../utils";
 import { prismaClient } from "../utils/lib/prisma-client";
 import { construirMapaFamilias, obtenerScoutIdsPorFamiliar } from "./pagoFamilia";
 import { normalizeText } from "../utils/helpers/text";
+import logger from "../utils/classes/Logger";
 
 const ROLES_GLOBALES_PENDIENTES: RolesType[] = [
 	ROLES.JEFE_GRUPO,
@@ -239,9 +240,27 @@ export class ServicioObligacionesPago {
 		});
 
 		if (opts?.forzarRecrear) {
-			const { ServicioImputacionPago } = await import("./servicioImputacionPago");
-			const servicioImputacion = new ServicioImputacionPago();
-			await servicioImputacion.reimputarPagosCiclo(cicloId);
+			// La reimputación es O(pagos) y cada pago abre su propia transacción.
+			// Correrla sync dentro del request causa timeouts de transacción en SQLite
+			// cuando hay muchos pagos. Se dispara async para que el request responda
+			// rápido y la reimputación termine en background.
+			import("./servicioImputacionPago").then(({ ServicioImputacionPago }) => {
+				new ServicioImputacionPago().reimputarPagosCiclo(cicloId).catch(async (err: any) => {
+					const mensaje = err?.message ?? String(err);
+					logger.error(`[Obligaciones] reimputarPagosCiclo falló en background para ciclo ${cicloId}: ${mensaje}`);
+					try {
+						const { sendMail } = await import("../utils/lib/mailer");
+						const horario = new Date().toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" });
+						await sendMail({
+							to: "agustinguti123@gmail.com",
+							subject: `[Scout API] Error en reimputación de pagos — ciclo ${cicloId}`,
+							text: `Horario: ${horario}\nCiclo: ${cicloId}\nError: ${mensaje}`,
+						});
+					} catch (mailErr: any) {
+						logger.error(`[Obligaciones] No se pudo enviar mail de alerta: ${mailErr?.message ?? mailErr}`);
+					}
+				});
+			});
 		}
 
 		return { cicloId, obligacionesGeneradas: obligaciones.length };

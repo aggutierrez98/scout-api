@@ -321,6 +321,114 @@ export class PagoService implements IPagoService {
 		});
 	};
 
+	exportarPagosXLSX = async ({ filters = {} }: { filters?: queryParams["filters"] }) => {
+		const {
+			nombre = "",
+			concepto = "",
+			scoutId,
+			equipos,
+			metodoPago,
+			rendido,
+			tiempoDesde,
+			tiempoHasta,
+			funciones,
+			progresiones,
+			ramas,
+			familiarId,
+		} = filters;
+
+		const nombreNorm = normalizeText(nombre);
+		const conceptoNorm = normalizeText(concepto);
+
+		const pagos = await prismaClient.pago.findMany({
+			orderBy: { fechaPago: "desc" },
+			include: {
+				scout: {
+					select: {
+						nombre: true,
+						apellido: true,
+						dni: true,
+						rama: true,
+						fechaNacimiento: true,
+					},
+				},
+			},
+			where: {
+				metodoPago: metodoPago || undefined,
+				scout: {
+					equipo: { uuid: equipos ? { in: equipos } : undefined },
+					progresionActual: { in: progresiones },
+					funcion: { in: funciones },
+					rama: { in: ramas },
+					uuid: scoutId,
+					familiarScout: familiarId ? { some: { familiarId } } : undefined,
+				},
+				rendido: rendido ? rendido === "true" ? true : false : undefined,
+				fechaPago: { lte: tiempoHasta, gte: tiempoDesde },
+				OR: [
+					{
+						scout: {
+							OR: [
+								{ nombreNormalizado: { contains: nombreNorm } },
+								{ apellidoNormalizado: { contains: nombreNorm } },
+							],
+						},
+					},
+					{ concepto: { contains: conceptoNorm } },
+				],
+			},
+		});
+
+		const calcularEdad = (fechaNacimiento: Date) => {
+			const hoy = new Date();
+			let edad = hoy.getFullYear() - fechaNacimiento.getFullYear();
+			const m = hoy.getMonth() - fechaNacimiento.getMonth();
+			if (m < 0 || (m === 0 && hoy.getDate() < fechaNacimiento.getDate())) edad--;
+			return edad;
+		};
+
+		const header = [
+			"Fecha y hora del pago",
+			"Nombre y apellido",
+			"DNI",
+			"Rama",
+			"Edad",
+			"Concepto",
+			"Monto ($)",
+			"Método de pago",
+		];
+
+		const rows = pagos.map(({ scout, fechaPago, ...pago }) => {
+			const fechaFormateada = fechaPago.toLocaleString("es-AR", {
+				day: "2-digit",
+				month: "2-digit",
+				year: "numeric",
+				hour: "2-digit",
+				minute: "2-digit",
+			});
+			return [
+				fechaFormateada,
+				`${scout.apellido}, ${scout.nombre}`,
+				scout.dni ?? "-",
+				scout.rama ?? "-",
+				scout.fechaNacimiento ? calcularEdad(new Date(scout.fechaNacimiento)) : "-",
+				pago.concepto,
+				pago.monto,
+				pago.metodoPago,
+			];
+		});
+
+		const xlsx = await import("xlsx");
+		const ws = xlsx.utils.aoa_to_sheet([header, ...rows]);
+		ws["!cols"] = [
+			{ wch: 20 }, { wch: 28 }, { wch: 12 }, { wch: 12 },
+			{ wch: 6 }, { wch: 30 }, { wch: 12 }, { wch: 15 },
+		];
+		const wb = xlsx.utils.book_new();
+		xlsx.utils.book_append_sheet(wb, ws, "Pagos");
+		return xlsx.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+	};
+
 	importPagos = async (csvBuffer: Buffer): Promise<{ created: number; errors: Array<{ fila: number; nombre: string; razon: string }> }> => {
 		const workbook = XLSX.read(csvBuffer, { type: "buffer" });
 		const sheet = workbook.Sheets[workbook.SheetNames[0]];
