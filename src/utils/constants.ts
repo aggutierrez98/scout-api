@@ -148,6 +148,7 @@ export const VALID_METODOS_PAGO = [
 export const VALID_TIPOS_PAGO = [
 	"AFILIACION",
 	"CUOTA_MENSUAL",
+	"CUOTA_MENSUAL_TODO_JUNTO",
 	"EVENTO",
 	"OTRO",
 ] as const;

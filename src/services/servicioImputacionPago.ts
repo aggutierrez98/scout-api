@@ -131,9 +131,14 @@ export class ServicioImputacionPago {
 					? { ...baseObligacionesWhere, tipo: "AFILIACION" }
 					: tipoPago === "CUOTA_MENSUAL" && pago.mesCuota
 						? { ...baseObligacionesWhere, tipo: "CUOTA_MENSUAL", periodo: `${ciclo.anio}-${String(pago.mesCuota).padStart(2, "0")}` }
-						: tipoPago === "EVENTO"
-							? { ...baseObligacionesWhere, tipo: "EVENTO" }
-							: baseObligacionesWhere;
+						: tipoPago === "CUOTA_MENSUAL_TODO_JUNTO"
+							// Todas las cuotas mensuales: el aplicarBonificacionAnual
+							// detecta automáticamente si el monto cubre el ciclo completo
+							// y aplica la condonación del mes bonificado.
+							? { ...baseObligacionesWhere, tipo: "CUOTA_MENSUAL" }
+							: tipoPago === "EVENTO"
+								? { ...baseObligacionesWhere, tipo: "EVENTO" }
+								: baseObligacionesWhere;
 
 			const [saldo, obligaciones] = await Promise.all([
 				tx.saldoAFavor.findUnique({

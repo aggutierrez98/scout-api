@@ -443,12 +443,24 @@ export class PagoService implements IPagoService {
 		};
 
 		const tipoPagoMap: Record<string, string> = {
+			// Valores del enum directamente (como vienen en el CSV)
 			afiliacion: "AFILIACION",
 			"afiliación": "AFILIACION",
+			cuota_mensual: "CUOTA_MENSUAL",
 			"cuota mensual": "CUOTA_MENSUAL",
 			cuota: "CUOTA_MENSUAL",
+			cuota_mensual_todo_junto: "CUOTA_MENSUAL_TODO_JUNTO",
+			"cuota mensual todo junto": "CUOTA_MENSUAL_TODO_JUNTO",
+			"cuotas juntas": "CUOTA_MENSUAL_TODO_JUNTO",
+			"todo junto": "CUOTA_MENSUAL_TODO_JUNTO",
 			evento: "EVENTO",
 			otro: "OTRO",
+		};
+
+		const mesNombreMap: Record<string, number> = {
+			enero: 1, february: 2, febrero: 2, marzo: 3, abril: 4,
+			mayo: 5, junio: 6, julio: 7, agosto: 8,
+			septiembre: 9, octubre: 10, noviembre: 11, diciembre: 12,
 		};
 
 		const ramaMap: Record<string, RamasType> = {
@@ -501,7 +513,9 @@ export class PagoService implements IPagoService {
 			const metodoPago = metodoPagoMap[metodoPagoRaw] ?? "OTRO";
 
 			const tipoPago = tipoPagoMap[tipoPagoRaw] ?? "OTRO";
-			const mesCuota = mesCuotaRaw ? parseInt(mesCuotaRaw, 10) : null;
+			const mesCuota = mesCuotaRaw
+				? (mesNombreMap[mesCuotaRaw.toLowerCase()] ?? (parseInt(mesCuotaRaw, 10) || null))
+				: null;
 
 			if (tipoPago === "CUOTA_MENSUAL" && (!mesCuota || mesCuota < 1 || mesCuota > 12)) {
 				errors.push({ fila, nombre: nombreStr || "(vacío)", razon: "Tipo 'Cuota mensual' requiere columna 'Mes pagado' con valor 1-12" });

@@ -45,6 +45,7 @@ enum TipoObligacionPago {
 enum TipoPago {
   AFILIACION
   CUOTA_MENSUAL
+  CUOTA_MENSUAL_TODO_JUNTO
   EVENTO
   OTRO
 }
