@@ -95,7 +95,7 @@ export class ServicioImputacionPago {
 		const [pagoBase, ciclo] = await Promise.all([
 			(prismaClient as any).pago.findUnique({
 				where: { uuid: pagoId },
-				select: { uuid: true, monto: true, scoutId: true, fechaPago: true },
+				select: { uuid: true, monto: true, scoutId: true, fechaPago: true, tipoPago: true, mesCuota: true },
 			}),
 			this.servicioObligaciones.obtenerCicloActivo(),
 		]);
@@ -118,6 +118,23 @@ export class ServicioImputacionPago {
 		return (prismaClient as any).$transaction(async (tx: any) => {
 			const pago = pagoBase;
 
+			// Filtrar obligaciones según el tipo del pago para dirigir la imputación.
+			// OTRO usa el comportamiento original (todas las pendientes en orden).
+			const baseObligacionesWhere = {
+				cicloId: ciclo.uuid,
+				estado: { in: ["PENDIENTE", "INCOMPLETO"] },
+				OR: [{ scoutId: pago.scoutId }, { familiaClave }],
+			};
+			const tipoPago = pago.tipoPago ?? "OTRO";
+			const obligacionesWhere =
+				tipoPago === "AFILIACION"
+					? { ...baseObligacionesWhere, tipo: "AFILIACION" }
+					: tipoPago === "CUOTA_MENSUAL" && pago.mesCuota
+						? { ...baseObligacionesWhere, tipo: "CUOTA_MENSUAL", periodo: `${ciclo.anio}-${String(pago.mesCuota).padStart(2, "0")}` }
+						: tipoPago === "EVENTO"
+							? { ...baseObligacionesWhere, tipo: "EVENTO" }
+							: baseObligacionesWhere;
+
 			const [saldo, obligaciones] = await Promise.all([
 				tx.saldoAFavor.findUnique({
 					where: {
@@ -125,11 +142,7 @@ export class ServicioImputacionPago {
 					},
 				}),
 				tx.obligacionPago.findMany({
-					where: {
-						cicloId: ciclo.uuid,
-						estado: { in: ["PENDIENTE", "INCOMPLETO"] },
-						OR: [{ scoutId: pago.scoutId }, { familiaClave }],
-					},
+					where: obligacionesWhere,
 					include: {
 						imputaciones: { select: { montoImputado: true } },
 					},

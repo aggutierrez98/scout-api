@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { IPago } from "../types";
 import { validScoutID } from "./scout";
-import { VALID_FUNCTIONS, VALID_METODOS_PAGO, VALID_RAMAS } from "../utils";
+import { VALID_FUNCTIONS, VALID_METODOS_PAGO, VALID_RAMAS, VALID_TIPOS_PAGO } from "../utils";
 import { ISODateStringReg } from "../utils/regex";
 import { IdSchema, QuerySearchSchema } from "./generics";
 import { prismaClient } from "../utils/lib/prisma-client";
@@ -121,12 +121,24 @@ const ReglasPagoBodySchema = z.object({
 	}
 });
 
-export const PagoSchema = z.object({
+const PagoBaseSchema = z.object({
 	concepto: z.string().max(50),
 	monto: z.number(),
 	metodoPago: z.enum(VALID_METODOS_PAGO),
 	scoutId: IdSchema.refine(validScoutID),
 	fechaPago: z.string().pipe(z.coerce.date()),
+	tipoPago: z.enum(VALID_TIPOS_PAGO).default("OTRO"),
+	mesCuota: z.number().int().min(1).max(12).nullable().optional(),
+});
+
+export const PagoSchema = PagoBaseSchema.superRefine((data, ctx) => {
+	if (data.tipoPago === "CUOTA_MENSUAL" && !data.mesCuota) {
+		ctx.addIssue({
+			code: "custom",
+			message: "mesCuota es requerido cuando tipoPago es CUOTA_MENSUAL",
+			path: ["mesCuota"],
+		});
+	}
 }) satisfies z.Schema<IPago>;
 
 export const GetPagosSchema = z.object({
@@ -150,7 +162,7 @@ export const PutPagoSchema = z.object({
 	params: z.object({
 		id: IdSchema.refine(validPagoId),
 	}),
-	body: PagoSchema.deepPartial(),
+	body: PagoBaseSchema.deepPartial(),
 });
 
 export const DeletePagoSchema = z.object({

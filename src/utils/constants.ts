@@ -145,6 +145,13 @@ export const VALID_METODOS_PAGO = [
 	"OTRO",
 ] as const;
 
+export const VALID_TIPOS_PAGO = [
+	"AFILIACION",
+	"CUOTA_MENSUAL",
+	"EVENTO",
+	"OTRO",
+] as const;
+
 export const VALID_ROLES = [
 	"EXTERNO",
 	"JOVEN",

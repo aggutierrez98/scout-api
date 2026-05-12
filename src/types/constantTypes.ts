@@ -2,6 +2,7 @@ import {
 	VALID_FUNCTIONS,
 	VALID_ENTREGAS_TYPE,
 	VALID_METODOS_PAGO,
+	VALID_TIPOS_PAGO,
 	VALID_RELATIONSHIPS,
 	VALID_ROLES,
 	VALID_SEX,
@@ -27,6 +28,7 @@ export type ProgresionType = typeof VALID_PROGRESSIONS[number];
 export type FuncionType = typeof VALID_FUNCTIONS[number];
 export type TipoEntregaType = typeof VALID_ENTREGAS_TYPE[number];
 export type MetodosPagoType = typeof VALID_METODOS_PAGO[number];
+export type TipoPagoType = typeof VALID_TIPOS_PAGO[number];
 export type RolesType = typeof VALID_ROLES[number];
 export type RamasType = typeof VALID_RAMAS[number];
 export type TipoEventoType = typeof VALID_TIPOS_EVENTO[number];

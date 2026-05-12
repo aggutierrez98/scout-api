@@ -21,8 +21,14 @@ function buildFechaPago(datos: IWebhookComprobanteDatos): Date {
   return datos.fecha ? new Date(datos.fecha) : new Date();
 }
 
-async function crearPago(scoutId: string, datos: IWebhookComprobanteDatos, rendido = false) {
-  return prismaClient.pago.create({
+async function crearPago(
+  scoutId: string,
+  datos: IWebhookComprobanteDatos,
+  rendido = false,
+  tipoPago: string = "OTRO",
+  mesCuota: number | null = null,
+) {
+  return (prismaClient as any).pago.create({
     data: {
       uuid: nanoid(10),
       scoutId,
@@ -31,8 +37,36 @@ async function crearPago(scoutId: string, datos: IWebhookComprobanteDatos, rendi
       metodoPago: "TRANSFERENCIA",
       fechaPago: buildFechaPago(datos),
       rendido,
+      tipoPago,
+      mesCuota,
     },
   });
+}
+
+async function inferirTipoPago(
+  obligacionId: string | null | undefined,
+  datosTipoPago?: string | null,
+  datosMesCuota?: number | null,
+): Promise<{ tipoPago: string; mesCuota: number | null }> {
+  // Si el hint ya viene desde whatsapp-comprobantes, usarlo directamente
+  if (datosTipoPago && datosTipoPago !== "OTRO") {
+    return { tipoPago: datosTipoPago, mesCuota: datosMesCuota ?? null };
+  }
+  if (!obligacionId) return { tipoPago: "OTRO", mesCuota: null };
+
+  const obligacion = await (prismaClient as any).obligacionPago.findUnique({
+    where: { uuid: obligacionId },
+    select: { tipo: true, periodo: true },
+  });
+  if (!obligacion) return { tipoPago: "OTRO", mesCuota: null };
+
+  const tipoPago = obligacion.tipo as string;
+  const mesCuota =
+    tipoPago === "CUOTA_MENSUAL" && obligacion.periodo
+      ? parseInt((obligacion.periodo as string).split("-")[1], 10)
+      : null;
+
+  return { tipoPago, mesCuota };
 }
 
 /**
@@ -144,7 +178,8 @@ export class WebhookService {
 
     // ── Caso 1: obligacionId explícita → imputar directamente ────────────────
     if (datos.obligacionId && datos.scoutId) {
-      const pago = await crearPago(datos.scoutId, datos, rendido);
+      const { tipoPago, mesCuota } = await inferirTipoPago(datos.obligacionId, datos.tipoPago, datos.mesCuota);
+      const pago = await crearPago(datos.scoutId, datos, rendido, tipoPago, mesCuota);
       await servicioImputacion.imputarPago(pago.uuid);
       return {
         pagoId: pago.uuid,
@@ -163,6 +198,8 @@ export class WebhookService {
         select: scoutSelect,
       });
       if (scout) {
+        // Sin obligacionId explícita, pagos de scout único se dejan como OTRO
+        // para que imputarPago distribuya automáticamente
         const pago = await crearPago(scout.uuid, datos, rendido);
         await servicioImputacion.imputarPago(pago.uuid);
         return {
@@ -182,6 +219,7 @@ export class WebhookService {
 
       if (scoutIdElegido) {
         const sinDeuda = datos.scoutIds.filter(id => id !== scoutIdElegido);
+        // Multi-scout: siempre OTRO para distribución automática entre obligaciones
         const pago = await crearPago(scoutIdElegido, datos, rendido);
         await servicioImputacion.imputarPago(pago.uuid);
 

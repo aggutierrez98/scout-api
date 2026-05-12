@@ -442,6 +442,15 @@ export class PagoService implements IPagoService {
 			Efectivo: "EFECTIVO",
 		};
 
+		const tipoPagoMap: Record<string, string> = {
+			afiliacion: "AFILIACION",
+			"afiliación": "AFILIACION",
+			"cuota mensual": "CUOTA_MENSUAL",
+			cuota: "CUOTA_MENSUAL",
+			evento: "EVENTO",
+			otro: "OTRO",
+		};
+
 		const ramaMap: Record<string, RamasType> = {
 			Manada: "MANADA",
 			Unidad: "SCOUTS",
@@ -459,6 +468,8 @@ export class PagoService implements IPagoService {
 			const conceptoStr = row["Concepto"]?.trim();
 			const montoRaw = row["Monto"]?.trim();
 			const metodoPagoRaw = row["Metodo de pago"]?.trim();
+			const tipoPagoRaw = row["Tipo de pago"]?.trim().toLowerCase() ?? "";
+			const mesCuotaRaw = row["Mes pagado"]?.trim();
 
 			if (!fechaStr && !nombreStr && !conceptoStr) continue;
 
@@ -488,6 +499,14 @@ export class PagoService implements IPagoService {
 			}
 
 			const metodoPago = metodoPagoMap[metodoPagoRaw] ?? "OTRO";
+
+			const tipoPago = tipoPagoMap[tipoPagoRaw] ?? "OTRO";
+			const mesCuota = mesCuotaRaw ? parseInt(mesCuotaRaw, 10) : null;
+
+			if (tipoPago === "CUOTA_MENSUAL" && (!mesCuota || mesCuota < 1 || mesCuota > 12)) {
+				errors.push({ fila, nombre: nombreStr || "(vacío)", razon: "Tipo 'Cuota mensual' requiere columna 'Mes pagado' con valor 1-12" });
+				continue;
+			}
 
 			let scoutUuid: string | null = null;
 
@@ -540,6 +559,8 @@ export class PagoService implements IPagoService {
 						concepto: conceptoStr.substring(0, 50).toUpperCase(),
 						monto,
 						metodoPago,
+						tipoPago: tipoPago as any,
+						mesCuota: tipoPago === "CUOTA_MENSUAL" ? mesCuota : null,
 						scoutId: scoutUuid,
 						fechaPago,
 						rendido: metodoPago === "TRANSFERENCIA",

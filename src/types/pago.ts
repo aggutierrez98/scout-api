@@ -1,5 +1,6 @@
-import { MetodosPagoType } from "./constantTypes";
+import { MetodosPagoType, TipoPagoType } from "./constantTypes";
 
+export type TipoPago = TipoPagoType;
 
 export interface IPago {
     scoutId: string;
@@ -7,6 +8,8 @@ export interface IPago {
     monto: number;
     metodoPago: string;
     fechaPago: Date | string;
+    tipoPago?: TipoPago;
+    mesCuota?: number | null;
 }
 
 export interface IReciboPagoData {

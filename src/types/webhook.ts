@@ -48,6 +48,9 @@ export interface IWebhookComprobanteDatos {
   obligacionesSugeridas?: ObligacionSugerida[];
   confianza?: NivelConfianza;
   metodoResolucion?: string;
+  // Hint opcional desde whatsapp-comprobantes; si no viene, se infiere desde obligacionId
+  tipoPago?: "AFILIACION" | "CUOTA_MENSUAL" | "EVENTO" | "OTRO";
+  mesCuota?: number | null;
 }
 
 // Resultado del procesamiento del webhook

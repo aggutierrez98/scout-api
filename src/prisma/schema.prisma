@@ -39,6 +39,14 @@ enum Rama {
 enum TipoObligacionPago {
   AFILIACION
   CUOTA_MENSUAL
+  EVENTO
+}
+
+enum TipoPago {
+  AFILIACION
+  CUOTA_MENSUAL
+  EVENTO
+  OTRO
 }
 
 enum EstadoObligacionPago {
@@ -146,6 +154,8 @@ model Pago {
   monto         Float
   rendido       Boolean        @default(false)
   metodoPago    String
+  tipoPago      TipoPago       @default(OTRO)
+  mesCuota      Int?
   scout         Scout          @relation(fields: [scoutId], references: [uuid])
   scoutId       String
   fechaPago     DateTime
@@ -155,6 +165,7 @@ model Pago {
   revision      PagoRevision?
 
   @@index([scoutId])
+  @@index([tipoPago])
 }
 
 model PagoRevision {
